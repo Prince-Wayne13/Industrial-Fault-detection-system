@@ -2,18 +2,21 @@
 
 One entry per version of the SRS. Newest first. Requirement numbers are those of the version named.
 
-## Unreleased (planned v1.7)
+## v1.7
 
-Decided but not yet applied. See `docs/requirement-decisions.md`, part B, for each item against its requirement number.
+Applied to the Word file on 26 October 2026. Wording is in `docs/v1.7-clear-statements.md`. Numbers stay in page order; new requirements carry a letter (FR-3a, FR-7a, FR-23a, FR-28a and so on).
 
-- Alerts as pop-ups to connected users only. Acknowledging logs who and when (FR-7, FR-8).
-- A 10-second window for the trend check. Alert target of 10 seconds (FR-6, PR-001).
-- One reading per second for every parameter on every machine (PR-005, PR-006).
-- A sanity check before the status model. Raw values still show on the dashboard (FR-14).
-- Normal windows keep only status and time stamp. Readings are deleted after a day. Warning and critical windows keep their readings (FR-9, NFR-10).
-- Local storage as an active backup. A storage alert at 75% used (FR-20, NFR-6, new requirement).
-- New security requirements. Session timeout of 5 minutes, shortened per user (FR-26).
-- Roles: the Administrator manages the system and gets no fault alerts. The engineer may change limits, logged.
+- Three roles: Operator, Engineer, Administrator. Management / Supervisor dropped. The Operator acknowledges; the Engineer resolves, uses maintenance mode and changes limits; the Administrator manages the system and gets the storage alert (Sections 2.3, 3.1.1, FR-7, FR-8, FR-17, FR-18, FR-21a).
+- Alerts as pop-ups to connected Operators and Engineers. Acknowledging logs who and when and does not close the fault (FR-7, FR-8).
+- Limits can be changed by the Engineer without a rebuild, with the limit stored on each fault record (FR-23a to FR-23d).
+- Security rules: passwords, lockout, HTTPS, stored passwords, 5-minute session timeout with a 1-minute minimum (FR-26, FR-28a to FR-28f).
+- One reading per second per parameter. A 10-second window. Normal windows keep status only; their readings are deleted after a day (FR-3a, FR-6, FR-9a, FR-9b, FR-13, NFR-10).
+- Status updates every 10 seconds. A critical alert shows within 2 seconds of the status confirming it; a late alert is logged and flagged (PR-001, PR-001a, PR-001b).
+- Sizing: at least 40 readings a second and room for 3,456,000 readings (PR-005, PR-006). Start-up time 60 seconds (PR-007). NFR-6 is 99% with local storage as an active backup.
+- FR-5: normal or abnormal where only one abnormal level exists. DC-006 and Section 5 say the demonstration is simulated data with fault injection.
+- Flask and React with JSX (Appendix B). Cover: version, date, group members, revision history. Section 1.5 corrected.
+
+Still open: O-4, O-5, O-7, O-9, DD-02. The contents page refreshes when the file is opened in Word (accept the prompt to update fields). Diagrams are not drawn yet.
 
 ## v1.6
 

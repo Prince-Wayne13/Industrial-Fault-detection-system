@@ -4,11 +4,23 @@ for
 
 **Industrial Fault Detection System for Motors, Water Pumps, and Backup Power Supplies**
 
-**Version 1.1**
+**Version 1.7**
 
 Prepared by Group 3 BEEE
 
-20-09-2026
+Group members: Prince Msowoya, Zilpah Kalipa, Theresa Somanje, Opra Chikwangwala, Steven Nkhoma, Akuzike Mphande, Timothy Kaperenganya
+
+26-10-2026
+
+Revision History
+
+| **Version** | **Changes**                                                                                                                                                                                                                             | **Date / tag** |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
+| 1.3         | The document as received, with margin notes. FR-1 to FR-13 and NFR-1 to NFR-14.                                                                                                                                                         | Tag v1.3       |
+| 1.4         | Added FR-14 to FR-27, DC-001 to DC-008 and PR-001 to PR-007. Margin notes resolved.                                                                                                                                                     | Tag v1.4       |
+| 1.5         | Non-functional requirements merged into Section 3.5. Sections 3.3 to 3.6 renamed.                                                                                                                                                       | Tag v1.5       |
+| 1.6         | Requirements renumbered in page order. New FR-6 (trend check). UC-2 rewritten.                                                                                                                                                          | Tag v1.6       |
+| 1.7         | Three roles. Alert and acknowledge rules. Limits can be changed. Security rules. One reading per second and storage rules. Status update every 10 seconds with a critical alert within 2 seconds. Flask and React. Group members added. | 26-10-2026     |
 
 # **Table of Contents**
 
@@ -184,7 +196,7 @@ Note on backup power supply parameters: no manufacturer datasheet or standard ha
 
 ## **1.5 Overview**
 
-Section 2 describes the system at a high level: its context, its main functions, its intended users, and the assumptions and constraints it operates under. Section 3 specifies detailed, testable requirements. Section 4 specifies external interface requirements. Section 5 covers other requirements. Appendix B records the design decisions made to satisfy these requirements, kept separate from the requirements themselves.
+Section 2 describes the system at a high level: its context, its main functions, its intended users, and the assumptions and constraints it operates under. Section 3 specifies detailed, testable requirements. Section 4 specifies external interface requirements. Section 5 sets out the acceptance criteria, which are checked in the final demonstration. Section 3.6 covers other requirements. Appendix B records the design decisions made to satisfy these requirements, kept separate from the requirements themselves.
 
 # **2. Overall Description**
 
@@ -216,12 +228,13 @@ At a high level, the system shall:
 
 ## **2.3 User Characteristics**
 
-| **User Category**                 | **Characteristics and System Needs**                                                                                                                                                                                                                                          |
-|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Machine Operator                  | Basic to moderate technical knowledge. Monitors motor and pump operating conditions during production. Needs a simple dashboard showing measurements, machine status, and clear warning/critical alerts. Should not normally change system configuration.                     |
-| Maintenance Technician / Engineer | Technical knowledge of industrial motors, pumps, electrical systems, and maintenance. Uses current and historical measurements, trends, and alerts to identify possible faults and plan preventive maintenance. May require access to diagnostic and configuration functions. |
-| System Administrator              | Knowledge of the software and basic IT/network administration. Manages user accounts, access permissions, equipment registration, system settings, data storage, and system availability.                                                                                     |
-| Management / Supervisor           | Requires limited technical interaction. Uses summaries, equipment status, alerts, and historical reports to understand equipment performance, downtime, and maintenance requirements.                                                                                         |
+| **User Category** | **Characteristics and System Needs**                                                                                                                                                                                                                                                                                                                                                               |
+|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Operator          | Basic to moderate technical knowledge. The first responder on shift: monitors motor and pump operating conditions during production, sees fault alerts, acknowledges them and can generate reports. Needs a simple dashboard showing measurements, machine status, and clear warning/critical alerts. Does not resolve faults, use maintenance mode, change limits or change system configuration. |
+| Engineer          | Technical knowledge of industrial motors, pumps, electrical systems, and maintenance, and often working remotely. Diagnoses and fixes faults. Does everything an Operator does, and also marks faults resolved, places equipment in maintenance mode and changes limits (every change is logged).                                                                                                  |
+| Administrator     | Knowledge of the software and basic IT/network administration. Manages user accounts, access permissions, equipment registration, system settings and data storage, and receives the storage alert. Is not an operational user: receives no fault alerts and does not acknowledge faults.                                                                                                          |
+
+The system has three roles because it gives three different sets of rights: watching and acknowledging faults (Operator), fixing faults and tuning limits (Engineer), and managing the system (Administrator).
 
 ## **2.4 Constraints**
 
@@ -265,27 +278,43 @@ FR-3: The system shall monitor backup power supply/UPS operating conditions, inc
 
 *Note: the pump bearing-temperature, current and vibration limits, and all backup power supply limits, are team-selected working values (see Appendix A.2 to A.4). They are adopted for the simulation and are pending equipment-specific validation.*
 
+FR-3a: The system shall take one reading per second for every monitored parameter on every machine.
+
 ### **Fault Detection**
 
 FR-4: The system shall compare incoming measurements against the defined operating limits for the corresponding equipment and parameter and flag measurements or patterns that exceed those limits.
 
-FR-5: For conditions flagged by FR-4, the system shall classify the condition as normal, warning, or critical using the defined fault-classification method and identify the affected equipment and parameter.
+FR-5: For conditions flagged by FR-4, the system shall classify the condition as normal, warning, or critical using the defined fault-classification method and identify the affected equipment and parameter. Where the limits define only one abnormal level, the system shall classify the condition as normal or abnormal.
 
-FR-6: A condition flagged by FR-4 shall not be classified as a fault under FR-5 based on a single abnormal reading alone. The system shall first check whether the abnormal condition holds across \[N — number of readings/time window to be agreed\] recent readings for that parameter; only if it does shall FR-5 classification and the FR-7 alert proceed. A single abnormal reading that does not repeat is not treated as a fault, and the dashboard's live reading (see NFR-8) is unaffected either way.
+FR-6: A condition flagged by FR-4 shall not be classified as a fault under FR-5 based on a single abnormal reading alone. The system shall first check whether the abnormal condition holds across the readings of the latest 10-second window for that parameter; only if it does shall FR-5 classification and the FR-7 alert proceed. A single abnormal reading that does not repeat is not treated as a fault, and the dashboard's live reading (see NFR-8) is unaffected either way.
 
 Design clarification (Appendix B): the processing flow is simulated sensor data → threshold screening → flagged abnormal condition → trend check (FR-6) → fault classification/severity assignment → fault record → dashboard alert. The logistic-regression model performs the classification stage; it does not replace the initial threshold screening or the trend check.
 
 ### **Fault Alerts and Notifications**
 
-FR-7: The system shall generate an alert whenever a fault is confirmed and display it on the dashboard, showing the affected equipment, type of fault, and severity.
+FR-7: When the status model confirms a fault, the system shall show a pop-up alert to every connected Operator and Engineer, whether near-range or remote.
 
-FR-8: The system shall allow a user to acknowledge a fault alert.
+FR-7a: The pop-up shall show the equipment, the parameter, the fault type, the severity and the time.
+
+FR-7b: The system shall not send fault alerts to the Administrator.
+
+FR-7c: If no Operator or Engineer is connected, the fault shall stay open and be shown to the next Operator or Engineer who connects.
+
+FR-8: An Operator or Engineer shall be able to acknowledge an open fault from its alert.
+
+FR-8a: When a fault is acknowledged, the system shall record which user did it and when.
+
+FR-8b: Acknowledging shall not close the fault. It stays open until an Engineer marks it resolved (FR-17).
 
 ### **Fault Recording and Reporting**
 
 FR-9: The system shall record detected faults and sensor readings for later retrieval.
 
-FR-10: Authorized users shall be able to access fault history and generate reports showing equipment performance and recurring faults.
+FR-9a: For every 10-second window, the system shall store the status and its time stamp.
+
+FR-9b: The readings of a normal window shall be deleted after 24 hours. The readings of a warning or critical window shall be kept with their status.
+
+FR-10: All users shall be able to view fault history. Operators and Engineers shall be able to generate reports from fault history showing equipment performance and recurring faults.
 
 ### **Remote Monitoring and Connectivity**
 
@@ -297,7 +326,7 @@ FR-12: The system shall continue collecting, evaluating, and displaying locally 
 
 ### **Fault Handling**
 
-FR-13: If a piece of equipment stops producing sensor readings for longer than three times its normal reporting interval, the system shall flag that equipment parameter as having a sensor fault and display this on the dashboard, instead of continuing to show the last known reading as current.
+FR-13: If no reading arrives for a parameter for 3 seconds, the system shall flag that parameter as having a sensor fault and display this on the dashboard, instead of continuing to show the last known reading as current.
 
 FR-14: If an incoming reading is of the wrong type, missing, or outside any physically possible range, the system shall reject that specific reading, log it as invalid, and continue operating normally.
 
@@ -305,11 +334,11 @@ FR-15: If two or more parameters on the same equipment become abnormal at the sa
 
 FR-16: The system shall not raise a duplicate alert for a fault condition that is already open and unacknowledged; it shall only raise a new alert once the condition has returned to normal and then reoccurs.
 
-FR-17: The system shall support a fault lifecycle of at least: open → acknowledged → resolved. A user shall be able to mark an acknowledged fault as resolved, and the system shall record when this happens.
+FR-17: The system shall support a fault lifecycle of at least: open → acknowledged → resolved. An Engineer shall be able to mark an acknowledged fault as resolved, and the system shall record when this happens.
 
 ### **Maintenance / Override**
 
-FR-18: An authorized user shall be able to place a piece of equipment into maintenance mode for a stated duration, during which the system continues recording sensor readings but suspends new fault alerts for that equipment.
+FR-18: An Engineer shall be able to place a piece of equipment into maintenance mode for a stated duration, during which the system continues recording sensor readings but suspends new fault alerts for that equipment.
 
 FR-19: If a piece of equipment remains in maintenance mode beyond its stated duration, the system shall flag this as overdue on the dashboard.
 
@@ -319,11 +348,21 @@ FR-20: If the data storage component becomes unavailable or full, the system sha
 
 FR-21: On restart after a shutdown or crash, the system shall resume monitoring using the last known configuration and shall not treat equipment status as unknown once fresh readings are received.
 
+FR-21a: When storage use reaches 75%, the system shall send an alert to the Administrator only. The Administrator manages storage.
+
 ### **Administration & Traceability**
 
 FR-22: The system shall keep a log of administrative actions (user account changes, equipment registration, threshold/configuration changes), recording who made the change and when.
 
 FR-23: If an operating threshold (normal/warning/critical limit) is changed, the system shall retain the previous value and the date of change, rather than overwriting it silently.
+
+FR-23a: An Engineer shall be able to change the warning limit and the critical limit for any parameter of any equipment type, from the dashboard, without restarting or rebuilding the system.
+
+FR-23b: The system shall reject a new limit if the warning limit is not below the critical limit.
+
+FR-23c: A changed limit shall apply to readings received after the change.
+
+FR-23d: Each fault record shall store the limit that was in force when the fault was raised.
 
 ### **Multi-Unit Support**
 
@@ -333,26 +372,41 @@ FR-24: The system shall support monitoring more than one piece of equipment with
 
 FR-25: All system components shall use a synchronized time source, so that fault timestamps and response-time measurements (see Section 3.3, Performance Requirements) are consistent across the system.
 
-FR-26: A user session shall expire after a period of inactivity, requiring re-authentication before further access.
+FR-26: A user session shall expire after 5 minutes of inactivity, requiring re-authentication before further access. A user may set a shorter time, but not shorter than 1 minute and not longer than 5 minutes.
 
 ### **Access Control**
 
-FR-27: The system shall restrict configuration, user-account management, and equipment-registration functions to users in the System Administrator role.
+FR-27: The system shall restrict configuration, user-account management, and equipment-registration functions to users in the Administrator role.
 
 FR-28: The system shall require authentication before allowing access to any monitoring or administrative function.
 
+FR-28a: Passwords shall be at least 15 characters long, and the system shall accept passwords of 64 characters or more.
+
+FR-28b: The system shall not require a mix of capitals, numbers or symbols in a password, and shall not force password changes on a schedule.
+
+FR-28c: The system shall refuse passwords that appear on a list of common or leaked passwords.
+
+FR-28d: After 5 failed login attempts on an account, the system should block login to that account for 15 minutes.
+
+FR-28e: All communication between the dashboard and the server shall use HTTPS (TLS 1.2 or newer).
+
+FR-28f: The system shall store passwords only in a salted, hashed form that cannot be read back.
+
 ### **3.1.1 User Role Permissions**
 
-The permissions below apply FR-10 and FR-27. Only the System Administrator role differs from the others: the Machine Operator, Maintenance Technician / Engineer and Management / Supervisor roles all have view and acknowledge access, and only the System Administrator can configure the system, manage users and register equipment.
+The permissions below apply FR-8, FR-10, FR-17, FR-18, FR-23a and FR-27. The system has three roles because it gives three different sets of rights: watching and acknowledging faults (Operator), fixing faults and tuning limits (Engineer), and managing the system (Administrator).
 
-| **Function**                                      | **Machine Operator** | **Maint. Tech / Engineer** | **System Admin** | **Mgmt / Supervisor** |
-|---------------------------------------------------|----------------------|----------------------------|------------------|-----------------------|
-| View equipment status, readings and fault history | Yes                  | Yes                        | Yes              | Yes                   |
-| Acknowledge fault alerts                          | Yes                  | Yes                        | Yes              | Yes                   |
-| Generate reports from fault history               | Yes                  | Yes                        | Yes              | Yes                   |
-| System configuration                              | No                   | No                         | Yes              | No                    |
-| User-account management                           | No                   | No                         | Yes              | No                    |
-| Equipment registration                            | No                   | No                         | Yes              | No                    |
+| **Function**                                                         | **Operator** | **Engineer** | **Administrator** |
+|----------------------------------------------------------------------|--------------|--------------|-------------------|
+| View equipment status, readings and fault history                    | Yes          | Yes          | Yes               |
+| See fault pop-ups                                                    | Yes          | Yes          | No                |
+| Acknowledge a fault                                                  | Yes          | Yes          | No                |
+| Mark a fault resolved                                                | No           | Yes          | No                |
+| Put equipment in maintenance mode                                    | No           | Yes          | No                |
+| Change limits                                                        | No           | Yes          | No                |
+| Generate reports from fault history                                  | Yes          | Yes          | No                |
+| Manage accounts, equipment registration, system settings and storage | No           | No           | Yes               |
+| Receive the 75% storage alert                                        | No           | No           | Yes               |
 
 ## **3.2 Use Cases**
 
@@ -360,7 +414,7 @@ This section describes how each type of user works with the system to reach a go
 
 ### **UC-1: Monitor Equipment Status**
 
-**Primary Actor:** Machine Operator
+**Primary Actor:** Operator
 
 **Goal:** See the current condition of the motor, water pump, and backup power supply at a glance
 
@@ -386,7 +440,7 @@ This section describes how each type of user works with the system to reach a go
 
 ### **UC-2: Detect a Fault and Alert the User**
 
-**Primary Actor:** System (initiated automatically); Secondary Actor: Machine Operator or Maintenance Technician
+**Primary Actor: System (initiated automatically); Secondary Actor: Operator or Engineer**
 
 **Goal:** Warn a user in time for them to act, whenever equipment moves outside its normal operating range
 
@@ -422,7 +476,7 @@ This section describes how each type of user works with the system to reach a go
 
 ### **UC-3: Review Fault History and Generate a Report**
 
-**Primary Actor:** Maintenance Technician / Engineer or Management / Supervisor
+**Primary Actor: Operator or Engineer**
 
 **Goal:** Understand how a piece of equipment has been performing over time and spot recurring problems
 
@@ -474,11 +528,11 @@ This section describes how each type of user works with the system to reach a go
 
 ### **UC-5: Administer Users and Equipment**
 
-**Primary Actor:** System Administrator
+**Primary Actor:** Administrator
 
 **Goal:** Control who can use the system and what equipment it monitors
 
-**Preconditions:** The user is logged in with the System Administrator role.
+**Preconditions:** The user is logged in with the Administrator role.
 
 **Main Success Scenario**
 
@@ -490,13 +544,13 @@ This section describes how each type of user works with the system to reach a go
 
 **Alternate / Exception Flows**
 
-- 1a. A user without the System Administrator role tries to open the administration area: the system denies access (see FR-27, FR-28).
+- 1a. A user without the Administrator role tries to open the administration area: the system denies access (see FR-27, FR-28).
 
 - 2a. The administrator tries to remove a user or piece of equipment that is referenced by existing fault history: the system keeps the historical records intact and does not silently delete data tied to them.
 
 ### **UC-6: Place Equipment in Maintenance Mode**
 
-**Primary Actor:** Maintenance Technician / Engineer
+**Primary Actor:** Engineer
 
 **Goal:** Work on a piece of equipment (for example, testing a pump while it is intentionally run dry) without the system raising false alerts
 
@@ -504,17 +558,17 @@ This section describes how each type of user works with the system to reach a go
 
 **Main Success Scenario**
 
-1.  The technician selects a piece of equipment and places it in maintenance mode, stating an expected duration.
+1.  The Engineer selects a piece of equipment and places it in maintenance mode, stating an expected duration.
 
 2.  The system stops raising new alerts for that equipment while still recording its readings.
 
-3.  The technician completes the work and takes the equipment out of maintenance mode.
+3.  The Engineer completes the work and takes the equipment out of maintenance mode.
 
 4.  The system resumes normal fault detection for that equipment.
 
 **Alternate / Exception Flows**
 
-- 1a. The stated duration passes and the technician has not ended maintenance mode: the system flags this on the dashboard as overdue rather than leaving the equipment silently unmonitored.
+- 1a. The stated duration passes and the Engineer has not ended maintenance mode: the system flags this on the dashboard as overdue rather than leaving the equipment silently unmonitored.
 
 - 2a. A reading during maintenance mode is severe enough to suggest a safety risk rather than an expected test condition: this case is noted as an open item in Appendix C, since the exact threshold for overriding maintenance mode needs to be confirmed with the client.
 
@@ -524,7 +578,13 @@ This section states both how fast the system must respond (dynamic behaviour) an
 
 ### **Response Time**
 
-PR-001: The system shall show a dashboard alert for a critical fault within 60 seconds of that fault being confirmed under FR-6. The 60 seconds is counted from the moment the trend check confirms the fault to the moment the alert appears on the dashboard.
+PR-001: The system shall update the status of each machine at least every 10 seconds.
+
+PR-001a: When the status is critical, the system shall show the alert immediately after the status confirms it, and no later than 2 seconds afterwards. A single abnormal reading never raises an alert (FR-6).
+
+PR-001b: If an alert is shown more than 2 seconds after its status confirms the fault, the system shall still show the alert, write the delay to the log, and show an "alerts delayed" notice on the dashboard.
+
+*The alert is late only when part of the system is interrupted or slow. The fault is still recorded and stays open, and is shown to the next user who connects. The cost of lateness is that the equipment runs longer before anyone acts.*
 
 PR-002: The dashboard shall show a newly received sensor reading within 2 seconds. The 2 seconds is counted from the moment the processing component receives the reading to the moment it appears on the dashboard, and applies to displaying the reading itself; it does not include the FR-6 trend check that decides whether a warning or critical alert is raised (see PR-001).
 
@@ -534,11 +594,11 @@ PR-003: The system shall support at least 10 pieces of equipment monitored at th
 
 PR-004: The system shall support at least 5 dashboard users viewing the system at the same time, without breaching PR-001 or PR-002.
 
-PR-005: The system shall be able to receive and process at least 1 sensor reading per second across all monitored equipment combined, without breaching PR-001 or PR-002.
+PR-005: The system shall process at least one reading per second for every monitored parameter on every machine, and at least 40 readings per second in total (10 machines × 4 parameters). If a machine has extra parameters, the system shall still keep up, without breaching PR-001 or PR-002.
 
-PR-006: The data store shall be sized to hold at least 1,296,000 readings without needing to discard data before the 30-day retention period set out in NFR-10 has passed. (This figure assumes 10 pieces of equipment, 3 monitored parameters each, and readings taken once per minute: 10 × 3 × 60 × 24 × 30.)
+PR-006: The system shall have room for at least 3,456,000 readings (one day at the minimum load), plus statuses and fault records. (10 machines × 4 parameters × 86,400 seconds in a day. Each extra parameter on 10 machines adds 864,000 a day.)
 
-PR-007: All system components shall complete startup and be actively monitoring equipment within \[X seconds/minutes — value to be agreed\] of launch.
+PR-007: All system components shall complete startup and be actively monitoring equipment within 60 seconds of launch.
 
 ## **3.4 Design Constraints** 
 
@@ -554,7 +614,7 @@ This section lists the real-world conditions and limits the system's design must
 
 - DC-005: The system shall be designed without dependence on a specific named industrial site; because sensor specifications for the reference industries could not all be confirmed, the system uses baseline parameters per Appendix A, adjustable per site during commissioning.
 
-- DC-006: The system shall be demonstrable without physical sensor hardware or physical access to real industrial equipment.
+- DC-006: The system shall be demonstrable without physical sensor hardware or physical access to real industrial equipment. The system is demonstrated with simulated sensor data and a fault-injection mode, and all tests are run on that simulation.
 
 - DC-007: The system shall remain operable, at least for locally available data, without continuous internet access.
 
@@ -572,7 +632,7 @@ NFR-2: The system shall correctly identify at least 85% of vibration-based fault
 
 NFR-5: The system shall keep a record of its own uptime during each test session. During the demonstration, the data-logging function shall be running for at least 95% of the session, not counting planned restarts that the team carries out on purpose (for example, to reload configuration).
 
-NFR-6: If the connection between system components is interrupted, the system shall retain all sensor readings generated during the interruption and, once the connection is restored, shall lose no more than 1% of them.
+NFR-6: The system shall store at least 99% of the sensor readings its data source generates, including during a connection interruption. The local store records the same readings at the same time as the main store, and the same keep and delete rules apply to both.
 
 *A reading only counts as "lost" if it was generated by the equipment's data source but never reaches the central database; readings never produced (FR-13) or discarded as invalid (NFR-7) don't count against this limit.*
 
@@ -588,7 +648,7 @@ NFR-9: The system shall be built so that the monitoring logic for one equipment 
 
 ### **Data Retention**
 
-NFR-10: The system shall keep sensor readings and fault records for at least 30 days.
+NFR-10: The system shall keep statuses and warning or critical records until storage use reaches 75%, and shall never delete them automatically. The readings of normal windows are deleted after 24 hours (FR-9b).
 
 ## **3.6 Other Requirements**
 
@@ -608,9 +668,9 @@ The dashboard shall display machine status, current sensor values, fault alerts,
 
 The system shall allow users to view equipment status, view detected faults and their details, view current and historical sensor readings, and acknowledge fault notifications.
 
-The system shall require a user to log in before showing any part of the dashboard (see FR-28). A System Administrator shall manage user accounts, equipment registration, maintenance mode, and thresholds through the same interface (see FR-27, FR-18, FR-23).
+The system shall require a user to log in before showing any part of the dashboard (see FR-28). An Administrator shall manage user accounts, equipment registration and system settings, and an Engineer shall manage maintenance mode and limits, through the same interface (see FR-27, FR-18, FR-23a).
 
-The system shall allow authorized users to generate and view fault-history reports for a chosen equipment and date range (see FR-10, UC-3).
+The system shall allow Operators and Engineers to generate, and all users to view, fault-history reports for a chosen equipment and date range (see FR-10, UC-3).
 
 ## **4.2 Hardware Interface**
 
@@ -630,16 +690,18 @@ All communication interfaces shall use a synchronized time source, consistent wi
 
 # **5. Acceptance Criteria**
 
-Each criterion below is demonstrated during the final demonstration and is traceable to the requirements listed against it.
+Each criterion below is demonstrated during the final demonstration, using simulated sensor data and a fault-injection mode, and is traceable to the requirements listed against it.
 
-| **ID** | **Acceptance Criterion**                                                                                                                                        | **Requirements**   |
-|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|
-| AC-1   | A simulated critical fault produces a dashboard alert within 60 seconds.                                                                                        | PR-001, FR-7       |
-| AC-2   | A System Administrator can perform configuration, user-management and equipment-registration actions; a user in any other role cannot.                          | FR-27, FR-28       |
-| AC-3   | During a simulated communication interruption, locally generated data is retained and is synchronized after reconnection, with no more than 1% of records lost. | FR-12, NFR-6       |
-| AC-4   | The required sensor parameters for motors, water pumps and backup power supplies are displayed on the dashboard and stored.                                     | FR-1 to FR-3, FR-9 |
-| AC-5   | The system correctly catches the target share of faults set out in NFR-1 and NFR-2, measured on the held-out labeled simulated test set.                        | NFR-1, NFR-2       |
-| AC-6   | The demonstration can switch between the simulated near-range and remote-range modes and receive/display equipment data in each mode.                           | FR-11              |
+| **ID** | **Acceptance Criterion**                                                                                                                                                          | **Requirements**      |
+|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
+| AC-1   | A simulated critical fault produces a dashboard alert within 2 seconds of its status confirming it, and each machine's status updates at least every 10 seconds.                  | PR-001, PR-001a, FR-7 |
+| AC-2   | An Administrator can perform configuration, user-management and equipment-registration actions; a user in any other role cannot.                                                  | FR-27, FR-28          |
+| AC-3   | During a simulated communication interruption, locally generated data is retained and is synchronized after reconnection, with no more than 1% of records lost.                   | FR-12, NFR-6          |
+| AC-4   | The required sensor parameters for motors, water pumps and backup power supplies are displayed on the dashboard and stored.                                                       | FR-1 to FR-3, FR-9    |
+| AC-5   | The system correctly catches the target share of faults set out in NFR-1 and NFR-2, measured on the held-out labeled simulated test set.                                          | NFR-1, NFR-2          |
+| AC-6   | The demonstration can switch between the simulated near-range and remote-range modes and receive/display equipment data in each mode.                                             | FR-11                 |
+| AC-7   | An Engineer can change a warning or critical limit from the dashboard without restarting the system. A new limit whose warning value is not below its critical value is rejected. | FR-23a, FR-23b        |
+| AC-8   | An alert shown more than 2 seconds late is still shown, is written to the log, and the dashboard shows an "alerts delayed" notice.                                                | PR-001b               |
 
 # **Appendix A: Reference Operating Limits**
 
@@ -707,10 +769,11 @@ This appendix records the technical choices made to satisfy the requirements in 
 |---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Equipment data source (4.2)                       | Simulink model generates simulated sensor data in place of physical sensors.                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Communication interface (4.4)                     | Simulated sensor data is transmitted from Simulink to the processing component via a UDP or TCP socket connection.                                                                                                                                                                                                                                                                                                                                                                  |
-| Processing component                              | A Python backend (Flask or FastAPI) receives simulated sensor data, performs threshold screening, applies the fault-classification logic, and serves the dashboard.                                                                                                                                                                                                                                                                                                                 |
+| Processing component                              | A Python backend (Flask) receives simulated sensor data, performs threshold screening, applies the fault-classification logic, and serves the dashboard.                                                                                                                                                                                                                                                                                                                            |
 | Software interface (4.3) / data storage           | A SQLite database stores sensor readings, detected faults, and equipment information.                                                                                                                                                                                                                                                                                                                                                                                               |
 | Fault classification (FR-4, FR-5)                 | Threshold screening identifies candidate abnormal conditions first. A logistic regression model, trained on Simulink-generated labeled data including simulated fault conditions, then classifies the flagged condition as normal, warning, or critical and assists with severity assignment. No trained model exists at the time of this draft. The performance targets in NFR-1 and NFR-2 apply once a model is trained and evaluated on the held-out labeled simulated test set. |
 | Dashboard delivery                                | The Python backend serves the dashboard via a REST API and WebSocket connection for real-time updates; the dashboard runs as a web application accessible through the latest two major versions of Chrome, Firefox, and Edge.                                                                                                                                                                                                                                                       |
+| Dashboard front end                               | The dashboard is built in React using JSX. It talks to the Flask backend over the REST API and WebSocket connection described above.                                                                                                                                                                                                                                                                                                                                                |
 | Near-range / remote-range connection mode (FR-11) | Near-range and remote-range connection modes are simulated, with a manual/selectable mode switch used for the demonstration. Physical Bluetooth/Wi-Fi hardware and automatic proximity detection are outside the scope of this implementation.                                                                                                                                                                                                                                      |
 
 Open design-stage items are listed in Appendix C. They do not affect the requirements in Section 3.
@@ -753,7 +816,7 @@ This appendix lists what is still open, so that nothing is implied to be settled
 
 - Measure and record F1-score, precision and recall.
 
-- Demonstrate the 60-second alert requirement.
+- Demonstrate the 10-second status update and the 2-second critical alert requirement.
 
 - Demonstrate the 2-second dashboard update requirement.
 
@@ -769,7 +832,7 @@ This section records how each Non-Functional Requirement above is intended to be
 
 - NFR-1 and NFR-2 are evaluated as F1-score on a labeled simulated test set. The test set contains normal operating records and injected fault records, each labeled by the simulation. Results are computed from true positives, false positives and false negatives and are reported as performance on the simulated test set only. They are not evidence of performance on real industrial equipment.
 
-- PR-001: Inject a known critical fault into the simulation, record the timestamp at which FR-6 confirms the fault and the dashboard alert timestamp, and confirm the elapsed time is within 60 seconds.
+- PR-001: Inject a known critical fault into the simulation, record the timestamp at which the status confirms the fault and the dashboard alert timestamp, both on the synchronized clock (FR-25), and confirm the elapsed time is 2 seconds or less. Also confirm that each machine's status updates at least every 10 seconds.
 
 - PR-002: Record the timestamp at which the processing component receives a measurement and the timestamp at which it appears on the dashboard, and confirm the difference is within 2 seconds.
 
