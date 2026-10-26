@@ -194,6 +194,10 @@ Section 2 describes the system at a high level: its context, its main functions,
 
 The system consists of a data source representing the monitored equipment (motor, water pump, backup power supply), a processing component that evaluates incoming data against defined limits and classifies conditions, a data store, and a monitoring dashboard used by personnel.
 
+<img src="media/image1.png" style="width:6.5in;height:4.68929in" alt="Context diagram: the equipment data source sends sensor readings to the system. The system sends status, readings, fault history, reports and fault pop-ups to the Operator and Engineer, and status, readings, fault history and the storage alert to the Administrator. Each user sends login details and their actions back." />
+
+*Figure 1: Context diagram. The system, the three user roles and the simulated equipment data source, with what passes between them.*
+
 For this implementation, the equipment data source is a simulation rather than physical sensor hardware. This substitution is recorded as an assumption in Section 2.5 and does not change what the processing, storage, and dashboard components are required to do.
 
 Backup power monitoring is a genuine, current requirement in this context: Malawi's national grid operator (ESCOM) runs an active, published load-shedding program, and has itself recently deployed a 20-megawatt grid-scale Battery Energy Storage System to reduce outage duration — confirming that power instability and battery/backup reliance are real, present-day operating conditions for equipment in this environment, not a hypothetical scenario.
@@ -402,9 +406,13 @@ The permissions below apply FR-8, FR-10, FR-17, FR-18, FR-23a and FR-27. The sys
 
 This section describes how each type of user works with the system to reach a goal, showing the behaviour that supports the functional requirements in Section 3.1.
 
+<img src="media/image2.png" style="width:5.6in;height:5.1968in" alt="Use-case diagram: the Operator takes part in UC-1, UC-2 and UC-3. The Engineer takes part in UC-6 and has every right the Operator has. The Administrator takes part in UC-1 and UC-5. UC-4 starts automatically." />
+
+*Figure 2: Use-case diagram. The three roles and the six use cases of this section. The Engineer has every right the Operator has.*
+
 ### **UC-1: Monitor Equipment Status**
 
-**Primary Actor:** Operator
+**Primary Actor:** Operator (the Engineer and Administrator can also view equipment status; see Section 3.1.1)
 
 **Goal:** See the current condition of the motor, water pump, and backup power supply at a glance
 
@@ -448,7 +456,7 @@ This section describes how each type of user works with the system to reach a go
 
 5.  The condition holds, so the system classifies it as warning or critical.
 
-6.  The system creates a fault record and raises an alert on the dashboard, showing the equipment, the parameter, and the severity.
+6.  The system creates a fault record and raises an alert on the dashboard, showing the equipment, the parameter, the fault type, the severity and the time (FR-7a).
 
 7.  The user sees the alert and acknowledges it.
 
@@ -462,7 +470,7 @@ This section describes how each type of user works with the system to reach a go
 
 - 6b. The same fault condition continues on the next reading: the system does not raise a duplicate alert for a fault that is already open and unacknowledged.
 
-- 7a. No user acknowledges the alert: the fault remains visible on the dashboard as open until it is acknowledged or the condition returns to normal.
+- 7a. No user acknowledges the alert: the fault stays open and visible on the dashboard until it is acknowledged and an Engineer marks it resolved (FR-8b, FR-17).
 
 ### **UC-3: Review Fault History and Generate a Report**
 

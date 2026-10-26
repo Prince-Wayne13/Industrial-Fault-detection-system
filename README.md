@@ -24,7 +24,9 @@ Prince Msowoya, Zilpah Kalipa, Theresa Somanje, Opra Chikwangwala, Steven Nkhoma
 | `docs/review/` | The examiner questions, our eight, and a 20-question checklist to run before every hand-in. |
 | `docs/history/` | The team's two earlier drafts of the extra requirements. |
 | `docs/plans/` | The plan for the v1.4 changes. |
+| `docs/diagrams/` | The two diagrams in the SRS (context and use-case) as SVG and PNG. |
 | `scripts/export-md.sh` | Makes the plain-text copy from the Word file. |
+| `scripts/draw-diagrams.py`, `scripts/render-diagrams.py` | Draw the diagrams and turn them into PNG. Edit the script, run both, then replace the pictures in the Word file. |
 | `CHANGELOG.md` | What changed in each version. |
 
 Older versions are not kept as separate files. Git keeps them. See the tags `v1.3` to `v1.6`.
@@ -42,7 +44,7 @@ Older versions are not kept as separate files. Git keeps them. See the tags `v1.
 
 ## Still to do in v2.0
 
-- The five diagrams are not drawn.
+- Two diagrams are in the document (Figure 1 context, Figure 2 use-case). The processing flow, fault lifecycle and data diagrams are not drawn.
 - Open items O-4, O-5, O-7, O-9 and DD-02 need an owner and a date.
 - The contents page refreshes when the file is opened in Word. Accept the prompt to update fields, then save.
 - Requirements keep their old numbers with added letters. A full renumbering is one separate change.

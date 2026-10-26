@@ -16,6 +16,8 @@ Applied to the Word file on 26 October 2026. Wording is in `docs/v2-clear-statem
 - FR-5: normal or abnormal where only one abnormal level exists. DC-006 and Section 5 say the demonstration is simulated data with fault injection.
 - Flask and React with JSX (Appendix B). Cover: version 2.0, date and group members. There is no revision history on the cover, because the 1.x versions never reached the lecturer. Section 1.5 corrected.
 
+- Two diagrams added: Figure 1 context diagram (Section 2.1) and Figure 2 use-case diagram (Section 3.2). UC-1 now says the Engineer and Administrator can also view status, and UC-2 step 6 and 7a match FR-7a, FR-8b and FR-17.
+
 Still open: O-4, O-5, O-7, O-9, DD-02. The contents page refreshes when the file is opened in Word (accept the prompt to update fields). Diagrams are not drawn yet.
 
 ## v1.6
