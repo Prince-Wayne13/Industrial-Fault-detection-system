@@ -1,8 +1,16 @@
-"""Every setting in one place. The numbers come from the SRS. Change them here only."""
-import os
-from dotenv import load_dotenv
+"""Every setting in one place. The numbers come from the SRS and from docs/design/limits-references.md.
+Change them here only.
 
-load_dotenv()
+Reference tags used below ([SRS], [R1] ...) are explained in docs/design/limits-references.md.
+"""
+import copy
+import os
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:          # .env support is optional
+    pass
 
 READING_INTERVAL_S = 1         # FR-3a   one reading per second per parameter
 WINDOW_S = 10                  # FR-6, PR-001   status is set every 10 seconds
@@ -10,7 +18,8 @@ SENSOR_TIMEOUT_S = 3           # FR-13   no reading for 3 seconds = sensor fault
 ALERT_LIMIT_S = 2              # PR-001a, PR-001b, PR-002
 NORMAL_KEEP_HOURS = 24         # FR-9b   readings of a normal window are deleted after this
 STORAGE_ALERT_AT = 0.75        # FR-21a, NFR-10
-LOCAL_STORAGE_CAP_MB = int(os.getenv("LOCAL_STORAGE_CAP_MB", "512"))  # placeholder: measure, then decide
+TREND_FRACTION = 1.0           # FR-6   share of the 10-second window that must be abnormal. Decision 3: start with all of it.
+LOCAL_STORAGE_CAP_MB = float(os.getenv("LOCAL_STORAGE_CAP_MB", "512"))   # decision 4: sized in metrics.projected_mb() against PR-006
 LOCAL_DB_PATH = os.getenv("LOCAL_DB_PATH", "local_store.db")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 ONLINE_FALLBACK_PATH = "online_store.db"   # used when DATABASE_URL is empty (simulated online database)
@@ -23,33 +32,52 @@ LOGIN_BLOCK_MIN = 15
 PASSWORD_MIN_LEN = 15          # FR-28a
 PASSWORD_MAX_LEN = 128         # must accept 64 or more
 
-# Limits from Appendix A. None means the SRS gives no number: the team has to decide (see build-plan).
-# "warning" and "critical" are levels. "abnormal" is for parameters that only have one abnormal level (FR-5).
-LIMITS = {
-    "motor": {
-        "temperature": {"warning": 130, "critical": 150},
-        "current":     {"warning": 31,  "critical": 35},
-        "vibration":   {"warning": None, "critical": None},   # SRS: normal below 2.8 mm/s, critical "per ISO 10816-3"
-        "rpm":         {"warning": None, "critical": None},
-    },
-    "pump": {
-        "temperature": {"abnormal": 95},                      # bearing temperature
-        "current":     {"abnormal": None},
-        "vibration":   {"abnormal": 5.0},
-        "rpm":         {"abnormal": None},
-    },
-    "ups": {
-        "temperature": {"abnormal": 75},                      # internal temperature
-        "current":     {"abnormal": None},
-        "fan_rpm":     {"abnormal_below": 1000},
-    },
+# Higher number = more serious. "warning" and "abnormal" are the first level; "critical" is the second.
+RANK = {"normal": 0, "abnormal": 1, "warning": 1, "critical": 2}
+
+# Rated (nameplate) values of the simulated machines. The rpm and current limits below are fractions of these.
+RATED = {
+    "motor": {"current": 28, "rpm": 1480},     # [SRS A.1] ~28 A; 4-pole 50 Hz motor, synchronous 1500 rpm [R2]
+    "pump":  {"current": 12, "rpm": 1450},
+    "ups":   {"current": 5},
 }
 
-# What counts as a physically possible reading (FR-14). These are placeholders for the team to confirm.
+# Limits. Three statuses (normal, warning, critical) only where the SRS or a standard gives two limits.
+# Every other parameter has two statuses: normal and abnormal (FR-5). "abnormal" = abnormal above this value,
+# "abnormal_below" = abnormal under this value.
+LIMITS = {
+    "motor": {
+        "temperature": {"warning": 130, "critical": 150},        # [SRS A.1] team-selected
+        "current":     {"warning": 31,  "critical": 35},         # [SRS A.1]; 35 A = 125% of 28 A, the usual overload ceiling [R5]
+        "vibration":   {"warning": 2.8, "critical": 4.5},        # [R1] ISO 10816-3 / 20816-3, Group 2, rigid support, mm/s RMS: zone B/C and C/D boundaries
+        "rpm":         {"abnormal_below": 1332},                 # [SRS A.4] below 90% of rated speed (0.9 x 1480); sync speed [R2]
+    },
+    "pump": {
+        "temperature": {"abnormal": 95},                         # [SRS A.4] bearing temperature
+        "current":     {"abnormal": 13.8, "abnormal_below": 9.6},   # 115% of rated = overload [R5]; 80% of rated = underload / dry running [R3][R4]
+        "vibration":   {"abnormal": 5.0},                        # [SRS A.4] mm/s RMS
+        "rpm":         {"abnormal_below": 1305},                 # [SRS A.4] same 90% rule as the motor (0.9 x 1450) [R2]
+    },
+    "ups": {
+        "temperature": {"abnormal": 75},                         # [SRS A.3] internal temperature
+        "current":     {"abnormal": 5.25},                       # 105% of rated: where UPS makers start their overload clock [R6]
+        "fan_rpm":     {"abnormal_below": 1000},                 # [SRS A.3]
+    },
+}
+DEFAULT_LIMITS = copy.deepcopy(LIMITS)
+
+
+def reset_limits():
+    """Put the limits back to the values above. The dict is changed in place, so every module sees it."""
+    LIMITS.clear()
+    LIMITS.update(copy.deepcopy(DEFAULT_LIMITS))
+
+
+# What counts as a physically possible reading (FR-14). Decision 2. Anything outside is rejected as invalid.
 PHYSICAL_RANGE = {
-    "temperature": (-20, 300),
-    "current": (0, 500),
-    "vibration": (0, 100),
-    "rpm": (0, 10000),
+    "temperature": (-20, 300),     # degrees C
+    "current": (0, 500),           # amps
+    "vibration": (0, 50),          # mm/s RMS
+    "rpm": (0, 3600),              # a 2-pole 60 Hz motor is the fastest case
     "fan_rpm": (0, 10000),
 }

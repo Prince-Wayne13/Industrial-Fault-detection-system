@@ -1,39 +1,86 @@
-"""The engine. A reading splits into two streams the moment it arrives. See docs/design/engine.md.
+"""The engine. A reading splits into two streams the moment it arrives. See docs/design/engine.md. Step 1.3.
 
   Stream 1: straight to the dashboard (every reading, even a wrong one).
   Stream 2: checker -> status model (10-second window) -> status -> save to both stores.
-"""
-import time
-from config import WINDOW_S, SENSOR_TIMEOUT_S
+
+Time comes from the reading's own time stamp, which comes from clock.py (FR-25)."""
+import clock
 from checker import check_reading
+from config import WINDOW_S, SENSOR_TIMEOUT_S
+from model import classify
+from seed import PARAMETERS
 
 
 class Engine:
-    def __init__(self, send_live, send_status, save_window):
-        self.send_live = send_live        # called with every reading (stream 1)
-        self.send_status = send_status    # called with each new status
-        self.save_window = save_window    # called after every 10-second window
-        self.buffer = {}                  # (machine_id, parameter) -> clean readings of this window
-        self.last_seen = {}               # (machine_id, parameter) -> time of last reading (FR-13)
-        self.window_started = time.time()
+    def __init__(self, machines, send_live=None, send_status=None, save_window=None, on_sensor_fault=None, on_sensor_back=None):
+        self.machines = machines                       # machine_id -> machine type. Shared with the System, so registering a machine reaches here.
+        self.send_live = send_live or (lambda r: None)
+        self.send_status = send_status or (lambda w: None)
+        self.save_window = save_window or (lambda w: None)
+        self.on_sensor_fault = on_sensor_fault or (lambda key, t: None)
+        self.on_sensor_back = on_sensor_back or (lambda key, t: None)
+        self.buffer = {}          # (machine_id, parameter) -> [(time, value)] clean readings of this window
+        self.last_seen = {}       # (machine_id, parameter) -> time of last reading (FR-13)
+        self.silent = set()
+        self.invalid_log = []     # FR-14
+        self.window_started = None
+        self.counts = {"received": 0, "invalid": 0, "windows": 0}
 
     def handle_reading(self, reading):
-        key = (reading["machine_id"], reading["parameter"])
-        self.last_seen[key] = time.time()
+        self.counts["received"] += 1
+        t = reading.get("time", clock.now()) if isinstance(reading, dict) else clock.now()
+        key = (reading.get("machine_id"), reading.get("parameter")) if isinstance(reading, dict) else (None, None)
+        self.last_seen[key] = t
+        if key in self.silent:
+            self.silent.discard(key)
+            self.on_sensor_back(key, t)
         ok, reason = check_reading(reading)
-        self.send_live({**reading, "valid": ok, "reason": reason})     # stream 1
+        if ok:
+            mtype = self.machines.get(key[0])
+            if mtype is None:
+                ok, reason = False, "unknown machine"
+            elif key[1] not in PARAMETERS[mtype]:
+                ok, reason = False, "unknown parameter"
+        self.send_live({**(reading if isinstance(reading, dict) else {}), "valid": ok, "reason": reason})   # stream 1
         if not ok:
-            return                                                      # kept out of the model, logged (FR-14)
-        self.buffer.setdefault(key, []).append(reading["value"])        # stream 2
-        if time.time() - self.window_started >= WINDOW_S:
-            self.close_window()
+            self.counts["invalid"] += 1
+            self.invalid_log.append({"reading": reading, "reason": reason, "time": t})      # kept out of the model, logged (FR-14)
+            return
+        if self.window_started is None:
+            self.window_started = t
+        if t - self.window_started >= WINDOW_S:
+            self.close_window(t)
+        self.buffer.setdefault(key, []).append((t, reading["value"]))                       # stream 2
 
-    def silent_sensors(self):
-        """Parameters with no reading for SENSOR_TIMEOUT_S seconds. FR-13."""
-        now = time.time()
-        return [k for k, t in self.last_seen.items() if now - t >= SENSOR_TIMEOUT_S]
+    def check_silence(self, now):
+        """Call every second. A parameter with no reading for SENSOR_TIMEOUT_S seconds is flagged once. FR-13."""
+        fresh = []
+        for key, seen in self.last_seen.items():
+            if key not in self.silent and now - seen >= SENSOR_TIMEOUT_S:
+                self.silent.add(key)
+                fresh.append(key)
+                self.on_sensor_fault(key, now)
+        return fresh
 
-    def close_window(self):
-        # TODO step 4: run model.classify for each key, send_status, then save_window. Step 5: raise faults.
+    def close_window(self, t):
+        """Set the status of every parameter for the window that just ended, then save it. FR-5, FR-6, FR-9a."""
+        closed = []
+        for key, items in self.buffer.items():
+            if not items:
+                continue
+            values = [v for _, v in items]
+            window = {"machine_id": key[0], "parameter": key[1], "machine_type": self.machines[key[0]],
+                      "start_time": self.window_started, "end_time": items[-1][0],
+                      "status": classify(self.machines[key[0]], key[1], values),
+                      "readings": values, "n": len(values), "confirmed_at": clock.now()}
+            self.send_status(window)
+            self.save_window(window)
+            closed.append(window)
+        self.counts["windows"] += len(closed)
         self.buffer = {}
-        self.window_started = time.time()
+        self.window_started = t
+        return closed
+
+    def flush(self):
+        """Close the window that is still open (end of a run or a planned stop)."""
+        return self.close_window(clock.now()) if self.buffer else []

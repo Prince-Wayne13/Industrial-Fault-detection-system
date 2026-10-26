@@ -1,13 +1,13 @@
-"""The checker. Every reading passes through here before the status model. FR-14, NFR-7."""
+"""The checker. Every reading passes through here before the status model. FR-14, NFR-7.
+A bad reading is kept out, logged as invalid, and the system carries on."""
 from config import PHYSICAL_RANGE
 
 
 def check_reading(reading):
     """Return (True, "") if the reading is clean, otherwise (False, reason).
-
-    A reading is a dict: {"machine_id", "parameter", "value", "time"}.
-    A bad reading is kept out, logged as invalid, and the system carries on.
-    """
+    A reading is a dict: {"machine_id", "parameter", "value", "time"}."""
+    if not isinstance(reading, dict):
+        return False, "not a reading"
     value = reading.get("value")
     if value is None:
         return False, "missing"
