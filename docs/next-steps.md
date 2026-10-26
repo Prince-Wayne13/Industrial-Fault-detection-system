@@ -26,7 +26,7 @@ Each requirement is a clear statement: one subject, one action, one number or co
 2. **Fix the front page:** version 2.0, today's date and the seven group members as authors (done). No revision history, because the 1.x versions never reached the lecturer. Still to do: name a reviewer if one is wanted, and refresh the contents page, and Section 1.5 (it still says Section 5 covers other requirements).
 3. **Add the one-sentence demonstration note** to DC-006 and Section 5.
 4. **Run `./scripts/export-md.sh`** (needs pandoc) so the plain-text copy matches the Word file. Never edit the `.md` copy by hand.
-5. **Diagrams.** Done: the context diagram (Figure 1, Section 2.1) and the use-case diagram (Figure 2, Section 3.2), in the lecturer's style and checked label by label against UC-1 to UC-6, the role table and Section 4. Still optional: the three below. Draw the other three last, once the wording is final: context, use-case, what the system keeps, processing flow from reading to alert, fault lifecycle with maintenance mode.
+5. **Diagrams.** Done: the context diagram (Figure 1, Section 2.1) and the use-case diagram (Figure 2, Section 3.2), in the lecturer's style and checked label by label against UC-1 to UC-6, the role table and Section 4. Optional, drawn last once the wording is final: what the system keeps, the processing flow from reading to alert, and the fault lifecycle with maintenance mode and the late-alert notice.
 6. **Run the 20-question checklist** (`review/general-questions-checklist.md`) and fill in the "After" column.
 7. **Tag** `v2.0` and hand in.
 
