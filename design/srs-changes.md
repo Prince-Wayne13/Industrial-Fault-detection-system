@@ -25,6 +25,7 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 | 8 | Limits are the exception to Administrator-only configuration | [[FR-27]], [[FR-23a]] | fixes a clash |
 | 9 | The Administrator cannot reset passwords, and can see the Overview | [[UC-5]], role table | adds detail |
 | 10 | Alerts, graphs and maintenance folded into other pages instead of pages of their own | [[UC-2]], [[UC-3]], [[UC-6]] | design only, no wording change |
+| 11 | Automatic switching between Bluetooth and Wi-Fi, shown by two icons in the top bar | [[FR-11]], [[UC-4]] | adds detail |
 
 ## The detail
 
@@ -87,12 +88,21 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 - Alerts, History and reports, and Maintenance are no longer separate pages. The fault pop-up, the bell list and the machine page do their jobs.
 - No requirement changes. [[UC-2]], [[UC-3]] and [[UC-6]] keep their steps, and only the screens that carry them moved.
 
+### 11. Automatic link switching
+
+- **Now:** [[FR-11]] asks for a near-range and a remote-range connection mode, and for a selectable simulated mode of each in the demonstration. It does not say how the mode is chosen.
+- **Suggested addition to [[FR-11]]:** the system uses the near-range connection automatically when it is available and uses the remote-range connection when it is not. The person can also choose a mode by hand. The dashboard shows which connection is in use and which are offline.
+- **Design:** the near-range link is Bluetooth and the remote-range link is Wi-Fi. Two icons in the top bar show the state: blue with a glow for the link in use, grey for a link that is offline. See [[top-bar]].
+- **Unchanged:** [[UC-4]] and [[NFR-6]]. When neither link is there the system keeps collecting and storing readings.
+- **Extra on the tracker:** the manual menu (Automatic, Bluetooth only, Wi-Fi only) and the icons themselves are not in the SRS today.
+
 ## Not decided yet
 
 - Can a resolved fault be switched back to open? The SRS has no way to do it.
 - Can the Administrator open a machine's page from an Overview card?
 - Does a limit belong to a machine type or to each machine on its own? [[FR-23a]] reads as per type.
 - Colours for the dark theme (see the end of this note).
+- How the real near-range link is built, since a browser cannot scan for Bluetooth on its own. See the Open list in [[top-bar]].
 
 ## Colour palette
 
@@ -122,6 +132,11 @@ The colours for Fault-Detect. The same code is in `palette.css`, ready to use wh
   --purple:         #7B6B8E;
   --purple-dim:     rgba(123, 107, 142, 0.1);
 
+  /* Connection icons (top bar) */
+  --link-active:    #4A8FD6; /* link in use */
+  --link-glow:      0 0 6px 2px rgba(74, 143, 214, 0.55);
+  --link-offline:   #A8B0BC; /* link not there */
+
   /* Text hierarchy - soft, readable */
   --text-head:      #2D3748;
   --text-body:      #4A5568;
@@ -144,6 +159,8 @@ The colours for Fault-Detect. The same code is in `palette.css`, ready to use wh
 | Warning status | `--warning` |
 | Critical status | `--red` |
 | Maintenance mark | `--purple` |
+| Connection icon in use | `--link-active` with `--link-glow` |
+| Connection icon offline | `--link-offline` |
 | Accent, bell count, buttons | `--gold` |
 | Headings, body text, small print | `--text-head`, `--text-body`, `--text-muted` |
 | Lines and card edges | `--border-faint`, `--border-light` |

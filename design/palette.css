@@ -22,6 +22,11 @@
   --purple:         #7B6B8E;
   --purple-dim:     rgba(123, 107, 142, 0.1);
 
+  /* Connection icons (top bar) */
+  --link-active:    #4A8FD6; /* link in use */
+  --link-glow:      0 0 6px 2px rgba(74, 143, 214, 0.55);
+  --link-offline:   #A8B0BC; /* link not there */
+
   /* Text hierarchy - soft, readable */
   --text-head:      #2D3748;
   --text-body:      #4A5568;

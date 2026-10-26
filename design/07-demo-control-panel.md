@@ -35,7 +35,9 @@ Draft count over the 70 requirement notes: 34 inject, 30 look, 6 inspect. Each r
 +--------------------------------------------------------------------+
 | DEMO CONTROL PANEL (demonstration only)        Demo clock 14:02:11 |
 +--------------------------------------------------------------------+
-| CONNECTION   (o) Near   ( ) Remote     [ Cut link ] [ Restore ]    |
+| CONNECTION   Mode (o) Auto ( ) Bluetooth ( ) Wi-Fi                 |
+|   Work Bluetooth in range [x]   Wi-Fi up [x]                       |
+|   [ Cut link ] [ Restore ]       Active link: Bluetooth            |
 +--------------------------------------------------------------------+
 | FAULT INJECTION        Machine [ Motor 1 v ]  Parameter [ Temp v ] |
 |  [I-01 Blip] [I-02 Warning] [I-03 Critical] [I-04 Vibration]       |
@@ -59,6 +61,7 @@ Draft count over the 70 requirement notes: 34 inject, 30 look, 6 inspect. Each r
 +--------------------------------------------------------------------+
 ```
 
+- The connection block drives the Bluetooth and Wi-Fi icons in the [[top-bar]]. The two tick boxes imitate the work Bluetooth being in range and Wi-Fi being up. Untick Bluetooth and the dashboard moves to Wi-Fi by itself. Untick both and both icons go grey. The Mode choice here is the same one as the menu behind the icons.
 - Every button carries its injection number, for example `I-03`, and the requirement tags it proves.
 - The live readouts exist so that Look requirements such as [[PR-001]] and [[PR-002]] show a number, not a claim.
 - The demo clock exists so that the 24-hour, 15-minute lockout and maintenance-overdue cases do not need real waiting.
@@ -79,7 +82,7 @@ The detail of each injection, its seed file and its timing is to be agreed later
 | I-07 | Sensor goes silent | One parameter stops sending for 3 seconds or more. | [[FR-13]] |
 | I-08 | Bad reading | Send a reading of the wrong type, a missing value, and an impossible value. | [[FR-14]], [[NFR-7]] |
 | I-09 | Noisy signal | Add noise to a stream of normal readings. | [[NFR-7]] |
-| I-10 | Cut and restore connection | Switch near or remote mode, cut the link, restore it. | [[FR-11]], [[FR-12]], [[NFR-6]], [[UC-4]] |
+| I-10 | Cut and restore connection | Switch Auto, Bluetooth or Wi-Fi mode. Take the work Bluetooth out of range and bring it back. Cut the link and restore it. | [[FR-11]], [[FR-12]], [[NFR-6]], [[UC-4]] |
 | I-11 | Delay the alert | Hold an alert back by more than 2 seconds. | [[PR-001b]] |
 | I-12 | Fill storage | Push storage to 75%, then full, then unavailable. | [[FR-20]], [[FR-21a]], [[NFR-10]] |
 | I-13 | Restart the system | Stop and restart the back end, as a planned restart. | [[FR-21]], [[NFR-5]], [[PR-007]] |
@@ -127,6 +130,8 @@ These are proven by looking or by inspecting. The tracker lists them with the sa
 Demonstration only. It is not a product page and has no requirement of its own. It is not part of the role table. It opens from the tracker or by its own address.
 
 ## Open
+
+- Whether Auto mode starts with Bluetooth in range ticked, so the demonstration opens on the near link. Not decided.
 
 - Whether the presenter runs the injections by hand or one button runs a scripted 5-minute sequence. Not decided.
 - The agreed injection details: seed files, exact limits and timings.

@@ -29,7 +29,7 @@ FR = functional requirement. UC = use case. DC = design constraint.
 | 4 | [[04-machine-detail]] | Operator, Engineer | One machine: readings, recent history, faults. One fault record per abnormal parameter. | [[UC-1]], [[FR-1]] to [[FR-3]], [[FR-15]] |
 | 5 | [[05-settings]] | everyone (limits: Engineer) | Theme, sign-out time, and limits for Engineers. | [[FR-26]], [[FR-23]], [[FR-23a]] to [[FR-23d]] |
 | 6 | [[06-admin]] | Administrator | Four tabs: Users, Machines, Storage, Change log. Storage alert at 75%. | [[UC-5]], [[FR-21a]], [[FR-22]], [[FR-27]], [[FR-28c]] |
-| 7 | [[07-demo-control-panel]] | demonstration only | Switch near or remote mode. Cut the connection. Inject faults. | [[FR-11]], [[FR-12]], [[UC-4]], DC-006 |
+| 7 | [[07-demo-control-panel]] | demonstration only | Switch Auto, Bluetooth or Wi-Fi mode. Put the work Bluetooth in or out of range. Cut the connection. Inject faults. | [[FR-11]], [[FR-12]], [[UC-4]], DC-006 |
 | 8 | [[08-requirements-tracker]] | demonstration only | Every requirement, which page shows it, and whether it is built, simulated or left out. | all |
 
 ## Folded in
@@ -68,6 +68,7 @@ Blue: shared pages. Yellow: Administrator. Settings opens from the name side bar
 ## Rules for every page
 
 - Every page after sign in carries the same top bar and name side bar. See [[top-bar]].
+- The top bar carries a Bluetooth icon and a Wi-Fi icon. The link in use glows blue and a link that is not there is grey. See [[top-bar]] and change 11 in [[srs-changes]].
 - Every feature on screen carries a small tag with its requirement number, for example `FR-7`.
 - The tracker page lists all requirements and marks each one:
   - **Built**: works in the demo.
