@@ -1,0 +1,162 @@
+{
+ "nodes": [
+  {
+   "id": "p1",
+   "type": "text",
+   "x": 0,
+   "y": 200,
+   "width": 260,
+   "height": 110,
+   "text": "**1 Sign in**\\nEveryone",
+   "color": "5"
+  },
+  {
+   "id": "p2",
+   "type": "text",
+   "x": 380,
+   "y": 80,
+   "width": 260,
+   "height": 110,
+   "text": "**2 Overview**\\nOperator, Engineer",
+   "color": "5"
+  },
+  {
+   "id": "p8",
+   "type": "text",
+   "x": 380,
+   "y": 400,
+   "width": 260,
+   "height": 110,
+   "text": "**8 Admin**\\nAdministrator",
+   "color": "3"
+  },
+  {
+   "id": "p3",
+   "type": "text",
+   "x": 760,
+   "y": -40,
+   "width": 260,
+   "height": 110,
+   "text": "**3 Machine detail**\\nOperator, Engineer",
+   "color": "5"
+  },
+  {
+   "id": "p4",
+   "type": "text",
+   "x": 760,
+   "y": 120,
+   "width": 260,
+   "height": 110,
+   "text": "**4 Alerts**\\nOperator, Engineer",
+   "color": "5"
+  },
+  {
+   "id": "p5",
+   "type": "text",
+   "x": 760,
+   "y": 280,
+   "width": 260,
+   "height": 110,
+   "text": "**5 History and reports**\\nAll view",
+   "color": "5"
+  },
+  {
+   "id": "p6",
+   "type": "text",
+   "x": 1140,
+   "y": -120,
+   "width": 260,
+   "height": 110,
+   "text": "**6 Maintenance**\\nEngineer",
+   "color": "4"
+  },
+  {
+   "id": "p7",
+   "type": "text",
+   "x": 1140,
+   "y": 40,
+   "width": 260,
+   "height": 110,
+   "text": "**7 Limits**\\nEngineer",
+   "color": "4"
+  },
+  {
+   "id": "p9",
+   "type": "text",
+   "x": 380,
+   "y": 640,
+   "width": 260,
+   "height": 110,
+   "text": "**9 Demo control panel**\\nDemonstration only",
+   "color": "6"
+  },
+  {
+   "id": "p10",
+   "type": "text",
+   "x": 760,
+   "y": 640,
+   "width": 260,
+   "height": 110,
+   "text": "**10 Requirements tracker**\\nDemonstration only",
+   "color": "6"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "fromNode": "p1",
+   "fromSide": "right",
+   "toNode": "p2",
+   "toSide": "left"
+  },
+  {
+   "id": "e2",
+   "fromNode": "p1",
+   "fromSide": "right",
+   "toNode": "p8",
+   "toSide": "left"
+  },
+  {
+   "id": "e3",
+   "fromNode": "p2",
+   "fromSide": "right",
+   "toNode": "p3",
+   "toSide": "left"
+  },
+  {
+   "id": "e4",
+   "fromNode": "p2",
+   "fromSide": "right",
+   "toNode": "p4",
+   "toSide": "left"
+  },
+  {
+   "id": "e5",
+   "fromNode": "p2",
+   "fromSide": "right",
+   "toNode": "p5",
+   "toSide": "left"
+  },
+  {
+   "id": "e6",
+   "fromNode": "p3",
+   "fromSide": "bottom",
+   "toNode": "p4",
+   "toSide": "top"
+  },
+  {
+   "id": "e7",
+   "fromNode": "p3",
+   "fromSide": "right",
+   "toNode": "p6",
+   "toSide": "left"
+  },
+  {
+   "id": "e8",
+   "fromNode": "p3",
+   "fromSide": "right",
+   "toNode": "p7",
+   "toSide": "left"
+  }
+ ]
+}
