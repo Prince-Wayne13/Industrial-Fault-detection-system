@@ -11,3 +11,10 @@ tags: [use-case]
 **Goal:** Keep collecting and showing equipment data even when the connection between system components is temporarily lost
 
 The full steps are in the SRS. The pages that support this use case show up under Backlinks.
+
+## How it is tested
+
+- **Method:** inject (draft)
+- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
+- **Check:** Run the connection flow from the panel: near, remote, cut, restore.
+

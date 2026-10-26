@@ -11,3 +11,10 @@ tags: [use-case]
 **Goal:** Control who can use the system and what equipment it monitors
 
 The full steps are in the SRS. The pages that support this use case show up under Backlinks.
+
+## How it is tested
+
+- **Method:** look (draft)
+- **Injection:** none
+- **Check:** As Administrator, add, change and remove a user and a machine.
+

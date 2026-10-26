@@ -11,3 +11,10 @@ tags: [use-case]
 **Goal:** See the current condition of the motor, water pump, and backup power supply at a glance
 
 The full steps are in the SRS. The pages that support this use case show up under Backlinks.
+
+## How it is tested
+
+- **Method:** look (draft)
+- **Injection:** none
+- **Check:** Sign in and open the Overview. Pick a machine.
+

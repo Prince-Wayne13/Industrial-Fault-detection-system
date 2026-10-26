@@ -80,4 +80,4 @@ FR-4, FR-5, FR-6, FR-20, FR-21, FR-25.
 - Decisions that change the SRS are collected in [[srs-changes]].
 
 - Does the Administrator also need to see the Overview page? Not included for now.
-- Page notes `01` to `10` are not written yet. Each one will hold the screen layout and the use case steps it supports.
+- Page notes 01 to 03, 07 to 11 are written. Pages 4, 5 and 6 are merged, so they have no note.

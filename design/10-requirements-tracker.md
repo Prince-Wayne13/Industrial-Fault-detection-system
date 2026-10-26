@@ -12,6 +12,16 @@ Back to [[page-map]].
 
 Every requirement has its own note in the `requirements` folder. Set `status` in each note to **built**, **simulated** or **left-out**. This table fills itself from those notes. It needs the Dataview plugin (Settings, Community plugins, search "Dataview").
 
+## How each requirement is tested
+
+Each note has a `test` line: **inject**, **look** or **inspect**. See [[09-demo-control-panel]].
+
+```dataview
+TABLE status, test, injections
+FROM #requirement
+SORT file.name ASC
+```
+
 ## What is still not set
 
 ```dataview
