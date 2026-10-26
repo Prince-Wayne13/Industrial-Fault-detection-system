@@ -1,0 +1,48 @@
+:root {
+  /* Canvas & surfaces - diary/paper feel */
+  --bg-canvas:      #dbdee0;
+  --bg-card:        #F8F9FB;
+  --bg-sidebar:     #2B3A4A;
+  --bg-sidebar-hover: #344657;
+  --bg-chart:       #F1F4F8;
+
+  /* Brand colors - muted yacht blue palette + Gold */
+  --primary:        #2C3A4C;
+  --primary-dim:    rgba(44, 58, 76, 0.08);
+  --secondary:      #5B7C99;
+  --secondary-dim:  rgba(91, 124, 153, 0.08);
+  --gold:           #C4A35A;
+  --gold-dim:       rgba(196, 163, 90, 0.1);
+  --warning:        #B8A06A;
+  --warning-dim:    rgba(184, 160, 106, 0.1);
+  --teal:           #6B8E7B;
+  --teal-dim:       rgba(107, 142, 123, 0.08);
+  --red:            #A06B6B;
+  --red-dim:        rgba(160, 107, 107, 0.1);
+  --purple:         #7B6B8E;
+  --purple-dim:     rgba(123, 107, 142, 0.1);
+
+  /* Text hierarchy */
+  --text-head:      #2D3748;
+  --text-body:      #4A5568;
+  --text-muted:     #8B9BB0;
+
+  /* Borders */
+  --border-faint:   #E5E8ED;
+  --border-light:   #D5DAE1;
+}
+
+/* TODO: dark theme colours are not chosen yet. When they are, put them here:
+:root[data-theme="dark"] { ... } */
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg-canvas); color: var(--text-body);
+       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+h1, h2, h3 { color: var(--text-head); }
+.page { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 14px; padding: 16px; }
+.muted { color: var(--text-body); font-size: 14px; }
+.topbar { display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--bg-sidebar); color: #F8F9FB; }
+.topbar input { flex: 1; max-width: 360px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-light); }
+.topbar button { background: transparent; color: #F8F9FB; border: 1px solid var(--bg-sidebar-hover); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.brand { font-weight: 700; color: var(--gold); text-decoration: none; }

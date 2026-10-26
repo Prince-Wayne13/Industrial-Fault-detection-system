@@ -1,0 +1,478 @@
+{
+ "scenarios": {
+  "A": {
+   "name": "Normal running",
+   "what": "All machines run normally for a few minutes."
+  },
+  "B": {
+   "name": "Lone spike",
+   "what": "One reading is far too high, then readings go back to normal."
+  },
+  "C": {
+   "name": "Sustained warning",
+   "what": "Motor 1 temperature stays above its warning limit for more than 10 seconds."
+  },
+  "D": {
+   "name": "Sustained critical",
+   "what": "A reading stays above its critical limit for more than 10 seconds."
+  },
+  "E": {
+   "name": "Two faults at once",
+   "what": "Motor 2 temperature and current both go abnormal together."
+  },
+  "F": {
+   "name": "Sensor goes silent",
+   "what": "One parameter stops sending readings."
+  },
+  "G": {
+   "name": "Bad reading",
+   "what": "A reading arrives as text, or empty, or impossible (for example 9999 degrees)."
+  },
+  "H": {
+   "name": "Connection cut",
+   "what": "The link between the parts is cut for a while, then restored."
+  },
+  "I": {
+   "name": "Storage fills up",
+   "what": "Used storage climbs to 75%."
+  },
+  "J": {
+   "name": "Storage fails",
+   "what": "The main store becomes unavailable or full."
+  },
+  "K": {
+   "name": "Restart",
+   "what": "The system is stopped and started again."
+  },
+  "L": {
+   "name": "Maintenance",
+   "what": "An Engineer puts a machine into maintenance for a short time and lets it run past the time."
+  },
+  "M": {
+   "name": "Fault returns",
+   "what": "A fault stays open, then clears, then comes back."
+  },
+  "N": {
+   "name": "Limit change",
+   "what": "An Engineer changes limits, including one that is not allowed."
+  },
+  "O": {
+   "name": "Nobody connected",
+   "what": "A fault happens while no Operator or Engineer is signed in."
+  },
+  "P": {
+   "name": "Noisy readings",
+   "what": "Readings are full of noise and some are damaged."
+  },
+  "Q": {
+   "name": "Heavy load",
+   "what": "10 machines and 5 users at the same time."
+  },
+  "R": {
+   "name": "Slow alert",
+   "what": "An alert is made to arrive more than 2 seconds late."
+  },
+  "S": {
+   "name": "Labelled test set",
+   "what": "A set of readings where the right answer is known, to count how many faults are found."
+  },
+  "T": {
+   "name": "Login checks",
+   "what": "Wrong passwords, short passwords, common passwords and a user without permission."
+  },
+  "U": {
+   "name": "Near and remote mode",
+   "what": "Switch between the near-range and remote-range modes."
+  },
+  "V": {
+   "name": "Old data",
+   "what": "Readings older than 24 hours, some from normal windows and some from fault windows."
+  }
+ },
+ "tests": {
+  "FR-1": {
+   "method": "look",
+   "scenarios": "A",
+   "steps": "Open the Overview and look at a motor card.",
+   "pass": "Temperature, current, vibration and RPM are all shown."
+  },
+  "FR-2": {
+   "method": "look",
+   "scenarios": "A",
+   "steps": "Open the Overview and look at a water pump card.",
+   "pass": "Bearing temperature, current, vibration and RPM are all shown."
+  },
+  "FR-3": {
+   "method": "look",
+   "scenarios": "A",
+   "steps": "Open the Overview and look at a backup power card.",
+   "pass": "Internal temperature, current and fan speed are all shown."
+  },
+  "FR-3a": {
+   "method": "measure",
+   "scenarios": "A",
+   "steps": "Count the readings for one parameter over one minute.",
+   "pass": "About 60 readings, one each second, for every parameter."
+  },
+  "FR-4": {
+   "method": "inject",
+   "scenarios": "C",
+   "steps": "Play the scenario and watch Motor 1.",
+   "pass": "The high temperature is flagged for Motor 1."
+  },
+  "FR-5": {
+   "method": "inject",
+   "scenarios": "C, D",
+   "steps": "Play both scenarios.",
+   "pass": "The status shows warning, then critical, naming the machine and parameter."
+  },
+  "FR-6": {
+   "method": "inject",
+   "scenarios": "B",
+   "steps": "Play the lone spike.",
+   "pass": "No fault is raised from one reading. A fault only appears when it lasts across the 10-second check."
+  },
+  "FR-7": {
+   "method": "inject",
+   "scenarios": "C",
+   "steps": "Play the scenario with an Operator and an Engineer signed in, one near and one remote.",
+   "pass": "A pop-up appears on both screens."
+  },
+  "FR-7a": {
+   "method": "look",
+   "scenarios": "C",
+   "steps": "Read the pop-up.",
+   "pass": "It shows the machine, parameter, fault type, level and time."
+  },
+  "FR-7b": {
+   "method": "look",
+   "scenarios": "C",
+   "steps": "Sign in as the Administrator while the scenario plays.",
+   "pass": "No pop-up and no fault bell list."
+  },
+  "FR-7c": {
+   "method": "inject",
+   "scenarios": "O",
+   "steps": "Play the scenario with nobody signed in, then sign in as an Operator.",
+   "pass": "The fault is still open and its pop-up appears."
+  },
+  "FR-8": {
+   "method": "inject",
+   "scenarios": "C",
+   "steps": "Press Acknowledge on the pop-up.",
+   "pass": "The pop-up goes away for that person."
+  },
+  "FR-8a": {
+   "method": "look",
+   "scenarios": "C",
+   "steps": "After acknowledging, open the machine's fault list.",
+   "pass": "It shows who acknowledged and when."
+  },
+  "FR-8b": {
+   "method": "look",
+   "scenarios": "C",
+   "steps": "After acknowledging, look at the fault again.",
+   "pass": "It is still open, not resolved."
+  },
+  "FR-9": {
+   "method": "look",
+   "scenarios": "C",
+   "steps": "Open the machine's history and graph.",
+   "pass": "The fault and the readings can be called up."
+  },
+  "FR-9a": {
+   "method": "inspect",
+   "scenarios": "A",
+   "steps": "Look at the stored statuses in the database.",
+   "pass": "One status with a time for every 10 seconds."
+  },
+  "FR-9b": {
+   "method": "inspect",
+   "scenarios": "V",
+   "steps": "Load the old data and look at what is kept.",
+   "pass": "Readings of old normal windows are gone. Readings of old warning or critical windows are still there with their status."
+  },
+  "FR-10": {
+   "method": "look",
+   "scenarios": "C",
+   "steps": "Sign in as each role and open fault history. As an Operator or Engineer, generate a report.",
+   "pass": "Everyone can view history. Operator and Engineer can make a report showing performance and repeated faults."
+  },
+  "FR-11": {
+   "method": "inject",
+   "scenarios": "U",
+   "steps": "Switch the demo between near and remote mode.",
+   "pass": "The dashboard shows the same equipment data in both modes."
+  },
+  "FR-12": {
+   "method": "inject",
+   "scenarios": "H",
+   "steps": "Cut the connection, wait, then restore it.",
+   "pass": "The dashboard keeps showing local data. After restoring, the stored readings arrive."
+  },
+  "FR-13": {
+   "method": "inject",
+   "scenarios": "F",
+   "steps": "Stop one parameter.",
+   "pass": "Within 3 seconds it shows a sensor fault, not the last number."
+  },
+  "FR-14": {
+   "method": "inject",
+   "scenarios": "G",
+   "steps": "Send the three kinds of bad reading.",
+   "pass": "Each one is kept out, logged as invalid, and the system carries on."
+  },
+  "FR-15": {
+   "method": "inject",
+   "scenarios": "E",
+   "steps": "Play the scenario.",
+   "pass": "Two separate fault records appear, one for each parameter."
+  },
+  "FR-16": {
+   "method": "inject",
+   "scenarios": "M",
+   "steps": "Let a fault stay open, then clear, then return.",
+   "pass": "No second alert while it is open. A new alert only after it cleared and came back."
+  },
+  "FR-17": {
+   "method": "inject",
+   "scenarios": "C",
+   "steps": "As an Engineer, mark the acknowledged fault resolved. Try as an Operator.",
+   "pass": "The Engineer can, and the time is recorded. The Operator cannot."
+  },
+  "FR-18": {
+   "method": "inject",
+   "scenarios": "L",
+   "steps": "As an Engineer, turn on maintenance for a stated time.",
+   "pass": "Readings keep recording. New fault alerts for that machine pause."
+  },
+  "FR-19": {
+   "method": "inject",
+   "scenarios": "L",
+   "steps": "Let the stated time run out.",
+   "pass": "The machine shows an overdue mark."
+  },
+  "FR-20": {
+   "method": "inject",
+   "scenarios": "J",
+   "steps": "Make the main store unavailable.",
+   "pass": "New readings are kept in temporary storage, the system keeps running, and the event is logged."
+  },
+  "FR-21": {
+   "method": "inject",
+   "scenarios": "K",
+   "steps": "Stop and start the system.",
+   "pass": "It carries on with the last settings, and machines show their status again once new readings arrive."
+  },
+  "FR-21a": {
+   "method": "inject",
+   "scenarios": "I",
+   "steps": "Fill storage to 75%.",
+   "pass": "An alert goes to the Administrator only."
+  },
+  "FR-22": {
+   "method": "look",
+   "scenarios": "N",
+   "steps": "Add a user, register a machine and change a limit, then open the change log.",
+   "pass": "Each change is listed with who and when."
+  },
+  "FR-23": {
+   "method": "inject",
+   "scenarios": "N",
+   "steps": "Change a limit, then look at its earlier values.",
+   "pass": "The old value and the date of change are still shown."
+  },
+  "FR-23a": {
+   "method": "inject",
+   "scenarios": "N",
+   "steps": "As an Engineer, change a warning and a critical limit in Settings.",
+   "pass": "It works with no restart."
+  },
+  "FR-23b": {
+   "method": "inject",
+   "scenarios": "N",
+   "steps": "Try a warning limit that is not below the critical limit.",
+   "pass": "The change is refused."
+  },
+  "FR-23c": {
+   "method": "inject",
+   "scenarios": "N",
+   "steps": "Change a limit, then send readings between the old and new limit.",
+   "pass": "New readings use the new limit. Earlier readings are unchanged."
+  },
+  "FR-23d": {
+   "method": "inject",
+   "scenarios": "N",
+   "steps": "Raise a fault, change the limit, then open the fault.",
+   "pass": "The fault shows the limit that was in force when it was raised."
+  },
+  "FR-24": {
+   "method": "look",
+   "scenarios": "A",
+   "steps": "Open the Overview and the machines list.",
+   "pass": "Several motors appear as separate units, each with its own status and fault history."
+  },
+  "FR-25": {
+   "method": "inspect",
+   "scenarios": "A",
+   "steps": "Compare the time stamps from different parts of the system for the same reading.",
+   "pass": "They agree."
+  },
+  "FR-26": {
+   "method": "look",
+   "scenarios": "T",
+   "steps": "Set the sign-out time to 1 minute and leave the screen idle.",
+   "pass": "The person is signed out and must sign in again. 1 minute and 5 minutes are accepted, 6 is not."
+  },
+  "FR-27": {
+   "method": "look",
+   "scenarios": "T",
+   "steps": "Sign in as an Operator and try to open the Admin page.",
+   "pass": "Access is denied."
+  },
+  "FR-28": {
+   "method": "look",
+   "scenarios": "T",
+   "steps": "Open a page without signing in.",
+   "pass": "The sign-in page appears instead."
+  },
+  "FR-28a": {
+   "method": "look",
+   "scenarios": "T",
+   "steps": "Set a 14-character, a 15-character and a 64-character password.",
+   "pass": "14 is refused. 15 and 64 are accepted."
+  },
+  "FR-28b": {
+   "method": "look",
+   "scenarios": "T",
+   "steps": "Set a long password with only lowercase letters.",
+   "pass": "It is accepted, and nothing forces a change later."
+  },
+  "FR-28c": {
+   "method": "look",
+   "scenarios": "T",
+   "steps": "Set a very common password.",
+   "pass": "It is refused."
+  },
+  "FR-28d": {
+   "method": "look",
+   "scenarios": "T",
+   "steps": "Enter a wrong password 5 times.",
+   "pass": "The account is blocked for 15 minutes and the message says so."
+  },
+  "FR-28e": {
+   "method": "inspect",
+   "scenarios": "T",
+   "steps": "Look at the address and the connection details in the browser.",
+   "pass": "It uses https with TLS 1.2 or newer."
+  },
+  "FR-28f": {
+   "method": "inspect",
+   "scenarios": "T",
+   "steps": "Look at how a password is stored.",
+   "pass": "It is scrambled and cannot be read back."
+  },
+  "NFR-1": {
+   "method": "measure",
+   "scenarios": "S",
+   "steps": "Run the labelled set and count critical temperature and current faults found.",
+   "pass": "At least 95% found."
+  },
+  "NFR-2": {
+   "method": "measure",
+   "scenarios": "S",
+   "steps": "Run the labelled set and count vibration faults found.",
+   "pass": "At least 85% found."
+  },
+  "NFR-5": {
+   "method": "measure",
+   "scenarios": "A",
+   "steps": "Read the system's own uptime record for the session.",
+   "pass": "Data logging was running at least 95% of the time."
+  },
+  "NFR-6": {
+   "method": "measure",
+   "scenarios": "H",
+   "steps": "Compare readings generated with readings stored, including during the cut.",
+   "pass": "At least 99% stored."
+  },
+  "NFR-7": {
+   "method": "inject",
+   "scenarios": "P",
+   "steps": "Play the noisy scenario.",
+   "pass": "Valid readings stay valid. Readings that cannot be checked are thrown away, not acted on."
+  },
+  "NFR-8": {
+   "method": "look",
+   "scenarios": "A",
+   "steps": "Open the Overview on one laptop screen.",
+   "pass": "Every machine's status is visible without opening a second window."
+  },
+  "NFR-9": {
+   "method": "inspect",
+   "scenarios": "A",
+   "steps": "Show the code for one parameter's logic, then change it.",
+   "pass": "Only that part changes. Nothing unrelated needs editing."
+  },
+  "NFR-10": {
+   "method": "inspect",
+   "scenarios": "I",
+   "steps": "Look at stored statuses and warning or critical records as storage grows.",
+   "pass": "Nothing is deleted automatically before 75% is reached. Normal readings still go after 24 hours."
+  },
+  "PR-001": {
+   "method": "measure",
+   "scenarios": "A",
+   "steps": "Check the time between status updates for each machine.",
+   "pass": "No more than 10 seconds."
+  },
+  "PR-001a": {
+   "method": "measure",
+   "scenarios": "D",
+   "steps": "Time from the status confirming a critical fault to the alert on screen.",
+   "pass": "No more than 2 seconds."
+  },
+  "PR-001b": {
+   "method": "inject",
+   "scenarios": "R",
+   "steps": "Make an alert arrive late.",
+   "pass": "The alert still shows, the delay is logged, and an Alerts delayed notice appears."
+  },
+  "PR-002": {
+   "method": "measure",
+   "scenarios": "A",
+   "steps": "Time from a reading arriving to it appearing on the dashboard.",
+   "pass": "Within 2 seconds."
+  },
+  "PR-003": {
+   "method": "measure",
+   "scenarios": "Q",
+   "steps": "Run 10 machines at once and watch the update times.",
+   "pass": "Status and reading times stay within their limits."
+  },
+  "PR-004": {
+   "method": "measure",
+   "scenarios": "Q",
+   "steps": "Open the dashboard on 5 screens at once.",
+   "pass": "Status and reading times stay within their limits."
+  },
+  "PR-005": {
+   "method": "measure",
+   "scenarios": "Q",
+   "steps": "Count readings processed each second with 10 machines of 4 parameters.",
+   "pass": "At least 40 per second."
+  },
+  "PR-006": {
+   "method": "inspect",
+   "scenarios": "I",
+   "steps": "Check the room the store has for readings.",
+   "pass": "Room for at least 3,456,000 readings plus statuses and faults."
+  },
+  "PR-007": {
+   "method": "measure",
+   "scenarios": "K",
+   "steps": "Time from launch until monitoring is active.",
+   "pass": "No more than 60 seconds."
+  }
+ }
+}
