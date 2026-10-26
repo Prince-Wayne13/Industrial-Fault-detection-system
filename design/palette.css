@@ -1,0 +1,33 @@
+:root {
+  /* Canvas & surfaces - diary/paper feel */
+  --bg-canvas:      #dbdee0;
+  --bg-card:        #F8F9FB;
+  --bg-sidebar:     #2B3A4A;
+  --bg-sidebar-hover: #344657;
+  --bg-chart:       #F1F4F8;
+
+  /* Brand colors - muted yacht blue palette + Gold */
+  --primary:        #2C3A4C; /* Slightly darker, richer yacht blue */
+  --primary-dim:    rgba(44, 58, 76, 0.08);
+  --secondary:      #5B7C99;
+  --secondary-dim:  rgba(91, 124, 153, 0.08);
+  --gold:           #C4A35A; /* Premium gold accent */
+  --gold-dim:       rgba(196, 163, 90, 0.1);
+  --warning:        #B8A06A;
+  --warning-dim:    rgba(184, 160, 106, 0.1);
+  --teal:           #6B8E7B;
+  --teal-dim:       rgba(107, 142, 123, 0.08);
+  --red:            #A06B6B;
+  --red-dim:        rgba(160, 107, 107, 0.1);
+  --purple:         #7B6B8E;
+  --purple-dim:     rgba(123, 107, 142, 0.1);
+
+  /* Text hierarchy - soft, readable */
+  --text-head:      #2D3748;
+  --text-body:      #4A5568;
+  --text-muted:     #8B9BB0;
+
+  /* Borders - subtle paper edges */
+  --border-faint:   #E5E8ED;
+  --border-light:   #D5DAE1;
+}

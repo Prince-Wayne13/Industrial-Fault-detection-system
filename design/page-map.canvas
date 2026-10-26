@@ -17,7 +17,7 @@
    "y": 80,
    "width": 260,
    "height": 110,
-   "text": "**2 Overview**\\nOperator, Engineer",
+   "text": "**2 Overview**\nOperator, Engineer, Administrator",
    "color": "5"
   },
   {
@@ -41,46 +41,6 @@
    "color": "5"
   },
   {
-   "id": "p4",
-   "type": "text",
-   "x": 760,
-   "y": 120,
-   "width": 260,
-   "height": 110,
-   "text": "**4 Alerts**\\nOperator, Engineer",
-   "color": "5"
-  },
-  {
-   "id": "p5",
-   "type": "text",
-   "x": 760,
-   "y": 280,
-   "width": 260,
-   "height": 110,
-   "text": "**5 History and reports**\\nAll view",
-   "color": "5"
-  },
-  {
-   "id": "p6",
-   "type": "text",
-   "x": 1140,
-   "y": -120,
-   "width": 260,
-   "height": 110,
-   "text": "**6 Maintenance**\\nEngineer",
-   "color": "4"
-  },
-  {
-   "id": "p7",
-   "type": "text",
-   "x": 1140,
-   "y": 40,
-   "width": 260,
-   "height": 110,
-   "text": "**7 Limits**\\nEngineer",
-   "color": "4"
-  },
-  {
    "id": "p9",
    "type": "text",
    "x": 380,
@@ -99,6 +59,26 @@
    "height": 110,
    "text": "**10 Requirements tracker**\\nDemonstration only",
    "color": "6"
+  },
+  {
+   "id": "p11",
+   "type": "text",
+   "x": 380,
+   "y": -80,
+   "width": 260,
+   "height": 110,
+   "text": "**11 Machines list**\nOperator, Engineer",
+   "color": "5"
+  },
+  {
+   "id": "p7",
+   "type": "text",
+   "x": 760,
+   "y": 160,
+   "width": 260,
+   "height": 110,
+   "text": "**7 Settings**\nEveryone (limits: Engineer)",
+   "color": "5"
   }
  ],
  "edges": [
@@ -124,39 +104,39 @@
    "toSide": "left"
   },
   {
-   "id": "e4",
-   "fromNode": "p2",
-   "fromSide": "right",
-   "toNode": "p4",
-   "toSide": "left"
-  },
-  {
-   "id": "e5",
-   "fromNode": "p2",
-   "fromSide": "right",
-   "toNode": "p5",
-   "toSide": "left"
-  },
-  {
-   "id": "e6",
-   "fromNode": "p3",
-   "fromSide": "bottom",
-   "toNode": "p4",
-   "toSide": "top"
-  },
-  {
-   "id": "e7",
-   "fromNode": "p3",
-   "fromSide": "right",
-   "toNode": "p6",
-   "toSide": "left"
-  },
-  {
    "id": "e8",
    "fromNode": "p3",
    "fromSide": "right",
    "toNode": "p7",
    "toSide": "left"
+  },
+  {
+   "id": "e9",
+   "fromNode": "p2",
+   "fromSide": "top",
+   "toNode": "p11",
+   "toSide": "bottom"
+  },
+  {
+   "id": "e10",
+   "fromNode": "p11",
+   "fromSide": "right",
+   "toNode": "p3",
+   "toSide": "left"
+  },
+  {
+   "id": "e11",
+   "fromNode": "p2",
+   "fromSide": "right",
+   "toNode": "p7",
+   "toSide": "left"
+  },
+  {
+   "id": "e12",
+   "fromNode": "p8",
+   "fromSide": "top",
+   "toNode": "p2",
+   "toSide": "bottom"
   }
  ]
 }

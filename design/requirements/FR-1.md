@@ -2,9 +2,7 @@
 title: FR-1
 kind: FR
 status: not-set
-tags:
-  - requirement
-  - FR
+tags: [requirement, FR]
 ---
 
 # FR-1
