@@ -105,6 +105,7 @@ Status on 17 October 2026. Requirement numbers are those in document version 1.6
 | --- | --- | --- |
 | DC-006, Appendix B | The demonstration is a dashboard with simulated modes that inject faults. It stays in Appendix B and DC-006. | Team |
 | DC-006, Section 5 | Question 7 settled the small way. The product is the real system. The demonstration is a dashboard with simulated data and a fault-injection mode. One sentence says so in DC-006 and Section 5. FR-11 and NFR-5 are not rewritten. | Team, 26 Oct 2026 |
+| FR-5, Appendix A | Where the limits define only one abnormal level, the system classifies the condition as normal or abnormal. Pumps and backup power have one abnormal level, and motor vibration has no warning level. Closes examiner question 8. | Team, 26 Oct 2026 |
 
 ---
 
@@ -113,7 +114,6 @@ Status on 17 October 2026. Requirement numbers are those in document version 1.6
 | Req | Proposal |
 | --- | --- |
 | FR-17, FR-18 | Replace "authorized user" with a named role. Operator and Management stay view-and-acknowledge and view-and-reports. |
-| FR-5, Appendix A | Classify as warning or critical where limits define those levels. Otherwise normal or abnormal. Pumps and backup power have one abnormal level, and motor vibration has no warning level. |
 | Sections 1.2, 2.2 | Add reports, maintenance mode, acknowledging and resolving faults, the trend check and administration. |
 | Section 1.1 | One sentence: "shall" is required, "should" is a preference, requirements do not use "must". Then change "must" to "shall" where binding. |
 | Section 4.4 | Each reading carries equipment identifier, parameter, value with unit, and time taken. Send method in Appendix B to be chosen. |
