@@ -4,6 +4,10 @@ The requirements document for a system that watches motors, water pumps and back
 
 **Current version:** v1.6. The next version, v1.7, will apply the decisions listed in `docs/requirement-decisions.md` (part B).
 
+## Group members
+
+Prince Msowoya, Zilpah Kalipa, Theresa Somanje, Opra Chikwangwala, Steven Nkhoma, Akuzike Mphande, Timothy Kaperenganya.
+
 ## What is where
 
 | Path | What it holds |
@@ -15,6 +19,8 @@ The requirements document for a system that watches motors, water pumps and back
 | `docs/open-items.md` | Everything waiting for a decision, with space for an owner and a date. |
 | `docs/glossary.md` | Plain meanings of the terms we use. |
 | `docs/workflow.md` | How we work in this repo, step by step. |
+| `docs/next-steps.md` | How we finish the SRS: the order of work, what is settled, what is left. |
+| `docs/v1.7-clear-statements.md` | The agreed wording for examiner questions 1 to 8, ready to go into the Word file. |
 | `docs/review/` | The examiner questions, our eight, and a 20-question checklist to run before every hand-in. |
 | `docs/history/` | The team's two earlier drafts of the extra requirements. |
 | `docs/plans/` | The plan for the v1.4 changes. |
@@ -55,4 +61,4 @@ The full list of findings is in `docs/review/general-questions-checklist.md`.
 
 ## Where to start
 
-Read `docs/open-items.md`, then `docs/workflow.md`.
+Read `docs/next-steps.md`, then `docs/open-items.md` and `docs/workflow.md`.
