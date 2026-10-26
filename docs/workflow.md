@@ -12,7 +12,7 @@ One rule: **decide first in writing, then change the document.** That keeps the 
 3. **Apply.** Change the Word file `srs/SRS_Industrial_Fault_Detection.docx`. Update the version and the revision history on the cover.
 4. **Export.** Run `./scripts/export-md.sh` (needs pandoc). It refreshes the plain-text copy.
 5. **Commit.** Save the Word file and the text copy together, with a message that names the requirements, for example `FR-7: alerts as pop-ups to connected users`.
-6. **Tag.** When a version is handed in or shared: `git tag -a v1.7 -m "SRS v1.7"`.
+6. **Tag.** When a version is handed in or shared: `git tag -a v2.0 -m "SRS v2.0"`.
 7. **Check.** Before every hand-in, run the document against `docs/review/general-questions-checklist.md` and fill in the "After" column.
 
 ## Rules of thumb
