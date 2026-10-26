@@ -1,0 +1,271 @@
+From 88bc03586914ade46b273fd7b3681b5f8c8e56f4 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Mon, 26 Oct 2026 17:03:14 +0000
+Subject: [PATCH] Add automatic Bluetooth and Wi-Fi switching to the top bar
+ design
+
+Two icons in the top bar show the link in use (blue, glowing) or offline (grey).
+Automatic mode prefers Bluetooth and falls back to Wi-Fi. Manual menu: Automatic,
+Bluetooth only, Wi-Fi only. Demo control panel gains range tick boxes. FR-11 and
+UC-4 checks updated. New SRS change 11. Link colour tokens added to palette.
+---
+ design/07-demo-control-panel.md |  9 ++++--
+ design/page-map.md              |  3 +-
+ design/palette.css              |  5 +++
+ design/requirements/FR-11.md    |  3 +-
+ design/requirements/UC-4.md     |  2 +-
+ design/srs-changes.md           | 17 ++++++++++
+ design/top-bar.md               | 57 +++++++++++++++++++++++++++++++--
+ 7 files changed, 88 insertions(+), 8 deletions(-)
+
+diff --git a/design/07-demo-control-panel.md b/design/07-demo-control-panel.md
+index e89b2d6..3324f84 100644
+--- a/design/07-demo-control-panel.md
++++ b/design/07-demo-control-panel.md
+@@ -35,7 +35,9 @@ Draft count over the 70 requirement notes: 34 inject, 30 look, 6 inspect. Each r
+ +--------------------------------------------------------------------+
+ | DEMO CONTROL PANEL (demonstration only)        Demo clock 14:02:11 |
+ +--------------------------------------------------------------------+
+-| CONNECTION   (o) Near   ( ) Remote     [ Cut link ] [ Restore ]    |
++| CONNECTION   Mode (o) Auto ( ) Bluetooth ( ) Wi-Fi                 |
++|   Work Bluetooth in range [x]   Wi-Fi up [x]                       |
++|   [ Cut link ] [ Restore ]       Active link: Bluetooth            |
+ +--------------------------------------------------------------------+
+ | FAULT INJECTION        Machine [ Motor 1 v ]  Parameter [ Temp v ] |
+ |  [I-01 Blip] [I-02 Warning] [I-03 Critical] [I-04 Vibration]       |
+@@ -59,6 +61,7 @@ Draft count over the 70 requirement notes: 34 inject, 30 look, 6 inspect. Each r
+ +--------------------------------------------------------------------+
+ ```
+ 
++- The connection block drives the Bluetooth and Wi-Fi icons in the [[top-bar]]. The two tick boxes imitate the work Bluetooth being in range and Wi-Fi being up. Untick Bluetooth and the dashboard moves to Wi-Fi by itself. Untick both and both icons go grey. The Mode choice here is the same one as the menu behind the icons.
+ - Every button carries its injection number, for example `I-03`, and the requirement tags it proves.
+ - The live readouts exist so that Look requirements such as [[PR-001]] and [[PR-002]] show a number, not a claim.
+ - The demo clock exists so that the 24-hour, 15-minute lockout and maintenance-overdue cases do not need real waiting.
+@@ -79,7 +82,7 @@ The detail of each injection, its seed file and its timing is to be agreed later
+ | I-07 | Sensor goes silent | One parameter stops sending for 3 seconds or more. | [[FR-13]] |
+ | I-08 | Bad reading | Send a reading of the wrong type, a missing value, and an impossible value. | [[FR-14]], [[NFR-7]] |
+ | I-09 | Noisy signal | Add noise to a stream of normal readings. | [[NFR-7]] |
+-| I-10 | Cut and restore connection | Switch near or remote mode, cut the link, restore it. | [[FR-11]], [[FR-12]], [[NFR-6]], [[UC-4]] |
++| I-10 | Cut and restore connection | Switch Auto, Bluetooth or Wi-Fi mode. Take the work Bluetooth out of range and bring it back. Cut the link and restore it. | [[FR-11]], [[FR-12]], [[NFR-6]], [[UC-4]] |
+ | I-11 | Delay the alert | Hold an alert back by more than 2 seconds. | [[PR-001b]] |
+ | I-12 | Fill storage | Push storage to 75%, then full, then unavailable. | [[FR-20]], [[FR-21a]], [[NFR-10]] |
+ | I-13 | Restart the system | Stop and restart the back end, as a planned restart. | [[FR-21]], [[NFR-5]], [[PR-007]] |
+@@ -128,6 +131,8 @@ Demonstration only. It is not a product page and has no requirement of its own.
+ 
+ ## Open
+ 
++- Whether Auto mode starts with Bluetooth in range ticked, so the demonstration opens on the near link. Not decided.
++
+ - Whether the presenter runs the injections by hand or one button runs a scripted 5-minute sequence. Not decided.
+ - The agreed injection details: seed files, exact limits and timings.
+ - Whether I-15 really adds machines or replays a seeded load.
+diff --git a/design/page-map.md b/design/page-map.md
+index 6485a32..a827084 100644
+--- a/design/page-map.md
++++ b/design/page-map.md
+@@ -29,7 +29,7 @@ FR = functional requirement. UC = use case. DC = design constraint.
+ | 4 | [[04-machine-detail]] | Operator, Engineer | One machine: readings, recent history, faults. One fault record per abnormal parameter. | [[UC-1]], [[FR-1]] to [[FR-3]], [[FR-15]] |
+ | 5 | [[05-settings]] | everyone (limits: Engineer) | Theme, sign-out time, and limits for Engineers. | [[FR-26]], [[FR-23]], [[FR-23a]] to [[FR-23d]] |
+ | 6 | [[06-admin]] | Administrator | Four tabs: Users, Machines, Storage, Change log. Storage alert at 75%. | [[UC-5]], [[FR-21a]], [[FR-22]], [[FR-27]], [[FR-28c]] |
+-| 7 | [[07-demo-control-panel]] | demonstration only | Switch near or remote mode. Cut the connection. Inject faults. | [[FR-11]], [[FR-12]], [[UC-4]], DC-006 |
++| 7 | [[07-demo-control-panel]] | demonstration only | Switch Auto, Bluetooth or Wi-Fi mode. Put the work Bluetooth in or out of range. Cut the connection. Inject faults. | [[FR-11]], [[FR-12]], [[UC-4]], DC-006 |
+ | 8 | [[08-requirements-tracker]] | demonstration only | Every requirement, which page shows it, and whether it is built, simulated or left out. | all |
+ 
+ ## Folded in
+@@ -68,6 +68,7 @@ Blue: shared pages. Yellow: Administrator. Settings opens from the name side bar
+ ## Rules for every page
+ 
+ - Every page after sign in carries the same top bar and name side bar. See [[top-bar]].
++- The top bar carries a Bluetooth icon and a Wi-Fi icon. The link in use glows blue and a link that is not there is grey. See [[top-bar]] and change 11 in [[srs-changes]].
+ - Every feature on screen carries a small tag with its requirement number, for example `FR-7`.
+ - The tracker page lists all requirements and marks each one:
+   - **Built**: works in the demo.
+diff --git a/design/palette.css b/design/palette.css
+index dd9107d..6f2b9eb 100644
+--- a/design/palette.css
++++ b/design/palette.css
+@@ -22,6 +22,11 @@
+   --purple:         #7B6B8E;
+   --purple-dim:     rgba(123, 107, 142, 0.1);
+ 
++  /* Connection icons (top bar) */
++  --link-active:    #4A8FD6; /* link in use */
++  --link-glow:      0 0 6px 2px rgba(74, 143, 214, 0.55);
++  --link-offline:   #A8B0BC; /* link not there */
++
+   /* Text hierarchy - soft, readable */
+   --text-head:      #2D3748;
+   --text-body:      #4A5568;
+diff --git a/design/requirements/FR-11.md b/design/requirements/FR-11.md
+index a9b33e0..3805d5d 100644
+--- a/design/requirements/FR-11.md
++++ b/design/requirements/FR-11.md
+@@ -15,7 +15,8 @@ The system shall support both a near-range and a remote-range connection mode fo
+ 
+ - **Method:** inject (draft)
+ - **Injection:** [[07-demo-control-panel|I-10]] Cut and restore connection
+-- **Check:** Switch between near and remote mode on the panel. The dashboard keeps working in each.
++- **Check:** Switch between near and remote mode on the panel. The dashboard keeps working in each. In Auto mode, untick Bluetooth in range: the glow moves from the Bluetooth icon to the Wi-Fi icon and readings keep arriving. Tick it again: the glow moves back. Untick both: both icons go grey and show Offline.
++- **Design note:** the icons and their rules are in [[top-bar]] and change 11 in [[srs-changes]].
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+diff --git a/design/requirements/UC-4.md b/design/requirements/UC-4.md
+index e22dc3c..de5ce6c 100644
+--- a/design/requirements/UC-4.md
++++ b/design/requirements/UC-4.md
+@@ -16,5 +16,5 @@ The full steps are in the SRS. The pages that support this use case show up unde
+ 
+ - **Method:** inject (draft)
+ - **Injection:** [[07-demo-control-panel|I-10]] Cut and restore connection
+-- **Check:** Run the connection flow from the panel: near, remote, cut, restore.
++- **Check:** Run the connection flow from the panel: near, remote, cut, restore. Watch the Bluetooth and Wi-Fi icons in the top bar follow each step.
+ 
+diff --git a/design/srs-changes.md b/design/srs-changes.md
+index dacb9f2..5ac7355 100644
+--- a/design/srs-changes.md
++++ b/design/srs-changes.md
+@@ -25,6 +25,7 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
+ | 8 | Limits are the exception to Administrator-only configuration | [[FR-27]], [[FR-23a]] | fixes a clash |
+ | 9 | The Administrator cannot reset passwords, and can see the Overview | [[UC-5]], role table | adds detail |
+ | 10 | Alerts, graphs and maintenance folded into other pages instead of pages of their own | [[UC-2]], [[UC-3]], [[UC-6]] | design only, no wording change |
++| 11 | Automatic switching between Bluetooth and Wi-Fi, shown by two icons in the top bar | [[FR-11]], [[UC-4]] | adds detail |
+ 
+ ## The detail
+ 
+@@ -87,12 +88,21 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
+ - Alerts, History and reports, and Maintenance are no longer separate pages. The fault pop-up, the bell list and the machine page do their jobs.
+ - No requirement changes. [[UC-2]], [[UC-3]] and [[UC-6]] keep their steps, and only the screens that carry them moved.
+ 
++### 11. Automatic link switching
++
++- **Now:** [[FR-11]] asks for a near-range and a remote-range connection mode, and for a selectable simulated mode of each in the demonstration. It does not say how the mode is chosen.
++- **Suggested addition to [[FR-11]]:** the system uses the near-range connection automatically when it is available and uses the remote-range connection when it is not. The person can also choose a mode by hand. The dashboard shows which connection is in use and which are offline.
++- **Design:** the near-range link is Bluetooth and the remote-range link is Wi-Fi. Two icons in the top bar show the state: blue with a glow for the link in use, grey for a link that is offline. See [[top-bar]].
++- **Unchanged:** [[UC-4]] and [[NFR-6]]. When neither link is there the system keeps collecting and storing readings.
++- **Extra on the tracker:** the manual menu (Automatic, Bluetooth only, Wi-Fi only) and the icons themselves are not in the SRS today.
++
+ ## Not decided yet
+ 
+ - Can a resolved fault be switched back to open? The SRS has no way to do it.
+ - Can the Administrator open a machine's page from an Overview card?
+ - Does a limit belong to a machine type or to each machine on its own? [[FR-23a]] reads as per type.
+ - Colours for the dark theme (see the end of this note).
++- How the real near-range link is built, since a browser cannot scan for Bluetooth on its own. See the Open list in [[top-bar]].
+ 
+ ## Colour palette
+ 
+@@ -122,6 +132,11 @@ The colours for Fault-Detect. The same code is in `palette.css`, ready to use wh
+   --purple:         #7B6B8E;
+   --purple-dim:     rgba(123, 107, 142, 0.1);
+ 
++  /* Connection icons (top bar) */
++  --link-active:    #4A8FD6; /* link in use */
++  --link-glow:      0 0 6px 2px rgba(74, 143, 214, 0.55);
++  --link-offline:   #A8B0BC; /* link not there */
++
+   /* Text hierarchy - soft, readable */
+   --text-head:      #2D3748;
+   --text-body:      #4A5568;
+@@ -144,6 +159,8 @@ The colours for Fault-Detect. The same code is in `palette.css`, ready to use wh
+ | Warning status | `--warning` |
+ | Critical status | `--red` |
+ | Maintenance mark | `--purple` |
++| Connection icon in use | `--link-active` with `--link-glow` |
++| Connection icon offline | `--link-offline` |
+ | Accent, bell count, buttons | `--gold` |
+ | Headings, body text, small print | `--text-head`, `--text-body`, `--text-muted` |
+ | Lines and card edges | `--border-faint`, `--border-light` |
+diff --git a/design/top-bar.md b/design/top-bar.md
+index a7961ca..5a488df 100644
+--- a/design/top-bar.md
++++ b/design/top-bar.md
+@@ -15,11 +15,13 @@ Shown at the top of every page after [[01-sign-in]]. It is the same everywhere,
+ ## Layout
+ 
+ ```
+-+------------------------------------------------------------+
+-| Fault-Detect    [ Search machines ...... ]   (bell 3)  Name v |
+-+------------------------------------------------------------+
+++--------------------------------------------------------------------+
++| Fault-Detect  [ Search machines ... ]  [BT] [Wi-Fi]  (bell 3)  Name v |
+++--------------------------------------------------------------------+
+ ```
+ 
++`[BT]` is the Bluetooth icon and `[Wi-Fi]` is the Wi-Fi icon. See Connection icons below.
++
+ When the name is clicked, a side bar slides in from the right:
+ 
+ ```
+@@ -36,12 +38,55 @@ When the name is clicked, a side bar slides in from the right:
+ | --- | --- | --- |
+ | Software name | Fault-Detect, on the left. Click to go home. | none |
+ | Search bar | Finds a machine by its name and opens it. | none |
++| Bluetooth and Wi-Fi icons | Show which link the dashboard is using to reach the system. The one in use glows blue. A link that is not there is grey. Click either icon to choose a mode by hand. | [[FR-11]], [[srs-changes]], change 11 |
+ | Bell icon | A number on it counts faults that are acknowledged and not yet resolved. Click it to open a small window listing them. | [[srs-changes]], change 3 |
+ | Bell list | Each line is one fault. Choosing it opens that machine's [[04-machine-detail]]. When the Engineer resolves a fault, it leaves the list and the number goes down. | [[FR-17]] |
+ | Fault pop-up | Separate from the bell. See [[fault-popup]]. | [[FR-7]], [[FR-7a]], [[FR-7c]] |
+ | Name, top right | The signed-in person's name. Click it to open the side bar. | none |
+ | Side bar | Shows the full name and the role, and a Settings link that opens [[05-settings]]. | none |
+ 
++## Connection icons
++
++Two icons sit between the search bar and the bell. Bluetooth is the near-range link and Wi-Fi is the remote-range link ([[FR-11]]). Every role sees them. They are the same on every page.
++
++### The three looks
++
++| State | Bluetooth / Wi-Fi icon looks like | Word shown on hover and to a screen reader |
++| --- | --- | --- |
++| Active | Blue (`--link-active`) with a soft glow (`--link-glow`). This is the link carrying the data now. | "Bluetooth: connected" or "Wi-Fi: connected" |
++| Available | Normal ink colour, no glow. The link is there but not in use. | "Bluetooth: available" or "Wi-Fi: available" |
++| Offline | Grey (`--link-offline`), with a small slash across it. | "Bluetooth: offline" or "Wi-Fi: offline" |
++
++The glow is never the only signal. The slash and the hover word say the same thing, so the meaning does not rest on colour alone (see the colour rule in [[srs-changes]]).
++
++### Automatic mode (the default)
++
++1. The dashboard looks for the Bluetooth of the system at work. If it finds it, it uses Bluetooth. The Bluetooth icon glows blue.
++2. If that Bluetooth is not found, or is lost, the dashboard moves to Wi-Fi if Wi-Fi is available. The Wi-Fi icon glows blue and the Bluetooth icon turns grey.
++3. If neither link is there, both icons are grey and the bar shows the word "Offline". The system keeps collecting and storing readings as in [[UC-4]] and [[NFR-6]].
++4. While on Wi-Fi, the dashboard keeps looking for the work Bluetooth. When it is found again, the dashboard moves back to Bluetooth. Near is preferred over remote.
++5. Each switch shows a short note under the icons, for example "Switched to Wi-Fi". It goes away by itself. It is not a fault pop-up and needs no acknowledging ([[fault-popup]]).
++
++### Manual mode
++
++Clicking either icon opens a small menu:
++
++```
++                    +----------------------+
++                    | (o) Automatic        |
++                    | ( ) Bluetooth only   |
++                    | ( ) Wi-Fi only       |
++                    +----------------------+
++```
++
++| Choice | What the dashboard does |
++| --- | --- |
++| Automatic | Follows the five steps above. This is the default. |
++| Bluetooth only | Uses Bluetooth and nothing else. If Bluetooth is not there, its icon is grey and the bar shows "Offline". It does not fall back to Wi-Fi by itself. |
++| Wi-Fi only | Uses Wi-Fi and nothing else. If Wi-Fi is not there, its icon is grey and the bar shows "Offline". It does not move to Bluetooth by itself. |
++
++A hand choice stays until the person changes it back to Automatic. While a hand choice is on, the icon that is chosen carries a small dot so it is clear the mode is not automatic.
++
+ ## Who sees what in the bell
+ 
+ | Role | The bell shows |
+@@ -52,6 +97,12 @@ When the name is clicked, a side bar slides in from the right:
+ 
+ ## Open
+ 
++- Connection icons: a browser page cannot quietly scan for Bluetooth. Web Bluetooth works only in some browsers (Chrome and Edge, not Firefox or Safari) and only after the person picks the device once. In the finished system the near link may need to go through a gateway at the work site. [[FR-11]] asks only for a simulated mode in the demonstration, so the demonstration imitates the detection with the switches on [[07-demo-control-panel]]. The team should record the real route in the design decisions.
++- Connection icons: how long a link must be missing before the dashboard moves to the other one. No figure is set, so none is written here.
++- Connection icons: whether the "Available" look (ink colour, no glow) is wanted, or only blue and grey.
++- Connection icons: whether a hand choice is remembered for the person or for the device.
++- Connection icons: whether a switch from one link to the other counts as an interruption under [[UC-4]].
++
+ - Search is set to find machines by name. Nothing in the SRS asks for search, so this is a design choice and the tracker will show it as extra.
+ - The SRS does not say an account has a full name. It only says the Administrator manages accounts ([[UC-5]]). If the side bar shows a full name, the SRS needs one line saying accounts hold it.
+ - Whether the Administrator's bell shows the storage alert as a number or only on [[06-admin]] is not decided.
+-- 
+2.43.0
+
