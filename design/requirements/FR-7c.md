@@ -14,7 +14,7 @@ If no Operator or Engineer is connected, the fault shall stay open and be shown 
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
+- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
 - **Check:** Run I-03 with nobody signed in as Operator or Engineer. Sign in afterwards: the open fault is shown.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

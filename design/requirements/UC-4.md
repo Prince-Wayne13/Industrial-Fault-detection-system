@@ -15,6 +15,6 @@ The full steps are in the SRS. The pages that support this use case show up unde
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
+- **Injection:** [[07-demo-control-panel|I-10]] Cut and restore connection
 - **Check:** Run the connection flow from the panel: near, remote, cut, restore.
 

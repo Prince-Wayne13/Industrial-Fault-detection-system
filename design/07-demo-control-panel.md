@@ -1,15 +1,15 @@
 ---
 title: Demo control panel
-page: 9
+page: 7
 status: draft
 srs-version: v2.0
 roles: [demonstration only]
 tags: [design, page, demo, industrial-fault-detection]
 ---
 
-# 9. Demo control panel
+# 7. Demo control panel
 
-Back to [[page-map]]. Previous: [[08-admin]]. Next: [[10-requirements-tracker]].
+Back to [[page-map]]. Previous: [[06-admin]]. Next: [[08-requirements-tracker]].
 
 The page the team uses during the 5-minute presentation. It does one job: let the examiners see every requirement proven. Supports [[UC-4]], [[FR-11]] and [[FR-12]], and carries the injections for the rest. DC-006 says the demonstration is a dashboard plus fault injection.
 

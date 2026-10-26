@@ -1,17 +1,17 @@
 ---
 title: Machines list
-page: 11
+page: 3
 status: draft
 srs-version: v2.0
 roles: [Operator, Engineer]
 tags: [design, page, industrial-fault-detection]
 ---
 
-# 11. Machines list
+# 3. Machines list
 
-Back to [[page-map]]. The number 11 only means it was added later. It is not the order of use.
+Back to [[page-map]]. Previous: [[02-overview]]. Next: [[04-machine-detail]].
 
-A list of every registered machine, with a filter. It is not the same as machine registration on [[08-admin]], which is where the Administrator adds machines.
+A list of every registered machine, with a filter. It is not the same as machine registration on [[06-admin]], which is where the Administrator adds machines.
 
 ## Layout
 
@@ -29,7 +29,7 @@ A list of every registered machine, with a filter. It is not the same as machine
 +------------------------------------------------------------+
 ```
 
-Choosing a row opens [[03-machine-detail]], the same page that opens from a card on the [[02-overview]].
+Choosing a row opens [[04-machine-detail]], the same page that opens from a card on the [[02-overview]].
 
 ## Parts of the page
 

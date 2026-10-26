@@ -14,7 +14,7 @@ When storage use reaches 75%, the system shall send an alert to the Administrato
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-12]] Fill storage
+- **Injection:** [[07-demo-control-panel|I-12]] Fill storage
 - **Check:** Push storage to 75% while signed in as the Administrator. Only the Administrator's bell shows the alert.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

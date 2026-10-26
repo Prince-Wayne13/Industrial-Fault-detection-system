@@ -14,7 +14,7 @@ The system shall correctly identify at least 85% of vibration-based faults, meas
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-17]] Run the labelled test set
+- **Injection:** [[07-demo-control-panel|I-17]] Run the labelled test set
 - **Check:** Run the labelled set. The panel shows the percentage of vibration faults found. Target 85%.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

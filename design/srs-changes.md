@@ -24,7 +24,7 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 | 7 | A Settings page: theme, sign-out time and limits | [[FR-23a]], [[FR-26]], new | adds detail and new |
 | 8 | Limits are the exception to Administrator-only configuration | [[FR-27]], [[FR-23a]] | fixes a clash |
 | 9 | The Administrator cannot reset passwords, and can see the Overview | [[UC-5]], role table | adds detail |
-| 10 | Pages 4, 5 and 6 merged into other pages | [[UC-2]], [[UC-3]], [[UC-6]] | design only, no wording change |
+| 10 | Alerts, graphs and maintenance folded into other pages instead of pages of their own | [[UC-2]], [[UC-3]], [[UC-6]] | design only, no wording change |
 
 ## The detail
 
@@ -50,13 +50,13 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 - **Now:** reports are for a chosen machine and date range ([[FR-10]], [[UC-3]]).
 - **Suggested:** the machine page offers a graph and a report for a day, a week, a month or a year.
 - **Limit to state in the SRS:** the readings of a normal period are deleted after 24 hours ([[FR-9b]]). Longer periods show status over time, with full readings only around warnings and faults.
-- See [[03-machine-detail]].
+- See [[04-machine-detail]].
 
 ### 5. Machines list and search (new requirement)
 
 - **Suggested:** the system shows a list of all registered machines that can be filtered by type and by status. Choosing a machine opens its page. A search bar in the top bar finds a machine by name.
 - Neither is in the SRS today, so both show as extra on the tracker.
-- See [[11-machines-list]] and [[top-bar]].
+- See [[03-machines-list]] and [[top-bar]].
 
 ### 6. Full name
 
@@ -68,7 +68,7 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 - **Sign-out time:** no wording change to [[FR-26]]. Each person sets their own, from 1 to 5 minutes. It now sits in Settings.
 - **Limits:** [[FR-23a]] says an Engineer changes limits "from the dashboard". **Suggested:** "from the Settings page".
 - **Theme (new):** a person can switch the screen between light and dark. Not in the SRS, so it shows as extra.
-- See [[07-settings]].
+- See [[05-settings]].
 
 ### 8. The clash in FR-27
 
@@ -80,7 +80,7 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 - **Decided:** the Administrator cannot reset another person's password.
 - **Decided:** the Administrator can see the Overview but gets no fault pop-ups and no fault bell list ([[FR-7b]]).
 - **Suggested:** the role table says the Administrator may view the Overview. Nothing else about the role changes.
-- See [[08-admin]] and [[02-overview]].
+- See [[06-admin]] and [[02-overview]].
 
 ### 10. Merged pages
 

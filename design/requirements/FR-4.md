@@ -14,7 +14,7 @@ The system shall compare incoming measurements against the defined operating lim
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning
+- **Injection:** [[07-demo-control-panel|I-02]] Sustained warning
 - **Check:** Run I-02. The reading is flagged once it passes the limit.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

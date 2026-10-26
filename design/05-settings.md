@@ -1,15 +1,15 @@
 ---
 title: Settings
-page: 7
+page: 5
 status: draft
 srs-version: v2.0
 roles: [Operator, Engineer, Administrator]
 tags: [design, page, industrial-fault-detection]
 ---
 
-# 7. Settings
+# 5. Settings
 
-Back to [[page-map]]. Previous: [[03-machine-detail]].
+Back to [[page-map]]. Previous: [[04-machine-detail]]. Next: [[06-admin]].
 
 One settings page for everyone. It opens from the name side bar in the [[top-bar]]. This page replaces the old Limits page: limits now live here, in a section only Engineers see.
 
@@ -46,7 +46,7 @@ One settings page for everyone. It opens from the name side bar in the [[top-bar
 | Limits: check | The warning limit must be lower than the critical limit. If not, the change is refused. | Engineer | [[FR-23b]] |
 | Limits: earlier values | The old values and the date of change stay visible. Nothing is overwritten silently. | Engineer | [[FR-23]] |
 | Limits: when it applies | A changed limit applies to readings that arrive after the change. Faults already raised keep the limit that was in force. | Engineer | [[FR-23c]], [[FR-23d]] |
-| Log entry | Every limit change is also written in the change log on [[08-admin]]. | Engineer | [[FR-22]] |
+| Log entry | Every limit change is also written in the change log on [[06-admin]]. | Engineer | [[FR-22]] |
 
 ## Who sees what
 

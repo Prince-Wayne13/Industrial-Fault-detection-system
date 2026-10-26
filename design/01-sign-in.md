@@ -61,7 +61,7 @@ The first screen anyone sees. Simple on purpose: the software name, two boxes an
 | --- | --- |
 | Operator | [[02-overview]] |
 | Engineer | [[02-overview]] |
-| Administrator | [[08-admin]] |
+| Administrator | [[06-admin]] |
 
 ## Rules that work behind the page
 
@@ -70,7 +70,7 @@ The screen does not show these, but the tracker still lists them:
 - All traffic uses a secure connection ([[FR-28e]]).
 - Passwords are stored scrambled, so nobody can read them back ([[FR-28f]]).
 - No rule forces capital letters, numbers or symbols, and no forced password changes ([[FR-28b]]).
-- Common or leaked passwords are refused. This applies when a password is set, so it belongs on [[08-admin]], not here ([[FR-28c]]).
+- Common or leaked passwords are refused. This applies when a password is set, so it belongs on [[06-admin]], not here ([[FR-28c]]).
 
 ## Use case
 

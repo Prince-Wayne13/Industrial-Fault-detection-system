@@ -25,29 +25,36 @@ FR = functional requirement. UC = use case. DC = design constraint.
 | --- | --- | --- | --- | --- |
 | 1 | [[01-sign-in]] | everyone | Login. Automatic sign-out after 5 minutes idle. Lockout after 5 wrong attempts. | [[FR-26]], [[FR-28]], [[FR-28a]] to [[FR-28f]] |
 | 2 | [[02-overview]] | Operator, Engineer, Administrator | Status of every machine at a glance. Live readings. Marks for "sensor stopped" and "invalid reading". | [[UC-1]], [[FR-1]] to [[FR-3]], [[FR-3a]], [[FR-13]], [[FR-14]], [[FR-24]] |
-| 3 | [[03-machine-detail]] | Operator, Engineer | One machine: readings, recent history, faults. One fault record per abnormal parameter. | [[UC-1]], [[FR-1]] to [[FR-3]], [[FR-15]] |
-| 4 | merged | | Folded into the bell list in [[top-bar]] and the [[fault-popup]]. | [[UC-2]], [[FR-7]], [[FR-8]], [[FR-16]], [[FR-17]] |
-| 5 | merged | | Folded into [[03-machine-detail]] (graph, history, report). | [[UC-3]], [[FR-9]], [[FR-10]] |
-| 6 | merged | | Folded into [[03-machine-detail]] (maintenance switch). | [[UC-6]], [[FR-18]], [[FR-19]] |
-| 7 | [[07-settings]] | everyone (limits: Engineer) | Theme, sign-out time, and limits for Engineers. | [[FR-26]], [[FR-23]], [[FR-23a]] to [[FR-23d]] |
-| 8 | [[08-admin]] | Administrator | Four tabs: Users, Machines, Storage, Change log. Storage alert at 75%. | [[UC-5]], [[FR-21a]], [[FR-22]], [[FR-27]], [[FR-28c]] |
-| 9 | [[09-demo-control-panel]] | demonstration only | Switch near or remote mode. Cut the connection. Inject faults. | [[FR-11]], [[FR-12]], [[UC-4]], DC-006 |
-| 10 | [[10-requirements-tracker]] | demonstration only | Every requirement, which page shows it, and whether it is built, simulated or left out. | all |
-| 11 | [[11-machines-list]] | Operator, Engineer | Every machine in a list, with a filter. Choosing one opens its page. | [[FR-24]], [[FR-5]], [[FR-18]] |
+| 3 | [[03-machines-list]] | Operator, Engineer | Every machine in a list, with a filter. Choosing one opens its page. | [[FR-24]], [[FR-5]], [[FR-18]] |
+| 4 | [[04-machine-detail]] | Operator, Engineer | One machine: readings, recent history, faults. One fault record per abnormal parameter. | [[UC-1]], [[FR-1]] to [[FR-3]], [[FR-15]] |
+| 5 | [[05-settings]] | everyone (limits: Engineer) | Theme, sign-out time, and limits for Engineers. | [[FR-26]], [[FR-23]], [[FR-23a]] to [[FR-23d]] |
+| 6 | [[06-admin]] | Administrator | Four tabs: Users, Machines, Storage, Change log. Storage alert at 75%. | [[UC-5]], [[FR-21a]], [[FR-22]], [[FR-27]], [[FR-28c]] |
+| 7 | [[07-demo-control-panel]] | demonstration only | Switch near or remote mode. Cut the connection. Inject faults. | [[FR-11]], [[FR-12]], [[UC-4]], DC-006 |
+| 8 | [[08-requirements-tracker]] | demonstration only | Every requirement, which page shows it, and whether it is built, simulated or left out. | all |
+
+## Folded in
+
+Three things were planned as pages of their own and are now part of other pages. They have no number.
+
+| What | Now lives in | Covers |
+| --- | --- | --- |
+| Fault alerts and acknowledging | the bell list in [[top-bar]] and the [[fault-popup]] | [[UC-2]], [[FR-7]], [[FR-8]], [[FR-16]], [[FR-17]] |
+| Graph, history and report | [[04-machine-detail]] | [[UC-3]], [[FR-9]], [[FR-10]] |
+| Maintenance mode | [[04-machine-detail]] (maintenance switch) | [[UC-6]], [[FR-18]], [[FR-19]] |
 
 ## How the pages connect (proposed)
 
 ```mermaid
 flowchart LR
   S["1 Sign in"] -->|Operator, Engineer| O["2 Overview"]
-  S -->|Administrator| A["8 Admin"]
+  S -->|Administrator| A["6 Admin"]
   A --> O
-  O --> M["3 Machine detail"]
-  O --> ML["11 Machines list"]
+  O --> M["4 Machine detail"]
+  O --> ML["3 Machines list"]
   ML --> M
-  O --> ST["7 Settings"]
-  D["9 Demo control panel"]
-  R["10 Requirements tracker"]
+  O --> ST["5 Settings"]
+  D["7 Demo control panel"]
+  R["8 Requirements tracker"]
   classDef shared fill:#dbeafe,stroke:#2563eb,color:#000
   classDef adm fill:#fef3c7,stroke:#d97706,color:#000
   classDef demo fill:#f3e8ff,stroke:#9333ea,color:#000
@@ -56,7 +63,7 @@ flowchart LR
   class D,R demo
 ```
 
-Blue: shared pages. Yellow: Administrator. Settings opens from the name side bar on any page. Pages 4, 5 and 6 are merged into others. Purple: demonstration only. The arrows are a proposal, not a requirement.
+Blue: shared pages. Yellow: Administrator. Settings opens from the name side bar on any page. The three merged pages are listed under Folded in. Purple: demonstration only. The arrows are a proposal, not a requirement.
 
 ## Rules for every page
 
@@ -80,4 +87,4 @@ FR-4, FR-5, FR-6, FR-20, FR-21, FR-25.
 - Decisions that change the SRS are collected in [[srs-changes]].
 
 - Does the Administrator also need to see the Overview page? Not included for now.
-- Page notes 01 to 03, 07 to 11 are written. Pages 4, 5 and 6 are merged, so they have no note.
+- All eight page notes are written. The page numbers follow the order a person uses the pages.

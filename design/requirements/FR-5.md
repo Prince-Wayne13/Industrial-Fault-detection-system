@@ -14,7 +14,7 @@ For conditions flagged by FR-4, the system shall classify the condition as norma
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning, [[09-demo-control-panel|I-03]] Sustained critical
+- **Injection:** [[07-demo-control-panel|I-02]] Sustained warning, [[07-demo-control-panel|I-03]] Sustained critical
 - **Check:** Run I-02 for warning and I-03 for critical. The card shows the status, machine and parameter. Repeat on a machine with one abnormal level.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

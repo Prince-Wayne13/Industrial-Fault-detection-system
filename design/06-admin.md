@@ -1,15 +1,15 @@
 ---
 title: Admin
-page: 8
+page: 6
 status: draft
 srs-version: v2.0
 roles: [Administrator]
 tags: [design, page, industrial-fault-detection]
 ---
 
-# 8. Admin
+# 6. Admin
 
-Back to [[page-map]]. Previous: [[01-sign-in]] (this is where the Administrator lands after signing in).
+Back to [[page-map]]. Previous: [[05-settings]]. The Administrator lands here after [[01-sign-in]].
 
 The Administrator's page. It controls who can use the system and which machines it watches. The Administrator manages the system and is not an operational user: no fault pop-ups, no fault bell list, no acknowledging ([[FR-7b]]). Supports [[UC-5]].
 
@@ -42,7 +42,7 @@ Four tabs on one page. No other page is needed for the Administrator. The top ba
 
 ## Tab 2: Machines
 
-This is where machines are registered. It is not the [[11-machines-list]], which the Operator and Engineer use to look at machines.
+This is where machines are registered. It is not the [[03-machines-list]], which the Operator and Engineer use to look at machines.
 
 | Part | What it does | Requirement |
 | --- | --- | --- |
@@ -70,7 +70,7 @@ What the personnel decide after the alert (delete, update or something else) is 
 | --- | --- | --- |
 | Log list | Each line says what changed, who changed it and when. It covers user changes, machine registration and limit changes. | [[FR-22]] |
 
-A limit changed by an Engineer on [[07-settings]] also appears here ([[FR-22]]).
+A limit changed by an Engineer on [[05-settings]] also appears here ([[FR-22]]).
 
 ## Who can open it
 

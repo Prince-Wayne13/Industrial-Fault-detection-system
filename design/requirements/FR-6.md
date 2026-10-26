@@ -14,7 +14,7 @@ A condition flagged by FR-4 shall not be classified as a fault under FR-5 based 
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-01]] One-off blip, [[09-demo-control-panel|I-02]] Sustained warning
+- **Injection:** [[07-demo-control-panel|I-01]] One-off blip, [[07-demo-control-panel|I-02]] Sustained warning
 - **Check:** Run I-01: no fault, no alert, the live number still moves. Then run I-02: the fault is raised only after the window.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

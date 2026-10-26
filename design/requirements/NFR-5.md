@@ -14,7 +14,7 @@ The system shall keep a record of its own uptime during each test session. Durin
 ## How it is tested
 
 - **Method:** look (draft)
-- **Injection:** [[09-demo-control-panel|I-13]] Restart the system
+- **Injection:** [[07-demo-control-panel|I-13]] Restart the system
 - **Check:** The panel shows logging uptime for the session. A planned restart (I-13) is not counted.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

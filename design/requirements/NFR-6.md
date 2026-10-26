@@ -14,7 +14,7 @@ The system shall store at least 99% of the sensor readings its data source gener
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
+- **Injection:** [[07-demo-control-panel|I-10]] Cut and restore connection
 - **Check:** Cut and restore the link. The panel compares readings generated with readings stored. Target 99%.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

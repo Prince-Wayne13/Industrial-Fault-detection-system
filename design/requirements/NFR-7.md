@@ -14,7 +14,7 @@ The system shall keep producing valid, uncorrupted readings when the input data 
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-08]] Bad reading, [[09-demo-control-panel|I-09]] Noisy signal
+- **Injection:** [[07-demo-control-panel|I-08]] Bad reading, [[07-demo-control-panel|I-09]] Noisy signal
 - **Check:** Run I-09 and I-08. Valid readings stay valid, unusable readings are discarded.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

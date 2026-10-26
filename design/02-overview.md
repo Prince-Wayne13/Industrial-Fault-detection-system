@@ -9,7 +9,7 @@ tags: [design, page, industrial-fault-detection]
 
 # 2. Overview
 
-Back to [[page-map]]. Previous: [[01-sign-in]]. Next: [[03-machine-detail]].
+Back to [[page-map]]. Previous: [[01-sign-in]]. Next: [[03-machines-list]].
 
 The main screen. It answers one question: is everything fine right now? Supports [[UC-1]].
 
@@ -53,7 +53,7 @@ The top bar is shared by every page. It is described in [[top-bar]].
 
 - Every registered machine is on this page, each as its own card.
 - Each card shows the live readings and the status as a mark.
-- Choosing a card, for example Motor 1, opens [[03-machine-detail]]. That page shows that machine's readings, status, history and faults.
+- Choosing a card, for example Motor 1, opens [[04-machine-detail]]. That page shows that machine's readings, status, history and faults.
 - A card in maintenance mode carries a "Maintenance" mark.
 - The status is shown with a word and a colour, never colour alone.
 
@@ -93,7 +93,7 @@ Readings are taken once a second for every parameter on every machine ([[FR-3a]]
 | 1. The user opens the dashboard. | This page opens after [[01-sign-in]]. |
 | 2. The system shows the status of every machine. | The cards. |
 | 3. The user picks a machine. | Click a card. |
-| 4. The system shows the readings and recent history. | Opens [[03-machine-detail]]. |
+| 4. The system shows the readings and recent history. | Opens [[04-machine-detail]]. |
 
 ## Open
 

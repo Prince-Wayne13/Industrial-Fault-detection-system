@@ -14,7 +14,7 @@ After 5 failed login attempts on an account, the system should block login to th
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
+- **Injection:** [[07-demo-control-panel|I-14]] Fast-forward the clock
 - **Check:** Fail 5 logins. The account is blocked. Fast-forward 15 minutes and it opens again.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

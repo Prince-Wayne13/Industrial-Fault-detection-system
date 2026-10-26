@@ -14,7 +14,7 @@ The readings of a normal window shall be deleted after 24 hours. The readings of
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
+- **Injection:** [[07-demo-control-panel|I-14]] Fast-forward the clock
 - **Check:** Fast-forward 24 hours. Normal readings are gone; warning and critical readings are still there.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

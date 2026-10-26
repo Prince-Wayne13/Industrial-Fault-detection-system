@@ -14,7 +14,7 @@ Acknowledging shall not close the fault. It stays open until an Engineer marks i
 ## How it is tested
 
 - **Method:** look (draft)
-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
+- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
 - **Check:** After acknowledging, the fault is still open.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

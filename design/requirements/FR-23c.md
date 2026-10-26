@@ -14,7 +14,7 @@ A changed limit shall apply to readings received after the change.
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning
+- **Injection:** [[07-demo-control-panel|I-02]] Sustained warning
 - **Check:** Change a limit, then replay I-02. The new limit applies to the new readings only.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

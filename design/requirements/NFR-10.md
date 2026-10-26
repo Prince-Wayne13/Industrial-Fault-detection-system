@@ -14,7 +14,7 @@ The system shall keep statuses and warning or critical records until storage use
 ## How it is tested
 
 - **Method:** inject (draft)
-- **Injection:** [[09-demo-control-panel|I-12]] Fill storage, [[09-demo-control-panel|I-14]] Fast-forward the clock
+- **Injection:** [[07-demo-control-panel|I-12]] Fill storage, [[07-demo-control-panel|I-14]] Fast-forward the clock
 - **Check:** Fast-forward 24 hours: normal readings go, statuses and warning or critical records stay. Fill storage to 75%: still nothing deleted by the system.
 
 Status is one of: built, simulated, left-out, not-set. Change the `status` line above.

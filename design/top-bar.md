@@ -37,10 +37,10 @@ When the name is clicked, a side bar slides in from the right:
 | Software name | Fault-Detect, on the left. Click to go home. | none |
 | Search bar | Finds a machine by its name and opens it. | none |
 | Bell icon | A number on it counts faults that are acknowledged and not yet resolved. Click it to open a small window listing them. | [[srs-changes]], change 3 |
-| Bell list | Each line is one fault. Choosing it opens that machine's [[03-machine-detail]]. When the Engineer resolves a fault, it leaves the list and the number goes down. | [[FR-17]] |
+| Bell list | Each line is one fault. Choosing it opens that machine's [[04-machine-detail]]. When the Engineer resolves a fault, it leaves the list and the number goes down. | [[FR-17]] |
 | Fault pop-up | Separate from the bell. See [[fault-popup]]. | [[FR-7]], [[FR-7a]], [[FR-7c]] |
 | Name, top right | The signed-in person's name. Click it to open the side bar. | none |
-| Side bar | Shows the full name and the role, and a Settings link that opens [[07-settings]]. | none |
+| Side bar | Shows the full name and the role, and a Settings link that opens [[05-settings]]. | none |
 
 ## Who sees what in the bell
 
@@ -54,4 +54,4 @@ When the name is clicked, a side bar slides in from the right:
 
 - Search is set to find machines by name. Nothing in the SRS asks for search, so this is a design choice and the tracker will show it as extra.
 - The SRS does not say an account has a full name. It only says the Administrator manages accounts ([[UC-5]]). If the side bar shows a full name, the SRS needs one line saying accounts hold it.
-- Whether the Administrator's bell shows the storage alert as a number or only on [[08-admin]] is not decided.
+- Whether the Administrator's bell shows the storage alert as a number or only on [[06-admin]] is not decided.

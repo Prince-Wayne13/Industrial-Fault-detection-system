@@ -1,19 +1,19 @@
 ---
 title: Machine detail
-page: 3
+page: 4
 status: draft
 srs-version: v2.0
 roles: [Operator, Engineer]
 tags: [design, page, industrial-fault-detection]
 ---
 
-# 3. Machine detail
+# 4. Machine detail
 
-Back to [[page-map]]. Previous: [[02-overview]]. Next: [[07-settings]].
+Back to [[page-map]]. Previous: [[03-machines-list]]. Next: [[05-settings]].
 
 One page for one machine. It opens the same way from three places:
 - a card on the [[02-overview]],
-- a row in the [[11-machines-list]],
+- a row in the [[03-machines-list]],
 - a fault in the bell list or a fault pop-up (see [[top-bar]] and [[fault-popup]]).
 
 Supports steps 3 and 4 of [[UC-1]] and the report steps of [[UC-3]].

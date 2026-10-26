@@ -7,7 +7,7 @@
    "y": 200,
    "width": 260,
    "height": 110,
-   "text": "**1 Sign in**\\nEveryone",
+   "text": "**1 Sign in**\n",
    "color": "5"
   },
   {
@@ -21,63 +21,63 @@
    "color": "5"
   },
   {
-   "id": "p8",
+   "id": "p6",
    "type": "text",
    "x": 380,
    "y": 400,
    "width": 260,
    "height": 110,
-   "text": "**8 Admin**\\nAdministrator",
+   "text": "**6 Admin**\n",
    "color": "3"
   },
   {
-   "id": "p3",
+   "id": "p4",
    "type": "text",
    "x": 760,
    "y": -40,
    "width": 260,
    "height": 110,
-   "text": "**3 Machine detail**\\nOperator, Engineer",
-   "color": "5"
-  },
-  {
-   "id": "p9",
-   "type": "text",
-   "x": 380,
-   "y": 640,
-   "width": 260,
-   "height": 110,
-   "text": "**9 Demo control panel**\\nDemonstration only",
-   "color": "6"
-  },
-  {
-   "id": "p10",
-   "type": "text",
-   "x": 760,
-   "y": 640,
-   "width": 260,
-   "height": 110,
-   "text": "**10 Requirements tracker**\\nDemonstration only",
-   "color": "6"
-  },
-  {
-   "id": "p11",
-   "type": "text",
-   "x": 380,
-   "y": -80,
-   "width": 260,
-   "height": 110,
-   "text": "**11 Machines list**\nOperator, Engineer",
+   "text": "**4 Machine detail**\n",
    "color": "5"
   },
   {
    "id": "p7",
    "type": "text",
+   "x": 380,
+   "y": 640,
+   "width": 260,
+   "height": 110,
+   "text": "**7 Demo control panel**\n",
+   "color": "6"
+  },
+  {
+   "id": "p8",
+   "type": "text",
+   "x": 760,
+   "y": 640,
+   "width": 260,
+   "height": 110,
+   "text": "**8 Requirements tracker**\n",
+   "color": "6"
+  },
+  {
+   "id": "p3",
+   "type": "text",
+   "x": 380,
+   "y": -80,
+   "width": 260,
+   "height": 110,
+   "text": "**3 Machines list**\nOperator, Engineer",
+   "color": "5"
+  },
+  {
+   "id": "p5",
+   "type": "text",
    "x": 760,
    "y": 160,
    "width": 260,
    "height": 110,
-   "text": "**7 Settings**\nEveryone (limits: Engineer)",
+   "text": "**5 Settings**\nEveryone (limits: Engineer)",
    "color": "5"
   }
  ],
@@ -93,47 +93,47 @@
    "id": "e2",
    "fromNode": "p1",
    "fromSide": "right",
-   "toNode": "p8",
+   "toNode": "p6",
    "toSide": "left"
   },
   {
    "id": "e3",
    "fromNode": "p2",
    "fromSide": "right",
-   "toNode": "p3",
+   "toNode": "p4",
    "toSide": "left"
   },
   {
    "id": "e8",
-   "fromNode": "p3",
+   "fromNode": "p4",
    "fromSide": "right",
-   "toNode": "p7",
+   "toNode": "p5",
    "toSide": "left"
   },
   {
    "id": "e9",
    "fromNode": "p2",
    "fromSide": "top",
-   "toNode": "p11",
+   "toNode": "p3",
    "toSide": "bottom"
   },
   {
    "id": "e10",
-   "fromNode": "p11",
+   "fromNode": "p3",
    "fromSide": "right",
-   "toNode": "p3",
+   "toNode": "p4",
    "toSide": "left"
   },
   {
    "id": "e11",
    "fromNode": "p2",
    "fromSide": "right",
-   "toNode": "p7",
+   "toNode": "p5",
    "toSide": "left"
   },
   {
    "id": "e12",
-   "fromNode": "p8",
+   "fromNode": "p6",
    "fromSide": "top",
    "toNode": "p2",
    "toSide": "bottom"
