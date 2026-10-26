@@ -1,6 +1,6 @@
 # Next Steps: How We Finish the SRS
 
-Written 26 October 2026, after examiner questions 1 to 8 were settled. This is the approach we agreed in discussion. Read it with `v1.7-clear-statements.md` (the agreed wording) and `workflow.md` (the git steps).
+Written 26 October 2026, after examiner questions 1 to 8 were settled. This is the approach we agreed in discussion. Read it with `v2-clear-statements.md` (the agreed wording) and `workflow.md` (the git steps).
 
 ## Group members
 
@@ -14,7 +14,7 @@ Each requirement is a clear statement: one subject, one action, one number or co
 
 ## What is settled (do not reopen)
 
-- Questions 1 to 8 are settled. The wording is in `v1.7-clear-statements.md`. The reasons are in `requirement-decisions.md`.
+- Questions 1 to 8 are settled. The wording is in `v2-clear-statements.md`. The reasons are in `requirement-decisions.md`.
 - Three roles: Operator, Engineer, Administrator. The Operator is the first responder and acknowledges; the Engineer resolves, uses maintenance mode and changes limits; the Administrator manages the system and the storage alert. Reports: Operator and Engineer.
 - Flask back end (DD-03). React with JSX front end (DD-15).
 - Alert timing: status updates at least every 10 seconds; a critical alert shows within 2 seconds of the status confirming it; a late alert is still shown, logged, and flagged on the dashboard.
@@ -22,13 +22,13 @@ Each requirement is a clear statement: one subject, one action, one number or co
 
 ## The order of work
 
-1. **Apply the statements to the Word file** (`srs/SRS_Industrial_Fault_Detection.docx`) in one pass, topic by topic, following `workflow.md`: decide, apply, export, commit, tag. One topic per commit, and never mix a renumbering with a new requirement. Only one person edits the Word file at a time, because Word cannot merge two people's edits. Requirement numbers in `v1.7-clear-statements.md` are provisional; fix the final numbers here and update every cross-reference (Section 5, Appendix D).
-2. **Fix the front page:** version v1.7, today's date, the seven group members as authors, a reviewer, a revision history, a refreshed contents page, and Section 1.5 (it still says Section 5 covers other requirements).
+1. **Apply the statements to the Word file** (`srs/SRS_Industrial_Fault_Detection.docx`) in one pass, topic by topic, following `workflow.md`: decide, apply, export, commit, tag. One topic per commit, and never mix a renumbering with a new requirement. Only one person edits the Word file at a time, because Word cannot merge two people's edits. Requirement numbers in `v2-clear-statements.md` are provisional; fix the final numbers here and update every cross-reference (Section 5, Appendix D).
+2. **Fix the front page:** version 2.0, today's date and the seven group members as authors (done). No revision history, because the 1.x versions never reached the lecturer. Still to do: name a reviewer if one is wanted, and refresh the contents page, and Section 1.5 (it still says Section 5 covers other requirements).
 3. **Add the one-sentence demonstration note** to DC-006 and Section 5.
 4. **Run `./scripts/export-md.sh`** (needs pandoc) so the plain-text copy matches the Word file. Never edit the `.md` copy by hand.
 5. **Draw the five diagrams last,** once the wording is final: context, use-case, what the system keeps, processing flow from reading to alert, fault lifecycle with maintenance mode.
 6. **Run the 20-question checklist** (`review/general-questions-checklist.md`) and fill in the "After" column.
-7. **Tag** `v1.7` and hand in.
+7. **Tag** `v2.0` and hand in.
 
 ## Open items that remain
 

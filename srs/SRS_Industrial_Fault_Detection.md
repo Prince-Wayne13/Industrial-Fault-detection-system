@@ -4,23 +4,13 @@ for
 
 **Industrial Fault Detection System for Motors, Water Pumps, and Backup Power Supplies**
 
-**Version 1.7**
+**Version 2.0**
 
 Prepared by Group 3 BEEE
 
 Group members: Prince Msowoya, Zilpah Kalipa, Theresa Somanje, Opra Chikwangwala, Steven Nkhoma, Akuzike Mphande, Timothy Kaperenganya
 
 26-10-2026
-
-Revision History
-
-| **Version** | **Changes**                                                                                                                                                                                                                             | **Date / tag** |
-|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
-| 1.3         | The document as received, with margin notes. FR-1 to FR-13 and NFR-1 to NFR-14.                                                                                                                                                         | Tag v1.3       |
-| 1.4         | Added FR-14 to FR-27, DC-001 to DC-008 and PR-001 to PR-007. Margin notes resolved.                                                                                                                                                     | Tag v1.4       |
-| 1.5         | Non-functional requirements merged into Section 3.5. Sections 3.3 to 3.6 renamed.                                                                                                                                                       | Tag v1.5       |
-| 1.6         | Requirements renumbered in page order. New FR-6 (trend check). UC-2 rewritten.                                                                                                                                                          | Tag v1.6       |
-| 1.7         | Three roles. Alert and acknowledge rules. Limits can be changed. Security rules. One reading per second and storage rules. Status update every 10 seconds with a critical alert within 2 seconds. Flask and React. Group members added. | 26-10-2026     |
 
 # **Table of Contents**
 

@@ -2,7 +2,7 @@
 
 The requirements document for a system that watches motors, water pumps and backup power supplies, using simulated sensor data, and raises alerts when something goes wrong. A group course project (BEEE). The document goes to a client and a lecturer.
 
-**Current version:** v1.7 (26 October 2026). It applies the decisions for examiner questions 1 to 8. What is still to do is in `docs/next-steps.md`.
+**Current version:** v2.0 (26 October 2026). This is the second version the lecturer sees; the earlier 1.x numbers were the team's own working versions. It applies the decisions for examiner questions 1 to 8. What is still to do is in `docs/next-steps.md`.
 
 ## Group members
 
@@ -20,7 +20,7 @@ Prince Msowoya, Zilpah Kalipa, Theresa Somanje, Opra Chikwangwala, Steven Nkhoma
 | `docs/glossary.md` | Plain meanings of the terms we use. |
 | `docs/workflow.md` | How we work in this repo, step by step. |
 | `docs/next-steps.md` | How we finish the SRS: the order of work, what is settled, what is left. |
-| `docs/v1.7-clear-statements.md` | The agreed wording for examiner questions 1 to 8, ready to go into the Word file. |
+| `docs/v2-clear-statements.md` | The agreed wording for examiner questions 1 to 8, ready to go into the Word file. |
 | `docs/review/` | The examiner questions, our eight, and a 20-question checklist to run before every hand-in. |
 | `docs/history/` | The team's two earlier drafts of the extra requirements. |
 | `docs/plans/` | The plan for the v1.4 changes. |
@@ -40,7 +40,7 @@ Older versions are not kept as separate files. Git keeps them. See the tags `v1.
 | NFR | Other qualities: accuracy, reliability, usability, upkeep, data retention | 3.5 |
 | AC | Acceptance criterion: how we check it | Section 5 |
 
-## Still to do in v1.7
+## Still to do in v2.0
 
 - The five diagrams are not drawn.
 - Open items O-4, O-5, O-7, O-9 and DD-02 need an owner and a date.

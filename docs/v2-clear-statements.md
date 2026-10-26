@@ -1,4 +1,4 @@
-# SRS v1.7: Clear Statements (Questions 1 to 8)
+# SRS v2.0: Clear Statements (Questions 1 to 8)
 
 Group: Prince Msowoya, Zilpah Kalipa, Theresa Somanje, Opra Chikwangwala, Steven Nkhoma, Akuzike Mphande, Timothy Kaperenganya.
 
@@ -8,7 +8,7 @@ Every statement here is also recorded in `requirement-decisions.md`. If the two 
 
 ---
 
-## Numbers used in the Word file (v1.7)
+## Numbers used in the Word file (v2.0)
 
 The Word file keeps the old numbers in page order and adds lettered requirements, so nothing was renumbered. Use these numbers, not the provisional ones below.
 
