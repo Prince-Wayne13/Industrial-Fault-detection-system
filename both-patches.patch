@@ -1,0 +1,3187 @@
+From 722f60db42bc0011c05151275fad9edffee944b1 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 26 Oct 2026 16:36:39 +0000
+Subject: [PATCH 1/2] Add demo control panel note, test method for all 70
+ requirements, tracker column
+
+---
+ design/09-demo-control-panel.md   | 134 ++++++++++++++++++++++++++++++
+ design/10-requirements-tracker.md |  10 +++
+ design/page-map.md                |   2 +-
+ design/requirements/FR-1.md       |   8 ++
+ design/requirements/FR-10.md      |   8 ++
+ design/requirements/FR-11.md      |   8 ++
+ design/requirements/FR-12.md      |   8 ++
+ design/requirements/FR-13.md      |   8 ++
+ design/requirements/FR-14.md      |   8 ++
+ design/requirements/FR-15.md      |   8 ++
+ design/requirements/FR-16.md      |   8 ++
+ design/requirements/FR-17.md      |   8 ++
+ design/requirements/FR-18.md      |   8 ++
+ design/requirements/FR-19.md      |   8 ++
+ design/requirements/FR-2.md       |   8 ++
+ design/requirements/FR-20.md      |   8 ++
+ design/requirements/FR-21.md      |   8 ++
+ design/requirements/FR-21a.md     |   8 ++
+ design/requirements/FR-22.md      |   8 ++
+ design/requirements/FR-23.md      |   8 ++
+ design/requirements/FR-23a.md     |   8 ++
+ design/requirements/FR-23b.md     |   8 ++
+ design/requirements/FR-23c.md     |   8 ++
+ design/requirements/FR-23d.md     |   8 ++
+ design/requirements/FR-24.md      |   8 ++
+ design/requirements/FR-25.md      |   8 ++
+ design/requirements/FR-26.md      |   8 ++
+ design/requirements/FR-27.md      |   8 ++
+ design/requirements/FR-28.md      |   8 ++
+ design/requirements/FR-28a.md     |   8 ++
+ design/requirements/FR-28b.md     |   8 ++
+ design/requirements/FR-28c.md     |   8 ++
+ design/requirements/FR-28d.md     |   8 ++
+ design/requirements/FR-28e.md     |   8 ++
+ design/requirements/FR-28f.md     |   8 ++
+ design/requirements/FR-3.md       |   8 ++
+ design/requirements/FR-3a.md      |   8 ++
+ design/requirements/FR-4.md       |   8 ++
+ design/requirements/FR-5.md       |   8 ++
+ design/requirements/FR-6.md       |   8 ++
+ design/requirements/FR-7.md       |   8 ++
+ design/requirements/FR-7a.md      |   8 ++
+ design/requirements/FR-7b.md      |   8 ++
+ design/requirements/FR-7c.md      |   8 ++
+ design/requirements/FR-8.md       |   8 ++
+ design/requirements/FR-8a.md      |   8 ++
+ design/requirements/FR-8b.md      |   8 ++
+ design/requirements/FR-9.md       |   8 ++
+ design/requirements/FR-9a.md      |   8 ++
+ design/requirements/FR-9b.md      |   8 ++
+ design/requirements/NFR-1.md      |   8 ++
+ design/requirements/NFR-10.md     |   8 ++
+ design/requirements/NFR-2.md      |   8 ++
+ design/requirements/NFR-5.md      |   8 ++
+ design/requirements/NFR-6.md      |   8 ++
+ design/requirements/NFR-7.md      |   8 ++
+ design/requirements/NFR-8.md      |   8 ++
+ design/requirements/NFR-9.md      |   8 ++
+ design/requirements/PR-001.md     |   8 ++
+ design/requirements/PR-001a.md    |   8 ++
+ design/requirements/PR-001b.md    |   8 ++
+ design/requirements/PR-002.md     |   8 ++
+ design/requirements/PR-003.md     |   8 ++
+ design/requirements/PR-004.md     |   8 ++
+ design/requirements/PR-005.md     |   8 ++
+ design/requirements/PR-006.md     |   8 ++
+ design/requirements/PR-007.md     |   8 ++
+ design/requirements/UC-1.md       |   7 ++
+ design/requirements/UC-2.md       |   7 ++
+ design/requirements/UC-3.md       |   7 ++
+ design/requirements/UC-4.md       |   7 ++
+ design/requirements/UC-5.md       |   7 ++
+ design/requirements/UC-6.md       |   7 ++
+ 73 files changed, 699 insertions(+), 1 deletion(-)
+ create mode 100644 design/09-demo-control-panel.md
+
+diff --git a/design/09-demo-control-panel.md b/design/09-demo-control-panel.md
+new file mode 100644
+index 0000000..0dfdff4
+--- /dev/null
++++ b/design/09-demo-control-panel.md
+@@ -0,0 +1,134 @@
++---
++title: Demo control panel
++page: 9
++status: draft
++srs-version: v2.0
++roles: [demonstration only]
++tags: [design, page, demo, industrial-fault-detection]
++---
++
++# 9. Demo control panel
++
++Back to [[page-map]]. Previous: [[08-admin]]. Next: [[10-requirements-tracker]].
++
++The page the team uses during the 5-minute presentation. It does one job: let the examiners see every requirement proven. Supports [[UC-4]], [[FR-11]] and [[FR-12]], and carries the injections for the rest. DC-006 says the demonstration is a dashboard plus fault injection.
++
++## The seed-data rule
++
++- Nothing on the panel is random. Every injection replays a **seeded scenario**: a fixed file of readings and timings. It gives the same result every time, which a 5-minute slot needs.
++- The seeded readings must still travel through the real Flask back end and out to the React dashboard. They must not be painted straight onto the screen. If they were, the timing requirements ([[PR-001]], [[PR-001a]], [[PR-002]]) would prove nothing.
++- The labelled seed set for [[NFR-1]] and [[NFR-2]] holds the true answer for each case, so the panel can score itself.
++
++## How each requirement is proven
++
++| Way | Meaning |
++| --- | --- |
++| Inject | Press a button on the panel and watch the result. |
++| Look | Check something on screen: a mark, a colour, a refusal. |
++| Inspect | Show it in the settings or the code. It cannot be triggered by a button. |
++
++Draft count over the 70 requirement notes: 34 inject, 30 look, 6 inspect. Each requirement note now has a `test` line and a "How it is tested" section. They are drafts for the team to review.
++
++## Layout
++
++```
+++--------------------------------------------------------------------+
++| DEMO CONTROL PANEL (demonstration only)        Demo clock 14:02:11 |
+++--------------------------------------------------------------------+
++| CONNECTION   (o) Near   ( ) Remote     [ Cut link ] [ Restore ]    |
+++--------------------------------------------------------------------+
++| FAULT INJECTION        Machine [ Motor 1 v ]  Parameter [ Temp v ] |
++|  [I-01 Blip] [I-02 Warning] [I-03 Critical] [I-04 Vibration]       |
++|  [I-05 Two at once] [I-06 Hold and repeat] [I-07 Silent sensor]    |
++|  [I-08 Bad reading] [I-09 Noise]                                   |
+++--------------------------------------------------------------------+
++| SYSTEM                                                             |
++|  [I-11 Delay alert] [I-12 Fill storage 75% | full | down]          |
++|  [I-13 Restart] [I-15 Load up] [I-16 5 viewers]                    |
++|  [I-14 Fast-forward: 15 min | 1 h | 24 h]                           |
+++--------------------------------------------------------------------+
++| SCORING   [I-17 Run labelled set]  Critical 96%   Vibration 88%    |
+++--------------------------------------------------------------------+
++| LIVE READOUTS (tag)                                                |
++|  Reading to screen   0.4 s   (PR-002)   Status every  10 s (PR-001)|
++|  Status to alert     0.8 s   (PR-001a)  Readings/s      42 (PR-005)|
++|  Generated 1,204  Stored 1,204  (NFR-6) Logging uptime 99% (NFR-5) |
++|  Time to monitoring 31 s     (PR-007)                              |
+++--------------------------------------------------------------------+
++| Open: [ Requirements tracker ]                                     |
+++--------------------------------------------------------------------+
++```
++
++- Every button carries its injection number, for example `I-03`, and the requirement tags it proves.
++- The live readouts exist so that Look requirements such as [[PR-001]] and [[PR-002]] show a number, not a claim.
++- The demo clock exists so that the 24-hour, 15-minute lockout and maintenance-overdue cases do not need real waiting.
++- Look requirements (passwords, roles, limits, history) need no button. The tracker tells the presenter where to look.
++
++## The injections (draft names)
++
++The detail of each injection, its seed file and its timing is to be agreed later. The table shows only what each one proves.
++
++| ID | Name | What it does | Proves |
++| --- | --- | --- | --- |
++| I-01 | One-off blip | One reading jumps out of range once, then goes back. | [[FR-6]] |
++| I-02 | Sustained warning | A parameter stays past its warning limit for longer than 10 seconds. | [[FR-4]], [[FR-5]], [[FR-6]], [[FR-23c]], [[FR-23d]] |
++| I-03 | Sustained critical | A parameter stays past its critical limit for longer than 10 seconds. | [[FR-5]], [[FR-7]], [[FR-7a]], [[FR-7b]], [[FR-7c]], [[FR-8]], [[FR-8a]], [[FR-8b]], [[FR-9]], [[FR-17]], [[FR-18]], [[PR-001a]], [[UC-2]], [[UC-6]] |
++| I-04 | Vibration fault | Vibration rises into a fault pattern. |  |
++| I-05 | Two at once | Two parameters on one machine go abnormal together. | [[FR-15]] |
++| I-06 | Hold and repeat | Keep a fault going while it is open, then return to normal and trigger it again. | [[FR-16]] |
++| I-07 | Sensor goes silent | One parameter stops sending for 3 seconds or more. | [[FR-13]] |
++| I-08 | Bad reading | Send a reading of the wrong type, a missing value, and an impossible value. | [[FR-14]], [[NFR-7]] |
++| I-09 | Noisy signal | Add noise to a stream of normal readings. | [[NFR-7]] |
++| I-10 | Cut and restore connection | Switch near or remote mode, cut the link, restore it. | [[FR-11]], [[FR-12]], [[NFR-6]], [[UC-4]] |
++| I-11 | Delay the alert | Hold an alert back by more than 2 seconds. | [[PR-001b]] |
++| I-12 | Fill storage | Push storage to 75%, then full, then unavailable. | [[FR-20]], [[FR-21a]], [[NFR-10]] |
++| I-13 | Restart the system | Stop and restart the back end, as a planned restart. | [[FR-21]], [[NFR-5]], [[PR-007]] |
++| I-14 | Fast-forward the clock | Jump the demo clock: 24 hours, past a maintenance time, past a lockout, past an idle time. | [[FR-9b]], [[FR-19]], [[FR-26]], [[FR-28d]], [[NFR-10]] |
++| I-15 | Load up | Add machines and extra parameters up to 10 machines and beyond. | [[PR-003]], [[PR-005]] |
++| I-16 | Extra viewers | Open 5 dashboard sessions at the same time. | [[PR-004]] |
++| I-17 | Run the labelled test set | Replay the labelled seeded set and show the percentage found. | [[NFR-1]], [[NFR-2]] |
++
++## Requirements with no injection
++
++These are proven by looking or by inspecting. The tracker lists them with the same lines.
++
++| Requirement | Way | Check |
++| --- | --- | --- |
++| [[FR-1]] | look | Overview shows temperature, current, vibration and RPM on each motor card. |
++| [[FR-2]] | look | Overview shows bearing temperature, current, vibration and RPM on each pump card. |
++| [[FR-3]] | look | Overview shows internal temperature, current and fan speed on each UPS card. |
++| [[FR-3a]] | look | The panel's reading counter shows 1 reading per second per parameter. |
++| [[FR-9a]] | inspect | Show the stored status and time stamp for each 10-second window in the Storage tab. |
++| [[FR-10]] | look | Open the history on a machine page. Generate a report as Operator or Engineer. |
++| [[FR-22]] | look | Make a user, machine and limit change. The Change log tab shows who and when. |
++| [[FR-23]] | look | Change a limit in Settings. The change log keeps the old value and the date. |
++| [[FR-23a]] | look | Change a limit as an Engineer from Settings. No restart. |
++| [[FR-23b]] | look | Try a warning limit at or above the critical limit. It is refused. |
++| [[FR-24]] | look | Overview shows several motors as separate cards, each with its own status and history. |
++| [[FR-25]] | inspect | Show the single time source in the code and that panel timestamps agree across components. |
++| [[FR-27]] | look | Sign in as Operator and as Engineer and try the Admin page. It is refused. The Engineer can still change limits. |
++| [[FR-28]] | look | Open any page while signed out. It sends you to sign in. |
++| [[FR-28a]] | look | Try a 14-character password (refused) and a 64-character one (accepted). |
++| [[FR-28b]] | look | Set a password with no capitals, numbers or symbols. It is accepted. No change is forced. |
++| [[FR-28c]] | look | Try a password from the common list. It is refused. |
++| [[FR-28e]] | inspect | Show the HTTPS connection and the TLS version in the browser. |
++| [[FR-28f]] | inspect | Show the user table: only salted hashes, no readable passwords. |
++| [[NFR-8]] | look | All machines are visible on the Overview on one laptop screen. |
++| [[NFR-9]] | inspect | Show the code: monitoring logic for one machine type or parameter lives in its own module. |
++| [[PR-001]] | look | The panel shows the time between status updates. It stays at 10 seconds or less. |
++| [[PR-002]] | look | The panel shows the time from reading received to reading on screen. 2 seconds or less. |
++| [[PR-006]] | inspect | Show the storage size and the sum: 10 x 4 x 86,400 = 3,456,000 readings a day. |
++| [[UC-1]] | look | Sign in and open the Overview. Pick a machine. |
++| [[UC-3]] | look | Pick a machine, choose a period, view the graph and the report. |
++| [[UC-5]] | look | As Administrator, add, change and remove a user and a machine. |
++
++## Who sees this page
++
++Demonstration only. It is not a product page and has no requirement of its own. It is not part of the role table. It opens from the tracker or by its own address.
++
++## Open
++
++- Whether the presenter runs the injections by hand or one button runs a scripted 5-minute sequence. Not decided.
++- The agreed injection details: seed files, exact limits and timings.
++- Whether I-15 really adds machines or replays a seeded load.
++- FR-25 (one time source) and FR-28e (HTTPS) need the demo to run over HTTPS. Check that the demo laptop setup allows it.
+diff --git a/design/10-requirements-tracker.md b/design/10-requirements-tracker.md
+index 85ba601..5ba8b3e 100644
+--- a/design/10-requirements-tracker.md
++++ b/design/10-requirements-tracker.md
+@@ -12,6 +12,16 @@ Back to [[page-map]].
+ 
+ Every requirement has its own note in the `requirements` folder. Set `status` in each note to **built**, **simulated** or **left-out**. This table fills itself from those notes. It needs the Dataview plugin (Settings, Community plugins, search "Dataview").
+ 
++## How each requirement is tested
++
++Each note has a `test` line: **inject**, **look** or **inspect**. See [[09-demo-control-panel]].
++
++```dataview
++TABLE status, test, injections
++FROM #requirement
++SORT file.name ASC
++```
++
+ ## What is still not set
+ 
+ ```dataview
+diff --git a/design/page-map.md b/design/page-map.md
+index 61b0d16..53d9cff 100644
+--- a/design/page-map.md
++++ b/design/page-map.md
+@@ -80,4 +80,4 @@ FR-4, FR-5, FR-6, FR-20, FR-21, FR-25.
+ - Decisions that change the SRS are collected in [[srs-changes]].
+ 
+ - Does the Administrator also need to see the Overview page? Not included for now.
+-- Page notes `01` to `10` are not written yet. Each one will hold the screen layout and the use case steps it supports.
++- Page notes 01 to 03, 07 to 11 are written. Pages 4, 5 and 6 are merged, so they have no note.
+diff --git a/design/requirements/FR-1.md b/design/requirements/FR-1.md
+index 1fd6fd5..dce2c9a 100644
+--- a/design/requirements/FR-1.md
++++ b/design/requirements/FR-1.md
+@@ -2,6 +2,8 @@
+ title: FR-1
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall monitor motor operating conditions, including temperature, current, vibration, and rotational speed (RPM).
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Overview shows temperature, current, vibration and RPM on each motor card.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-10.md b/design/requirements/FR-10.md
+index 7327b37..9f31771 100644
+--- a/design/requirements/FR-10.md
++++ b/design/requirements/FR-10.md
+@@ -2,6 +2,8 @@
+ title: FR-10
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ All users shall be able to view fault history. Operators and Engineers shall be able to generate reports from fault history showing equipment performance and recurring faults.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Open the history on a machine page. Generate a report as Operator or Engineer.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-11.md b/design/requirements/FR-11.md
+index 127435f..6828439 100644
+--- a/design/requirements/FR-11.md
++++ b/design/requirements/FR-11.md
+@@ -2,6 +2,8 @@
+ title: FR-11
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-10]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall support both a near-range and a remote-range connection mode for accessing equipment data from the dashboard. The final demonstration shall provide a selectable simulated mode for each connection type.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
++- **Check:** Switch between near and remote mode on the panel. The dashboard keeps working in each.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-12.md b/design/requirements/FR-12.md
+index e38ebe5..e270d2a 100644
+--- a/design/requirements/FR-12.md
++++ b/design/requirements/FR-12.md
+@@ -2,6 +2,8 @@
+ title: FR-12
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-10]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall continue collecting, evaluating, and displaying locally available equipment status if the connection between system components is temporarily interrupted, and shall store any data collected during the interruption for transmission once the connection is restored.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
++- **Check:** Cut the link. The dashboard keeps showing local status. Restore it and the stored data arrives.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-13.md b/design/requirements/FR-13.md
+index 995cd4a..9aadfbf 100644
+--- a/design/requirements/FR-13.md
++++ b/design/requirements/FR-13.md
+@@ -2,6 +2,8 @@
+ title: FR-13
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-07]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ If no reading arrives for a parameter for 3 seconds, the system shall flag that parameter as having a sensor fault and display this on the dashboard, instead of continuing to show the last known reading as current.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-07]] Sensor goes silent
++- **Check:** Silence one parameter for 3 seconds. Its number is replaced by the "sensor fault" mark.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-14.md b/design/requirements/FR-14.md
+index 21c63be..157eff7 100644
+--- a/design/requirements/FR-14.md
++++ b/design/requirements/FR-14.md
+@@ -2,6 +2,8 @@
+ title: FR-14
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-08]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ If an incoming reading is of the wrong type, missing, or outside any physically possible range, the system shall reject that specific reading, log it as invalid, and continue operating normally.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-08]] Bad reading
++- **Check:** Send the three bad readings. Each is rejected, logged as invalid, and the system carries on.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-15.md b/design/requirements/FR-15.md
+index 87391a9..cd48f14 100644
+--- a/design/requirements/FR-15.md
++++ b/design/requirements/FR-15.md
+@@ -2,6 +2,8 @@
+ title: FR-15
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-05]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ If two or more parameters on the same equipment become abnormal at the same time, the system shall raise a separate fault record for each affected parameter rather than combining them into a single alert.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-05]] Two at once
++- **Check:** Run I-05. Two separate fault records appear.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-16.md b/design/requirements/FR-16.md
+index 1833510..ace53e1 100644
+--- a/design/requirements/FR-16.md
++++ b/design/requirements/FR-16.md
+@@ -2,6 +2,8 @@
+ title: FR-16
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-06]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall not raise a duplicate alert for a fault condition that is already open and unacknowledged; it shall only raise a new alert once the condition has returned to normal and then reoccurs.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-06]] Hold and repeat
++- **Check:** Hold the fault: no second alert. Clear it and trigger it again: a new alert.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-17.md b/design/requirements/FR-17.md
+index 3b15c02..4cc6de8 100644
+--- a/design/requirements/FR-17.md
++++ b/design/requirements/FR-17.md
+@@ -2,6 +2,8 @@
+ title: FR-17
+ kind: FR
+ status: not-set
++test: look
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall support a fault lifecycle of at least: open → acknowledged → resolved. An Engineer shall be able to mark an acknowledged fault as resolved, and the system shall record when this happens.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Acknowledge, then resolve as an Engineer. The resolve time is recorded.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-18.md b/design/requirements/FR-18.md
+index 99f2a48..e303cf0 100644
+--- a/design/requirements/FR-18.md
++++ b/design/requirements/FR-18.md
+@@ -2,6 +2,8 @@
+ title: FR-18
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ An Engineer shall be able to place a piece of equipment into maintenance mode for a stated duration, during which the system continues recording sensor readings but suspends new fault alerts for that equipment.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Put a machine in maintenance mode, then run I-03 on it. Readings keep coming, no new alert.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-19.md b/design/requirements/FR-19.md
+index 86c831a..c1685b3 100644
+--- a/design/requirements/FR-19.md
++++ b/design/requirements/FR-19.md
+@@ -2,6 +2,8 @@
+ title: FR-19
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-14]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ If a piece of equipment remains in maintenance mode beyond its stated duration, the system shall flag this as overdue on the dashboard.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Check:** Fast-forward past the stated maintenance time. The "Overdue" mark appears.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-2.md b/design/requirements/FR-2.md
+index 75ac241..f3198b8 100644
+--- a/design/requirements/FR-2.md
++++ b/design/requirements/FR-2.md
+@@ -2,6 +2,8 @@
+ title: FR-2
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall monitor water pump operating conditions, including bearing temperature, current draw, vibration, and rotational speed (RPM).
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Overview shows bearing temperature, current, vibration and RPM on each pump card.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-20.md b/design/requirements/FR-20.md
+index 31ff4de..d0b5ada 100644
+--- a/design/requirements/FR-20.md
++++ b/design/requirements/FR-20.md
+@@ -2,6 +2,8 @@
+ title: FR-20
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-12]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ If the data storage component becomes unavailable or full, the system shall retain new readings in temporary local storage and shall not crash or silently discard data without logging the event.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-12]] Fill storage
++- **Check:** Make storage unavailable or full. New readings are kept locally and the event is logged.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-21.md b/design/requirements/FR-21.md
+index 689bc4c..eb5a296 100644
+--- a/design/requirements/FR-21.md
++++ b/design/requirements/FR-21.md
+@@ -2,6 +2,8 @@
+ title: FR-21
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-13]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ On restart after a shutdown or crash, the system shall resume monitoring using the last known configuration and shall not treat equipment status as unknown once fresh readings are received.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-13]] Restart the system
++- **Check:** Restart the system. It resumes with the last configuration and shows status once fresh readings arrive.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-21a.md b/design/requirements/FR-21a.md
+index 0ec04f4..79c9a5f 100644
+--- a/design/requirements/FR-21a.md
++++ b/design/requirements/FR-21a.md
+@@ -2,6 +2,8 @@
+ title: FR-21a
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-12]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ When storage use reaches 75%, the system shall send an alert to the Administrator only. The Administrator manages storage.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-12]] Fill storage
++- **Check:** Push storage to 75% while signed in as the Administrator. Only the Administrator's bell shows the alert.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-22.md b/design/requirements/FR-22.md
+index 1071fd3..62647e3 100644
+--- a/design/requirements/FR-22.md
++++ b/design/requirements/FR-22.md
+@@ -2,6 +2,8 @@
+ title: FR-22
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall keep a log of administrative actions (user account changes, equipment registration, threshold/configuration changes), recording who made the change and when.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Make a user, machine and limit change. The Change log tab shows who and when.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-23.md b/design/requirements/FR-23.md
+index 6cde8e1..1aafe53 100644
+--- a/design/requirements/FR-23.md
++++ b/design/requirements/FR-23.md
+@@ -2,6 +2,8 @@
+ title: FR-23
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ If an operating threshold (normal/warning/critical limit) is changed, the system shall retain the previous value and the date of change, rather than overwriting it silently.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Change a limit in Settings. The change log keeps the old value and the date.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-23a.md b/design/requirements/FR-23a.md
+index ef9c209..64f1403 100644
+--- a/design/requirements/FR-23a.md
++++ b/design/requirements/FR-23a.md
+@@ -2,6 +2,8 @@
+ title: FR-23a
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ An Engineer shall be able to change the warning limit and the critical limit for any parameter of any equipment type, from the dashboard, without restarting or rebuilding the system.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Change a limit as an Engineer from Settings. No restart.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-23b.md b/design/requirements/FR-23b.md
+index 42a8d9c..40aed8b 100644
+--- a/design/requirements/FR-23b.md
++++ b/design/requirements/FR-23b.md
+@@ -2,6 +2,8 @@
+ title: FR-23b
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall reject a new limit if the warning limit is not below the critical limit.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Try a warning limit at or above the critical limit. It is refused.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-23c.md b/design/requirements/FR-23c.md
+index 682d209..c5a8dc3 100644
+--- a/design/requirements/FR-23c.md
++++ b/design/requirements/FR-23c.md
+@@ -2,6 +2,8 @@
+ title: FR-23c
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-02]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ A changed limit shall apply to readings received after the change.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning
++- **Check:** Change a limit, then replay I-02. The new limit applies to the new readings only.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-23d.md b/design/requirements/FR-23d.md
+index d206675..b153423 100644
+--- a/design/requirements/FR-23d.md
++++ b/design/requirements/FR-23d.md
+@@ -2,6 +2,8 @@
+ title: FR-23d
+ kind: FR
+ status: not-set
++test: look
++injections: [I-02]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ Each fault record shall store the limit that was in force when the fault was raised.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning
++- **Check:** Open the fault record raised after a limit change. It shows the limit in force at that time.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-24.md b/design/requirements/FR-24.md
+index 05cff43..8e6b93a 100644
+--- a/design/requirements/FR-24.md
++++ b/design/requirements/FR-24.md
+@@ -2,6 +2,8 @@
+ title: FR-24
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall support monitoring more than one piece of equipment within the same category (e.g. multiple motors) as separately identifiable units, each with its own status and fault history.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Overview shows several motors as separate cards, each with its own status and history.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-25.md b/design/requirements/FR-25.md
+index b633d1c..2ebe597 100644
+--- a/design/requirements/FR-25.md
++++ b/design/requirements/FR-25.md
+@@ -2,6 +2,8 @@
+ title: FR-25
+ kind: FR
+ status: not-set
++test: inspect
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ All system components shall use a synchronized time source, so that fault timestamps and response-time measurements (see Section 3.3, Performance Requirements) are consistent across the system.
+ 
++## How it is tested
++
++- **Method:** inspect (draft)
++- **Injection:** none
++- **Check:** Show the single time source in the code and that panel timestamps agree across components.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-26.md b/design/requirements/FR-26.md
+index dbc4a96..201653e 100644
+--- a/design/requirements/FR-26.md
++++ b/design/requirements/FR-26.md
+@@ -2,6 +2,8 @@
+ title: FR-26
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-14]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ A user session shall expire after 5 minutes of inactivity, requiring re-authentication before further access. A user may set a shorter time, but not shorter than 1 minute and not longer than 5 minutes.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Check:** Set a 1-minute time-out in Settings, try 0 and 6 (refused), then fast-forward the idle clock. The session ends.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-27.md b/design/requirements/FR-27.md
+index f79eba5..7c20155 100644
+--- a/design/requirements/FR-27.md
++++ b/design/requirements/FR-27.md
+@@ -2,6 +2,8 @@
+ title: FR-27
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall restrict configuration, user-account management, and equipment-registration functions to users in the Administrator role.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Sign in as Operator and as Engineer and try the Admin page. It is refused. The Engineer can still change limits.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-28.md b/design/requirements/FR-28.md
+index 1cdf230..51acc30 100644
+--- a/design/requirements/FR-28.md
++++ b/design/requirements/FR-28.md
+@@ -2,6 +2,8 @@
+ title: FR-28
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall require authentication before allowing access to any monitoring or administrative function.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Open any page while signed out. It sends you to sign in.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-28a.md b/design/requirements/FR-28a.md
+index eaeebed..7919503 100644
+--- a/design/requirements/FR-28a.md
++++ b/design/requirements/FR-28a.md
+@@ -2,6 +2,8 @@
+ title: FR-28a
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ Passwords shall be at least 15 characters long, and the system shall accept passwords of 64 characters or more.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Try a 14-character password (refused) and a 64-character one (accepted).
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-28b.md b/design/requirements/FR-28b.md
+index 7e8b567..f81a3d8 100644
+--- a/design/requirements/FR-28b.md
++++ b/design/requirements/FR-28b.md
+@@ -2,6 +2,8 @@
+ title: FR-28b
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall not require a mix of capitals, numbers or symbols in a password, and shall not force password changes on a schedule.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Set a password with no capitals, numbers or symbols. It is accepted. No change is forced.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-28c.md b/design/requirements/FR-28c.md
+index e066633..46aa62c 100644
+--- a/design/requirements/FR-28c.md
++++ b/design/requirements/FR-28c.md
+@@ -2,6 +2,8 @@
+ title: FR-28c
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall refuse passwords that appear on a list of common or leaked passwords.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Try a password from the common list. It is refused.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-28d.md b/design/requirements/FR-28d.md
+index 0b8f61b..d6dbe50 100644
+--- a/design/requirements/FR-28d.md
++++ b/design/requirements/FR-28d.md
+@@ -2,6 +2,8 @@
+ title: FR-28d
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-14]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ After 5 failed login attempts on an account, the system should block login to that account for 15 minutes.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Check:** Fail 5 logins. The account is blocked. Fast-forward 15 minutes and it opens again.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-28e.md b/design/requirements/FR-28e.md
+index ab7679a..53adcca 100644
+--- a/design/requirements/FR-28e.md
++++ b/design/requirements/FR-28e.md
+@@ -2,6 +2,8 @@
+ title: FR-28e
+ kind: FR
+ status: not-set
++test: inspect
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ All communication between the dashboard and the server shall use HTTPS (TLS 1.2 or newer).
+ 
++## How it is tested
++
++- **Method:** inspect (draft)
++- **Injection:** none
++- **Check:** Show the HTTPS connection and the TLS version in the browser.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-28f.md b/design/requirements/FR-28f.md
+index 47c80f1..b7a4bc8 100644
+--- a/design/requirements/FR-28f.md
++++ b/design/requirements/FR-28f.md
+@@ -2,6 +2,8 @@
+ title: FR-28f
+ kind: FR
+ status: not-set
++test: inspect
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall store passwords only in a salted, hashed form that cannot be read back.
+ 
++## How it is tested
++
++- **Method:** inspect (draft)
++- **Injection:** none
++- **Check:** Show the user table: only salted hashes, no readable passwords.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-3.md b/design/requirements/FR-3.md
+index a9f286f..31823c9 100644
+--- a/design/requirements/FR-3.md
++++ b/design/requirements/FR-3.md
+@@ -2,6 +2,8 @@
+ title: FR-3
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall monitor backup power supply/UPS operating conditions, including internal temperature, charging/output current, and cooling fan speed.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Overview shows internal temperature, current and fan speed on each UPS card.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-3a.md b/design/requirements/FR-3a.md
+index 39d04b7..ae406c9 100644
+--- a/design/requirements/FR-3a.md
++++ b/design/requirements/FR-3a.md
+@@ -2,6 +2,8 @@
+ title: FR-3a
+ kind: FR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall take one reading per second for every monitored parameter on every machine.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** The panel's reading counter shows 1 reading per second per parameter.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-4.md b/design/requirements/FR-4.md
+index 7f98b15..1bf6bfd 100644
+--- a/design/requirements/FR-4.md
++++ b/design/requirements/FR-4.md
+@@ -2,6 +2,8 @@
+ title: FR-4
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-02]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall compare incoming measurements against the defined operating limits for the corresponding equipment and parameter and flag measurements or patterns that exceed those limits.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning
++- **Check:** Run I-02. The reading is flagged once it passes the limit.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-5.md b/design/requirements/FR-5.md
+index 84c0cc5..b49f315 100644
+--- a/design/requirements/FR-5.md
++++ b/design/requirements/FR-5.md
+@@ -2,6 +2,8 @@
+ title: FR-5
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-02, I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ For conditions flagged by FR-4, the system shall classify the condition as normal, warning, or critical using the defined fault-classification method and identify the affected equipment and parameter. Where the limits define only one abnormal level, the system shall classify the condition as normal or abnormal.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning, [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Run I-02 for warning and I-03 for critical. The card shows the status, machine and parameter. Repeat on a machine with one abnormal level.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-6.md b/design/requirements/FR-6.md
+index be71578..5da7c43 100644
+--- a/design/requirements/FR-6.md
++++ b/design/requirements/FR-6.md
+@@ -2,6 +2,8 @@
+ title: FR-6
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-01, I-02]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ A condition flagged by FR-4 shall not be classified as a fault under FR-5 based on a single abnormal reading alone. The system shall first check whether the abnormal condition holds across the readings of the latest 10-second window for that parameter; only if it does shall FR-5 classification and the FR-7 alert proceed. A single abnormal reading that does not repeat is not treated as a fault, and the dashboard's live reading (see NFR-8) is unaffected either way.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-01]] One-off blip, [[09-demo-control-panel|I-02]] Sustained warning
++- **Check:** Run I-01: no fault, no alert, the live number still moves. Then run I-02: the fault is raised only after the window.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-7.md b/design/requirements/FR-7.md
+index 5e2fe53..45d1071 100644
+--- a/design/requirements/FR-7.md
++++ b/design/requirements/FR-7.md
+@@ -2,6 +2,8 @@
+ title: FR-7
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ When the status model confirms a fault, the system shall show a pop-up alert to every connected Operator and Engineer, whether near-range or remote.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Run I-03 with an Operator and an Engineer signed in on two screens. Both get the pop-up.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-7a.md b/design/requirements/FR-7a.md
+index 0c04396..323ee93 100644
+--- a/design/requirements/FR-7a.md
++++ b/design/requirements/FR-7a.md
+@@ -2,6 +2,8 @@
+ title: FR-7a
+ kind: FR
+ status: not-set
++test: look
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The pop-up shall show the equipment, the parameter, the fault type, the severity and the time.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Read the pop-up from I-03: equipment, parameter, fault type, severity, time.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-7b.md b/design/requirements/FR-7b.md
+index 5e6ca77..290507a 100644
+--- a/design/requirements/FR-7b.md
++++ b/design/requirements/FR-7b.md
+@@ -2,6 +2,8 @@
+ title: FR-7b
+ kind: FR
+ status: not-set
++test: look
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall not send fault alerts to the Administrator.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Keep an Administrator signed in during I-03. No pop-up reaches them.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-7c.md b/design/requirements/FR-7c.md
+index 92675d0..990d409 100644
+--- a/design/requirements/FR-7c.md
++++ b/design/requirements/FR-7c.md
+@@ -2,6 +2,8 @@
+ title: FR-7c
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ If no Operator or Engineer is connected, the fault shall stay open and be shown to the next Operator or Engineer who connects.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Run I-03 with nobody signed in as Operator or Engineer. Sign in afterwards: the open fault is shown.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-8.md b/design/requirements/FR-8.md
+index 0e12b71..f75ac71 100644
+--- a/design/requirements/FR-8.md
++++ b/design/requirements/FR-8.md
+@@ -2,6 +2,8 @@
+ title: FR-8
+ kind: FR
+ status: not-set
++test: look
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ An Operator or Engineer shall be able to acknowledge an open fault from its alert.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Acknowledge the I-03 pop-up as an Operator.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-8a.md b/design/requirements/FR-8a.md
+index f3c0b07..e5ef885 100644
+--- a/design/requirements/FR-8a.md
++++ b/design/requirements/FR-8a.md
+@@ -2,6 +2,8 @@
+ title: FR-8a
+ kind: FR
+ status: not-set
++test: look
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ When a fault is acknowledged, the system shall record which user did it and when.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** After acknowledging, the fault record shows who and when.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-8b.md b/design/requirements/FR-8b.md
+index 5072dd9..1ea6c1d 100644
+--- a/design/requirements/FR-8b.md
++++ b/design/requirements/FR-8b.md
+@@ -2,6 +2,8 @@
+ title: FR-8b
+ kind: FR
+ status: not-set
++test: look
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ Acknowledging shall not close the fault. It stays open until an Engineer marks it resolved (FR-17).
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** After acknowledging, the fault is still open.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-9.md b/design/requirements/FR-9.md
+index 53c06af..0d183c7 100644
+--- a/design/requirements/FR-9.md
++++ b/design/requirements/FR-9.md
+@@ -2,6 +2,8 @@
+ title: FR-9
+ kind: FR
+ status: not-set
++test: look
++injections: [I-03]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The system shall record detected faults and sensor readings for later retrieval.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Machine page history shows the fault and the readings after I-03.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-9a.md b/design/requirements/FR-9a.md
+index 08b6e23..62107fe 100644
+--- a/design/requirements/FR-9a.md
++++ b/design/requirements/FR-9a.md
+@@ -2,6 +2,8 @@
+ title: FR-9a
+ kind: FR
+ status: not-set
++test: inspect
++injections: []
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ For every 10-second window, the system shall store the status and its time stamp.
+ 
++## How it is tested
++
++- **Method:** inspect (draft)
++- **Injection:** none
++- **Check:** Show the stored status and time stamp for each 10-second window in the Storage tab.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/FR-9b.md b/design/requirements/FR-9b.md
+index 08f569f..2b19754 100644
+--- a/design/requirements/FR-9b.md
++++ b/design/requirements/FR-9b.md
+@@ -2,6 +2,8 @@
+ title: FR-9b
+ kind: FR
+ status: not-set
++test: inject
++injections: [I-14]
+ tags: [requirement, FR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, FR]
+ 
+ The readings of a normal window shall be deleted after 24 hours. The readings of a warning or critical window shall be kept with their status.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Check:** Fast-forward 24 hours. Normal readings are gone; warning and critical readings are still there.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/NFR-1.md b/design/requirements/NFR-1.md
+index d9e8cd4..42e9abc 100644
+--- a/design/requirements/NFR-1.md
++++ b/design/requirements/NFR-1.md
+@@ -2,6 +2,8 @@
+ title: NFR-1
+ kind: NFR
+ status: not-set
++test: inject
++injections: [I-17]
+ tags: [requirement, NFR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, NFR]
+ 
+ The system shall correctly identify at least 95% of critical faults (temperature and current problems), measured on the labelled simulated test set described in Appendix D.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-17]] Run the labelled test set
++- **Check:** Run the labelled set. The panel shows the percentage of critical faults found. Target 95%.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/NFR-10.md b/design/requirements/NFR-10.md
+index 6c4063b..5f3be8d 100644
+--- a/design/requirements/NFR-10.md
++++ b/design/requirements/NFR-10.md
+@@ -2,6 +2,8 @@
+ title: NFR-10
+ kind: NFR
+ status: not-set
++test: inject
++injections: [I-12, I-14]
+ tags: [requirement, NFR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, NFR]
+ 
+ The system shall keep statuses and warning or critical records until storage use reaches 75%, and shall never delete them automatically. The readings of normal windows are deleted after 24 hours (FR-9b).
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-12]] Fill storage, [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Check:** Fast-forward 24 hours: normal readings go, statuses and warning or critical records stay. Fill storage to 75%: still nothing deleted by the system.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/NFR-2.md b/design/requirements/NFR-2.md
+index a4d2143..810f6a5 100644
+--- a/design/requirements/NFR-2.md
++++ b/design/requirements/NFR-2.md
+@@ -2,6 +2,8 @@
+ title: NFR-2
+ kind: NFR
+ status: not-set
++test: inject
++injections: [I-17]
+ tags: [requirement, NFR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, NFR]
+ 
+ The system shall correctly identify at least 85% of vibration-based faults, measured on the same labelled simulated test set described in Appendix D.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-17]] Run the labelled test set
++- **Check:** Run the labelled set. The panel shows the percentage of vibration faults found. Target 85%.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/NFR-5.md b/design/requirements/NFR-5.md
+index 04ee060..cf6fe2a 100644
+--- a/design/requirements/NFR-5.md
++++ b/design/requirements/NFR-5.md
+@@ -2,6 +2,8 @@
+ title: NFR-5
+ kind: NFR
+ status: not-set
++test: look
++injections: [I-13]
+ tags: [requirement, NFR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, NFR]
+ 
+ The system shall keep a record of its own uptime during each test session. During the demonstration, the data-logging function shall be running for at least 95% of the session, not counting planned restarts that the team carries out on purpose (for example, to reload configuration).
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** [[09-demo-control-panel|I-13]] Restart the system
++- **Check:** The panel shows logging uptime for the session. A planned restart (I-13) is not counted.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/NFR-6.md b/design/requirements/NFR-6.md
+index fc87d51..55d133c 100644
+--- a/design/requirements/NFR-6.md
++++ b/design/requirements/NFR-6.md
+@@ -2,6 +2,8 @@
+ title: NFR-6
+ kind: NFR
+ status: not-set
++test: inject
++injections: [I-10]
+ tags: [requirement, NFR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, NFR]
+ 
+ The system shall store at least 99% of the sensor readings its data source generates, including during a connection interruption. The local store records the same readings at the same time as the main store, and the same keep and delete rules apply to both.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
++- **Check:** Cut and restore the link. The panel compares readings generated with readings stored. Target 99%.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/NFR-7.md b/design/requirements/NFR-7.md
+index 57c1e8b..6b463b8 100644
+--- a/design/requirements/NFR-7.md
++++ b/design/requirements/NFR-7.md
+@@ -2,6 +2,8 @@
+ title: NFR-7
+ kind: NFR
+ status: not-set
++test: inject
++injections: [I-08, I-09]
+ tags: [requirement, NFR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, NFR]
+ 
+ The system shall keep producing valid, uncorrupted readings when the input data is noisy or degraded, or shall identify and discard any reading it cannot validate rather than passing it on or acting on it.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-08]] Bad reading, [[09-demo-control-panel|I-09]] Noisy signal
++- **Check:** Run I-09 and I-08. Valid readings stay valid, unusable readings are discarded.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/NFR-8.md b/design/requirements/NFR-8.md
+index 9667f0d..167c71f 100644
+--- a/design/requirements/NFR-8.md
++++ b/design/requirements/NFR-8.md
+@@ -2,6 +2,8 @@
+ title: NFR-8
+ kind: NFR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, NFR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, NFR]
+ 
+ A user shall be able to see the current status of every piece of monitored equipment from the main dashboard on a single laptop screen, without having to open a second window.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** All machines are visible on the Overview on one laptop screen.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/NFR-9.md b/design/requirements/NFR-9.md
+index 602324e..90a78e9 100644
+--- a/design/requirements/NFR-9.md
++++ b/design/requirements/NFR-9.md
+@@ -2,6 +2,8 @@
+ title: NFR-9
+ kind: NFR
+ status: not-set
++test: inspect
++injections: []
+ tags: [requirement, NFR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, NFR]
+ 
+ The system shall be built so that the monitoring logic for one equipment type or one parameter can be changed on its own, without needing changes to unrelated parts of the system.
+ 
++## How it is tested
++
++- **Method:** inspect (draft)
++- **Injection:** none
++- **Check:** Show the code: monitoring logic for one machine type or parameter lives in its own module.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-001.md b/design/requirements/PR-001.md
+index a0952e9..70361f1 100644
+--- a/design/requirements/PR-001.md
++++ b/design/requirements/PR-001.md
+@@ -2,6 +2,8 @@
+ title: PR-001
+ kind: PR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ The system shall update the status of each machine at least every 10 seconds.
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** The panel shows the time between status updates. It stays at 10 seconds or less.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-001a.md b/design/requirements/PR-001a.md
+index 1d2ec5a..3085277 100644
+--- a/design/requirements/PR-001a.md
++++ b/design/requirements/PR-001a.md
+@@ -2,6 +2,8 @@
+ title: PR-001a
+ kind: PR
+ status: not-set
++test: inject
++injections: [I-03]
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ When the status is critical, the system shall show the alert immediately after the status confirms it, and no later than 2 seconds afterwards. A single abnormal reading never raises an alert (FR-6).
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Run I-03. The panel shows the time from status confirmed to alert shown. 2 seconds or less.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-001b.md b/design/requirements/PR-001b.md
+index bcd5a72..224f875 100644
+--- a/design/requirements/PR-001b.md
++++ b/design/requirements/PR-001b.md
+@@ -2,6 +2,8 @@
+ title: PR-001b
+ kind: PR
+ status: not-set
++test: inject
++injections: [I-11]
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ If an alert is shown more than 2 seconds after its status confirms the fault, the system shall still show the alert, write the delay to the log, and show an "alerts delayed" notice on the dashboard.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-11]] Delay the alert
++- **Check:** Hold the alert back. It still appears, the delay is logged, and the "alerts delayed" notice shows.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-002.md b/design/requirements/PR-002.md
+index b98515d..fd81b1a 100644
+--- a/design/requirements/PR-002.md
++++ b/design/requirements/PR-002.md
+@@ -2,6 +2,8 @@
+ title: PR-002
+ kind: PR
+ status: not-set
++test: look
++injections: []
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ The dashboard shall show a newly received sensor reading within 2 seconds. The 2 seconds is counted from the moment the processing component receives the reading to the moment it appears on the dashboard, and applies to displaying the reading itself; it does not include the FR-6 trend check that decides whether a warning or critical alert is raised (see PR-001).
+ 
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** The panel shows the time from reading received to reading on screen. 2 seconds or less.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-003.md b/design/requirements/PR-003.md
+index 1e14aeb..ae798f4 100644
+--- a/design/requirements/PR-003.md
++++ b/design/requirements/PR-003.md
+@@ -2,6 +2,8 @@
+ title: PR-003
+ kind: PR
+ status: not-set
++test: inject
++injections: [I-15]
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ The system shall support at least 10 pieces of equipment monitored at the same time, across any combination of motors, water pumps, and backup power supplies, without breaching PR-001 or PR-002.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-15]] Load up
++- **Check:** Add machines up to 10 and beyond. PR-001 and PR-002 hold.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-004.md b/design/requirements/PR-004.md
+index f066f46..15a6002 100644
+--- a/design/requirements/PR-004.md
++++ b/design/requirements/PR-004.md
+@@ -2,6 +2,8 @@
+ title: PR-004
+ kind: PR
+ status: not-set
++test: inject
++injections: [I-16]
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ The system shall support at least 5 dashboard users viewing the system at the same time, without breaching PR-001 or PR-002.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-16]] Extra viewers
++- **Check:** Open 5 dashboard sessions. PR-001 and PR-002 hold.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-005.md b/design/requirements/PR-005.md
+index 3de18c2..5d1549b 100644
+--- a/design/requirements/PR-005.md
++++ b/design/requirements/PR-005.md
+@@ -2,6 +2,8 @@
+ title: PR-005
+ kind: PR
+ status: not-set
++test: inject
++injections: [I-15]
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ The system shall process at least one reading per second for every monitored parameter on every machine, and at least 40 readings per second in total (10 machines × 4 parameters). If a machine has extra parameters, the system shall still keep up, without breaching PR-001 or PR-002.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-15]] Load up
++- **Check:** Run I-15. The counter shows at least 40 readings per second being processed.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-006.md b/design/requirements/PR-006.md
+index f152ce7..118aac4 100644
+--- a/design/requirements/PR-006.md
++++ b/design/requirements/PR-006.md
+@@ -2,6 +2,8 @@
+ title: PR-006
+ kind: PR
+ status: not-set
++test: inspect
++injections: []
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ The system shall have room for at least 3,456,000 readings (one day at the minimum load), plus statuses and fault records. (10 machines × 4 parameters × 86,400 seconds in a day. Each extra parameter on 10 machines adds 864,000 a day.)
+ 
++## How it is tested
++
++- **Method:** inspect (draft)
++- **Injection:** none
++- **Check:** Show the storage size and the sum: 10 x 4 x 86,400 = 3,456,000 readings a day.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/PR-007.md b/design/requirements/PR-007.md
+index 692116e..d524d1b 100644
+--- a/design/requirements/PR-007.md
++++ b/design/requirements/PR-007.md
+@@ -2,6 +2,8 @@
+ title: PR-007
+ kind: PR
+ status: not-set
++test: inject
++injections: [I-13]
+ tags: [requirement, PR]
+ ---
+ 
+@@ -9,6 +11,12 @@ tags: [requirement, PR]
+ 
+ All system components shall complete startup and be actively monitoring equipment within 60 seconds of launch.
+ 
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-13]] Restart the system
++- **Check:** Restart the system. The panel times how long until monitoring is running. 60 seconds or less.
++
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+ 
+ The pages that cover this requirement show up under Backlinks.
+diff --git a/design/requirements/UC-1.md b/design/requirements/UC-1.md
+index 750bae4..d76141f 100644
+--- a/design/requirements/UC-1.md
++++ b/design/requirements/UC-1.md
+@@ -11,3 +11,10 @@ tags: [use-case]
+ **Goal:** See the current condition of the motor, water pump, and backup power supply at a glance
+ 
+ The full steps are in the SRS. The pages that support this use case show up under Backlinks.
++
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Sign in and open the Overview. Pick a machine.
++
+diff --git a/design/requirements/UC-2.md b/design/requirements/UC-2.md
+index 1bc28c3..b27eff3 100644
+--- a/design/requirements/UC-2.md
++++ b/design/requirements/UC-2.md
+@@ -11,3 +11,10 @@ tags: [use-case]
+ **Goal:** Warn a user in time for them to act, whenever equipment moves outside its normal operating range
+ 
+ The full steps are in the SRS. The pages that support this use case show up under Backlinks.
++
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Walk the alert flow from I-03: pop-up, acknowledge. Include the one-off blip alternate flow with I-01.
++
+diff --git a/design/requirements/UC-3.md b/design/requirements/UC-3.md
+index 4b83c1e..27fe38e 100644
+--- a/design/requirements/UC-3.md
++++ b/design/requirements/UC-3.md
+@@ -11,3 +11,10 @@ tags: [use-case]
+ **Goal:** Understand how a piece of equipment has been performing over time and spot recurring problems
+ 
+ The full steps are in the SRS. The pages that support this use case show up under Backlinks.
++
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** Pick a machine, choose a period, view the graph and the report.
++
+diff --git a/design/requirements/UC-4.md b/design/requirements/UC-4.md
+index fabbe01..8647c61 100644
+--- a/design/requirements/UC-4.md
++++ b/design/requirements/UC-4.md
+@@ -11,3 +11,10 @@ tags: [use-case]
+ **Goal:** Keep collecting and showing equipment data even when the connection between system components is temporarily lost
+ 
+ The full steps are in the SRS. The pages that support this use case show up under Backlinks.
++
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
++- **Check:** Run the connection flow from the panel: near, remote, cut, restore.
++
+diff --git a/design/requirements/UC-5.md b/design/requirements/UC-5.md
+index 6845835..849e889 100644
+--- a/design/requirements/UC-5.md
++++ b/design/requirements/UC-5.md
+@@ -11,3 +11,10 @@ tags: [use-case]
+ **Goal:** Control who can use the system and what equipment it monitors
+ 
+ The full steps are in the SRS. The pages that support this use case show up under Backlinks.
++
++## How it is tested
++
++- **Method:** look (draft)
++- **Injection:** none
++- **Check:** As Administrator, add, change and remove a user and a machine.
++
+diff --git a/design/requirements/UC-6.md b/design/requirements/UC-6.md
+index 0a8d8ea..402b381 100644
+--- a/design/requirements/UC-6.md
++++ b/design/requirements/UC-6.md
+@@ -11,3 +11,10 @@ tags: [use-case]
+ **Goal:** Work on a piece of equipment (for example, testing a pump while it is intentionally run dry) without the system raising false alerts
+ 
+ The full steps are in the SRS. The pages that support this use case show up under Backlinks.
++
++## How it is tested
++
++- **Method:** inject (draft)
++- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Check:** Walk the maintenance flow: set maintenance, see readings continue, no alerts, then end it.
++
+-- 
+2.43.0
+
+
+From 8498eed20afe80e1632e606f06507ec1c150ff16 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 26 Oct 2026 16:39:57 +0000
+Subject: [PATCH 2/2] Renumber pages 1 to 8 in the order of use; fold merged
+ pages into a list
+
+---
+ design/01-sign-in.md                          |  4 +-
+ design/02-overview.md                         |  6 +--
+ ...1-machines-list.md => 03-machines-list.md} | 10 ++---
+ ...machine-detail.md => 04-machine-detail.md} |  8 ++--
+ design/{07-settings.md => 05-settings.md}     |  8 ++--
+ design/{08-admin.md => 06-admin.md}           | 10 ++---
+ ...trol-panel.md => 07-demo-control-panel.md} |  6 +--
+ ...-tracker.md => 08-requirements-tracker.md} |  8 ++--
+ design/page-map.canvas                        | 44 +++++++++----------
+ design/page-map.md                            | 41 ++++++++++-------
+ design/requirements/FR-11.md                  |  2 +-
+ design/requirements/FR-12.md                  |  2 +-
+ design/requirements/FR-13.md                  |  2 +-
+ design/requirements/FR-14.md                  |  2 +-
+ design/requirements/FR-15.md                  |  2 +-
+ design/requirements/FR-16.md                  |  2 +-
+ design/requirements/FR-17.md                  |  2 +-
+ design/requirements/FR-18.md                  |  2 +-
+ design/requirements/FR-19.md                  |  2 +-
+ design/requirements/FR-20.md                  |  2 +-
+ design/requirements/FR-21.md                  |  2 +-
+ design/requirements/FR-21a.md                 |  2 +-
+ design/requirements/FR-23c.md                 |  2 +-
+ design/requirements/FR-23d.md                 |  2 +-
+ design/requirements/FR-26.md                  |  2 +-
+ design/requirements/FR-28d.md                 |  2 +-
+ design/requirements/FR-4.md                   |  2 +-
+ design/requirements/FR-5.md                   |  2 +-
+ design/requirements/FR-6.md                   |  2 +-
+ design/requirements/FR-7.md                   |  2 +-
+ design/requirements/FR-7a.md                  |  2 +-
+ design/requirements/FR-7b.md                  |  2 +-
+ design/requirements/FR-7c.md                  |  2 +-
+ design/requirements/FR-8.md                   |  2 +-
+ design/requirements/FR-8a.md                  |  2 +-
+ design/requirements/FR-8b.md                  |  2 +-
+ design/requirements/FR-9.md                   |  2 +-
+ design/requirements/FR-9b.md                  |  2 +-
+ design/requirements/NFR-1.md                  |  2 +-
+ design/requirements/NFR-10.md                 |  2 +-
+ design/requirements/NFR-2.md                  |  2 +-
+ design/requirements/NFR-5.md                  |  2 +-
+ design/requirements/NFR-6.md                  |  2 +-
+ design/requirements/NFR-7.md                  |  2 +-
+ design/requirements/PR-001a.md                |  2 +-
+ design/requirements/PR-001b.md                |  2 +-
+ design/requirements/PR-003.md                 |  2 +-
+ design/requirements/PR-004.md                 |  2 +-
+ design/requirements/PR-005.md                 |  2 +-
+ design/requirements/PR-007.md                 |  2 +-
+ design/requirements/UC-2.md                   |  2 +-
+ design/requirements/UC-4.md                   |  2 +-
+ design/requirements/UC-6.md                   |  2 +-
+ design/srs-changes.md                         | 10 ++---
+ design/top-bar.md                             |  6 +--
+ 55 files changed, 127 insertions(+), 120 deletions(-)
+ rename design/{11-machines-list.md => 03-machines-list.md} (87%)
+ rename design/{03-machine-detail.md => 04-machine-detail.md} (97%)
+ rename design/{07-settings.md => 05-settings.md} (95%)
+ rename design/{08-admin.md => 06-admin.md} (94%)
+ rename design/{09-demo-control-panel.md => 07-demo-control-panel.md} (98%)
+ rename design/{10-requirements-tracker.md => 08-requirements-tracker.md} (88%)
+
+diff --git a/design/01-sign-in.md b/design/01-sign-in.md
+index 43f77e4..63c7043 100644
+--- a/design/01-sign-in.md
++++ b/design/01-sign-in.md
+@@ -61,7 +61,7 @@ The first screen anyone sees. Simple on purpose: the software name, two boxes an
+ | --- | --- |
+ | Operator | [[02-overview]] |
+ | Engineer | [[02-overview]] |
+-| Administrator | [[08-admin]] |
++| Administrator | [[06-admin]] |
+ 
+ ## Rules that work behind the page
+ 
+@@ -70,7 +70,7 @@ The screen does not show these, but the tracker still lists them:
+ - All traffic uses a secure connection ([[FR-28e]]).
+ - Passwords are stored scrambled, so nobody can read them back ([[FR-28f]]).
+ - No rule forces capital letters, numbers or symbols, and no forced password changes ([[FR-28b]]).
+-- Common or leaked passwords are refused. This applies when a password is set, so it belongs on [[08-admin]], not here ([[FR-28c]]).
++- Common or leaked passwords are refused. This applies when a password is set, so it belongs on [[06-admin]], not here ([[FR-28c]]).
+ 
+ ## Use case
+ 
+diff --git a/design/02-overview.md b/design/02-overview.md
+index 1337129..ac26247 100644
+--- a/design/02-overview.md
++++ b/design/02-overview.md
+@@ -9,7 +9,7 @@ tags: [design, page, industrial-fault-detection]
+ 
+ # 2. Overview
+ 
+-Back to [[page-map]]. Previous: [[01-sign-in]]. Next: [[03-machine-detail]].
++Back to [[page-map]]. Previous: [[01-sign-in]]. Next: [[03-machines-list]].
+ 
+ The main screen. It answers one question: is everything fine right now? Supports [[UC-1]].
+ 
+@@ -53,7 +53,7 @@ The top bar is shared by every page. It is described in [[top-bar]].
+ 
+ - Every registered machine is on this page, each as its own card.
+ - Each card shows the live readings and the status as a mark.
+-- Choosing a card, for example Motor 1, opens [[03-machine-detail]]. That page shows that machine's readings, status, history and faults.
++- Choosing a card, for example Motor 1, opens [[04-machine-detail]]. That page shows that machine's readings, status, history and faults.
+ - A card in maintenance mode carries a "Maintenance" mark.
+ - The status is shown with a word and a colour, never colour alone.
+ 
+@@ -93,7 +93,7 @@ Readings are taken once a second for every parameter on every machine ([[FR-3a]]
+ | 1. The user opens the dashboard. | This page opens after [[01-sign-in]]. |
+ | 2. The system shows the status of every machine. | The cards. |
+ | 3. The user picks a machine. | Click a card. |
+-| 4. The system shows the readings and recent history. | Opens [[03-machine-detail]]. |
++| 4. The system shows the readings and recent history. | Opens [[04-machine-detail]]. |
+ 
+ ## Open
+ 
+diff --git a/design/11-machines-list.md b/design/03-machines-list.md
+similarity index 87%
+rename from design/11-machines-list.md
+rename to design/03-machines-list.md
+index a101bff..50c4c82 100644
+--- a/design/11-machines-list.md
++++ b/design/03-machines-list.md
+@@ -1,17 +1,17 @@
+ ---
+ title: Machines list
+-page: 11
++page: 3
+ status: draft
+ srs-version: v2.0
+ roles: [Operator, Engineer]
+ tags: [design, page, industrial-fault-detection]
+ ---
+ 
+-# 11. Machines list
++# 3. Machines list
+ 
+-Back to [[page-map]]. The number 11 only means it was added later. It is not the order of use.
++Back to [[page-map]]. Previous: [[02-overview]]. Next: [[04-machine-detail]].
+ 
+-A list of every registered machine, with a filter. It is not the same as machine registration on [[08-admin]], which is where the Administrator adds machines.
++A list of every registered machine, with a filter. It is not the same as machine registration on [[06-admin]], which is where the Administrator adds machines.
+ 
+ ## Layout
+ 
+@@ -29,7 +29,7 @@ A list of every registered machine, with a filter. It is not the same as machine
+ +------------------------------------------------------------+
+ ```
+ 
+-Choosing a row opens [[03-machine-detail]], the same page that opens from a card on the [[02-overview]].
++Choosing a row opens [[04-machine-detail]], the same page that opens from a card on the [[02-overview]].
+ 
+ ## Parts of the page
+ 
+diff --git a/design/03-machine-detail.md b/design/04-machine-detail.md
+similarity index 97%
+rename from design/03-machine-detail.md
+rename to design/04-machine-detail.md
+index 1254c67..b568e42 100644
+--- a/design/03-machine-detail.md
++++ b/design/04-machine-detail.md
+@@ -1,19 +1,19 @@
+ ---
+ title: Machine detail
+-page: 3
++page: 4
+ status: draft
+ srs-version: v2.0
+ roles: [Operator, Engineer]
+ tags: [design, page, industrial-fault-detection]
+ ---
+ 
+-# 3. Machine detail
++# 4. Machine detail
+ 
+-Back to [[page-map]]. Previous: [[02-overview]]. Next: [[07-settings]].
++Back to [[page-map]]. Previous: [[03-machines-list]]. Next: [[05-settings]].
+ 
+ One page for one machine. It opens the same way from three places:
+ - a card on the [[02-overview]],
+-- a row in the [[11-machines-list]],
++- a row in the [[03-machines-list]],
+ - a fault in the bell list or a fault pop-up (see [[top-bar]] and [[fault-popup]]).
+ 
+ Supports steps 3 and 4 of [[UC-1]] and the report steps of [[UC-3]].
+diff --git a/design/07-settings.md b/design/05-settings.md
+similarity index 95%
+rename from design/07-settings.md
+rename to design/05-settings.md
+index 8676839..6987381 100644
+--- a/design/07-settings.md
++++ b/design/05-settings.md
+@@ -1,15 +1,15 @@
+ ---
+ title: Settings
+-page: 7
++page: 5
+ status: draft
+ srs-version: v2.0
+ roles: [Operator, Engineer, Administrator]
+ tags: [design, page, industrial-fault-detection]
+ ---
+ 
+-# 7. Settings
++# 5. Settings
+ 
+-Back to [[page-map]]. Previous: [[03-machine-detail]].
++Back to [[page-map]]. Previous: [[04-machine-detail]]. Next: [[06-admin]].
+ 
+ One settings page for everyone. It opens from the name side bar in the [[top-bar]]. This page replaces the old Limits page: limits now live here, in a section only Engineers see.
+ 
+@@ -46,7 +46,7 @@ One settings page for everyone. It opens from the name side bar in the [[top-bar
+ | Limits: check | The warning limit must be lower than the critical limit. If not, the change is refused. | Engineer | [[FR-23b]] |
+ | Limits: earlier values | The old values and the date of change stay visible. Nothing is overwritten silently. | Engineer | [[FR-23]] |
+ | Limits: when it applies | A changed limit applies to readings that arrive after the change. Faults already raised keep the limit that was in force. | Engineer | [[FR-23c]], [[FR-23d]] |
+-| Log entry | Every limit change is also written in the change log on [[08-admin]]. | Engineer | [[FR-22]] |
++| Log entry | Every limit change is also written in the change log on [[06-admin]]. | Engineer | [[FR-22]] |
+ 
+ ## Who sees what
+ 
+diff --git a/design/08-admin.md b/design/06-admin.md
+similarity index 94%
+rename from design/08-admin.md
+rename to design/06-admin.md
+index baa1f19..10615fe 100644
+--- a/design/08-admin.md
++++ b/design/06-admin.md
+@@ -1,15 +1,15 @@
+ ---
+ title: Admin
+-page: 8
++page: 6
+ status: draft
+ srs-version: v2.0
+ roles: [Administrator]
+ tags: [design, page, industrial-fault-detection]
+ ---
+ 
+-# 8. Admin
++# 6. Admin
+ 
+-Back to [[page-map]]. Previous: [[01-sign-in]] (this is where the Administrator lands after signing in).
++Back to [[page-map]]. Previous: [[05-settings]]. The Administrator lands here after [[01-sign-in]].
+ 
+ The Administrator's page. It controls who can use the system and which machines it watches. The Administrator manages the system and is not an operational user: no fault pop-ups, no fault bell list, no acknowledging ([[FR-7b]]). Supports [[UC-5]].
+ 
+@@ -42,7 +42,7 @@ Four tabs on one page. No other page is needed for the Administrator. The top ba
+ 
+ ## Tab 2: Machines
+ 
+-This is where machines are registered. It is not the [[11-machines-list]], which the Operator and Engineer use to look at machines.
++This is where machines are registered. It is not the [[03-machines-list]], which the Operator and Engineer use to look at machines.
+ 
+ | Part | What it does | Requirement |
+ | --- | --- | --- |
+@@ -70,7 +70,7 @@ What the personnel decide after the alert (delete, update or something else) is
+ | --- | --- | --- |
+ | Log list | Each line says what changed, who changed it and when. It covers user changes, machine registration and limit changes. | [[FR-22]] |
+ 
+-A limit changed by an Engineer on [[07-settings]] also appears here ([[FR-22]]).
++A limit changed by an Engineer on [[05-settings]] also appears here ([[FR-22]]).
+ 
+ ## Who can open it
+ 
+diff --git a/design/09-demo-control-panel.md b/design/07-demo-control-panel.md
+similarity index 98%
+rename from design/09-demo-control-panel.md
+rename to design/07-demo-control-panel.md
+index 0dfdff4..e89b2d6 100644
+--- a/design/09-demo-control-panel.md
++++ b/design/07-demo-control-panel.md
+@@ -1,15 +1,15 @@
+ ---
+ title: Demo control panel
+-page: 9
++page: 7
+ status: draft
+ srs-version: v2.0
+ roles: [demonstration only]
+ tags: [design, page, demo, industrial-fault-detection]
+ ---
+ 
+-# 9. Demo control panel
++# 7. Demo control panel
+ 
+-Back to [[page-map]]. Previous: [[08-admin]]. Next: [[10-requirements-tracker]].
++Back to [[page-map]]. Previous: [[06-admin]]. Next: [[08-requirements-tracker]].
+ 
+ The page the team uses during the 5-minute presentation. It does one job: let the examiners see every requirement proven. Supports [[UC-4]], [[FR-11]] and [[FR-12]], and carries the injections for the rest. DC-006 says the demonstration is a dashboard plus fault injection.
+ 
+diff --git a/design/10-requirements-tracker.md b/design/08-requirements-tracker.md
+similarity index 88%
+rename from design/10-requirements-tracker.md
+rename to design/08-requirements-tracker.md
+index 5ba8b3e..b04f67e 100644
+--- a/design/10-requirements-tracker.md
++++ b/design/08-requirements-tracker.md
+@@ -1,20 +1,20 @@
+ ---
+ title: Requirements tracker
+-page: 10
++page: 8
+ status: draft
+ srs-version: v2.0
+ tags: [design, page, tracker]
+ ---
+ 
+-# 10. Requirements tracker
++# 8. Requirements tracker
+ 
+-Back to [[page-map]].
++Back to [[page-map]]. Previous: [[07-demo-control-panel]].
+ 
+ Every requirement has its own note in the `requirements` folder. Set `status` in each note to **built**, **simulated** or **left-out**. This table fills itself from those notes. It needs the Dataview plugin (Settings, Community plugins, search "Dataview").
+ 
+ ## How each requirement is tested
+ 
+-Each note has a `test` line: **inject**, **look** or **inspect**. See [[09-demo-control-panel]].
++Each note has a `test` line: **inject**, **look** or **inspect**. See [[07-demo-control-panel]].
+ 
+ ```dataview
+ TABLE status, test, injections
+diff --git a/design/page-map.canvas b/design/page-map.canvas
+index 02a2604..9cbe357 100644
+--- a/design/page-map.canvas
++++ b/design/page-map.canvas
+@@ -7,7 +7,7 @@
+    "y": 200,
+    "width": 260,
+    "height": 110,
+-   "text": "**1 Sign in**\\nEveryone",
++   "text": "**1 Sign in**\n",
+    "color": "5"
+   },
+   {
+@@ -21,63 +21,63 @@
+    "color": "5"
+   },
+   {
+-   "id": "p8",
++   "id": "p6",
+    "type": "text",
+    "x": 380,
+    "y": 400,
+    "width": 260,
+    "height": 110,
+-   "text": "**8 Admin**\\nAdministrator",
++   "text": "**6 Admin**\n",
+    "color": "3"
+   },
+   {
+-   "id": "p3",
++   "id": "p4",
+    "type": "text",
+    "x": 760,
+    "y": -40,
+    "width": 260,
+    "height": 110,
+-   "text": "**3 Machine detail**\\nOperator, Engineer",
++   "text": "**4 Machine detail**\n",
+    "color": "5"
+   },
+   {
+-   "id": "p9",
++   "id": "p7",
+    "type": "text",
+    "x": 380,
+    "y": 640,
+    "width": 260,
+    "height": 110,
+-   "text": "**9 Demo control panel**\\nDemonstration only",
++   "text": "**7 Demo control panel**\n",
+    "color": "6"
+   },
+   {
+-   "id": "p10",
++   "id": "p8",
+    "type": "text",
+    "x": 760,
+    "y": 640,
+    "width": 260,
+    "height": 110,
+-   "text": "**10 Requirements tracker**\\nDemonstration only",
++   "text": "**8 Requirements tracker**\n",
+    "color": "6"
+   },
+   {
+-   "id": "p11",
++   "id": "p3",
+    "type": "text",
+    "x": 380,
+    "y": -80,
+    "width": 260,
+    "height": 110,
+-   "text": "**11 Machines list**\nOperator, Engineer",
++   "text": "**3 Machines list**\nOperator, Engineer",
+    "color": "5"
+   },
+   {
+-   "id": "p7",
++   "id": "p5",
+    "type": "text",
+    "x": 760,
+    "y": 160,
+    "width": 260,
+    "height": 110,
+-   "text": "**7 Settings**\nEveryone (limits: Engineer)",
++   "text": "**5 Settings**\nEveryone (limits: Engineer)",
+    "color": "5"
+   }
+  ],
+@@ -93,47 +93,47 @@
+    "id": "e2",
+    "fromNode": "p1",
+    "fromSide": "right",
+-   "toNode": "p8",
++   "toNode": "p6",
+    "toSide": "left"
+   },
+   {
+    "id": "e3",
+    "fromNode": "p2",
+    "fromSide": "right",
+-   "toNode": "p3",
++   "toNode": "p4",
+    "toSide": "left"
+   },
+   {
+    "id": "e8",
+-   "fromNode": "p3",
++   "fromNode": "p4",
+    "fromSide": "right",
+-   "toNode": "p7",
++   "toNode": "p5",
+    "toSide": "left"
+   },
+   {
+    "id": "e9",
+    "fromNode": "p2",
+    "fromSide": "top",
+-   "toNode": "p11",
++   "toNode": "p3",
+    "toSide": "bottom"
+   },
+   {
+    "id": "e10",
+-   "fromNode": "p11",
++   "fromNode": "p3",
+    "fromSide": "right",
+-   "toNode": "p3",
++   "toNode": "p4",
+    "toSide": "left"
+   },
+   {
+    "id": "e11",
+    "fromNode": "p2",
+    "fromSide": "right",
+-   "toNode": "p7",
++   "toNode": "p5",
+    "toSide": "left"
+   },
+   {
+    "id": "e12",
+-   "fromNode": "p8",
++   "fromNode": "p6",
+    "fromSide": "top",
+    "toNode": "p2",
+    "toSide": "bottom"
+diff --git a/design/page-map.md b/design/page-map.md
+index 53d9cff..6485a32 100644
+--- a/design/page-map.md
++++ b/design/page-map.md
+@@ -25,29 +25,36 @@ FR = functional requirement. UC = use case. DC = design constraint.
+ | --- | --- | --- | --- | --- |
+ | 1 | [[01-sign-in]] | everyone | Login. Automatic sign-out after 5 minutes idle. Lockout after 5 wrong attempts. | [[FR-26]], [[FR-28]], [[FR-28a]] to [[FR-28f]] |
+ | 2 | [[02-overview]] | Operator, Engineer, Administrator | Status of every machine at a glance. Live readings. Marks for "sensor stopped" and "invalid reading". | [[UC-1]], [[FR-1]] to [[FR-3]], [[FR-3a]], [[FR-13]], [[FR-14]], [[FR-24]] |
+-| 3 | [[03-machine-detail]] | Operator, Engineer | One machine: readings, recent history, faults. One fault record per abnormal parameter. | [[UC-1]], [[FR-1]] to [[FR-3]], [[FR-15]] |
+-| 4 | merged | | Folded into the bell list in [[top-bar]] and the [[fault-popup]]. | [[UC-2]], [[FR-7]], [[FR-8]], [[FR-16]], [[FR-17]] |
+-| 5 | merged | | Folded into [[03-machine-detail]] (graph, history, report). | [[UC-3]], [[FR-9]], [[FR-10]] |
+-| 6 | merged | | Folded into [[03-machine-detail]] (maintenance switch). | [[UC-6]], [[FR-18]], [[FR-19]] |
+-| 7 | [[07-settings]] | everyone (limits: Engineer) | Theme, sign-out time, and limits for Engineers. | [[FR-26]], [[FR-23]], [[FR-23a]] to [[FR-23d]] |
+-| 8 | [[08-admin]] | Administrator | Four tabs: Users, Machines, Storage, Change log. Storage alert at 75%. | [[UC-5]], [[FR-21a]], [[FR-22]], [[FR-27]], [[FR-28c]] |
+-| 9 | [[09-demo-control-panel]] | demonstration only | Switch near or remote mode. Cut the connection. Inject faults. | [[FR-11]], [[FR-12]], [[UC-4]], DC-006 |
+-| 10 | [[10-requirements-tracker]] | demonstration only | Every requirement, which page shows it, and whether it is built, simulated or left out. | all |
+-| 11 | [[11-machines-list]] | Operator, Engineer | Every machine in a list, with a filter. Choosing one opens its page. | [[FR-24]], [[FR-5]], [[FR-18]] |
++| 3 | [[03-machines-list]] | Operator, Engineer | Every machine in a list, with a filter. Choosing one opens its page. | [[FR-24]], [[FR-5]], [[FR-18]] |
++| 4 | [[04-machine-detail]] | Operator, Engineer | One machine: readings, recent history, faults. One fault record per abnormal parameter. | [[UC-1]], [[FR-1]] to [[FR-3]], [[FR-15]] |
++| 5 | [[05-settings]] | everyone (limits: Engineer) | Theme, sign-out time, and limits for Engineers. | [[FR-26]], [[FR-23]], [[FR-23a]] to [[FR-23d]] |
++| 6 | [[06-admin]] | Administrator | Four tabs: Users, Machines, Storage, Change log. Storage alert at 75%. | [[UC-5]], [[FR-21a]], [[FR-22]], [[FR-27]], [[FR-28c]] |
++| 7 | [[07-demo-control-panel]] | demonstration only | Switch near or remote mode. Cut the connection. Inject faults. | [[FR-11]], [[FR-12]], [[UC-4]], DC-006 |
++| 8 | [[08-requirements-tracker]] | demonstration only | Every requirement, which page shows it, and whether it is built, simulated or left out. | all |
++
++## Folded in
++
++Three things were planned as pages of their own and are now part of other pages. They have no number.
++
++| What | Now lives in | Covers |
++| --- | --- | --- |
++| Fault alerts and acknowledging | the bell list in [[top-bar]] and the [[fault-popup]] | [[UC-2]], [[FR-7]], [[FR-8]], [[FR-16]], [[FR-17]] |
++| Graph, history and report | [[04-machine-detail]] | [[UC-3]], [[FR-9]], [[FR-10]] |
++| Maintenance mode | [[04-machine-detail]] (maintenance switch) | [[UC-6]], [[FR-18]], [[FR-19]] |
+ 
+ ## How the pages connect (proposed)
+ 
+ ```mermaid
+ flowchart LR
+   S["1 Sign in"] -->|Operator, Engineer| O["2 Overview"]
+-  S -->|Administrator| A["8 Admin"]
++  S -->|Administrator| A["6 Admin"]
+   A --> O
+-  O --> M["3 Machine detail"]
+-  O --> ML["11 Machines list"]
++  O --> M["4 Machine detail"]
++  O --> ML["3 Machines list"]
+   ML --> M
+-  O --> ST["7 Settings"]
+-  D["9 Demo control panel"]
+-  R["10 Requirements tracker"]
++  O --> ST["5 Settings"]
++  D["7 Demo control panel"]
++  R["8 Requirements tracker"]
+   classDef shared fill:#dbeafe,stroke:#2563eb,color:#000
+   classDef adm fill:#fef3c7,stroke:#d97706,color:#000
+   classDef demo fill:#f3e8ff,stroke:#9333ea,color:#000
+@@ -56,7 +63,7 @@ flowchart LR
+   class D,R demo
+ ```
+ 
+-Blue: shared pages. Yellow: Administrator. Settings opens from the name side bar on any page. Pages 4, 5 and 6 are merged into others. Purple: demonstration only. The arrows are a proposal, not a requirement.
++Blue: shared pages. Yellow: Administrator. Settings opens from the name side bar on any page. The three merged pages are listed under Folded in. Purple: demonstration only. The arrows are a proposal, not a requirement.
+ 
+ ## Rules for every page
+ 
+@@ -80,4 +87,4 @@ FR-4, FR-5, FR-6, FR-20, FR-21, FR-25.
+ - Decisions that change the SRS are collected in [[srs-changes]].
+ 
+ - Does the Administrator also need to see the Overview page? Not included for now.
+-- Page notes 01 to 03, 07 to 11 are written. Pages 4, 5 and 6 are merged, so they have no note.
++- All eight page notes are written. The page numbers follow the order a person uses the pages.
+diff --git a/design/requirements/FR-11.md b/design/requirements/FR-11.md
+index 6828439..a9b33e0 100644
+--- a/design/requirements/FR-11.md
++++ b/design/requirements/FR-11.md
+@@ -14,7 +14,7 @@ The system shall support both a near-range and a remote-range connection mode fo
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
++- **Injection:** [[07-demo-control-panel|I-10]] Cut and restore connection
+ - **Check:** Switch between near and remote mode on the panel. The dashboard keeps working in each.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-12.md b/design/requirements/FR-12.md
+index e270d2a..f8deee4 100644
+--- a/design/requirements/FR-12.md
++++ b/design/requirements/FR-12.md
+@@ -14,7 +14,7 @@ The system shall continue collecting, evaluating, and displaying locally availab
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
++- **Injection:** [[07-demo-control-panel|I-10]] Cut and restore connection
+ - **Check:** Cut the link. The dashboard keeps showing local status. Restore it and the stored data arrives.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-13.md b/design/requirements/FR-13.md
+index 9aadfbf..42e442e 100644
+--- a/design/requirements/FR-13.md
++++ b/design/requirements/FR-13.md
+@@ -14,7 +14,7 @@ If no reading arrives for a parameter for 3 seconds, the system shall flag that
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-07]] Sensor goes silent
++- **Injection:** [[07-demo-control-panel|I-07]] Sensor goes silent
+ - **Check:** Silence one parameter for 3 seconds. Its number is replaced by the "sensor fault" mark.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-14.md b/design/requirements/FR-14.md
+index 157eff7..10254e5 100644
+--- a/design/requirements/FR-14.md
++++ b/design/requirements/FR-14.md
+@@ -14,7 +14,7 @@ If an incoming reading is of the wrong type, missing, or outside any physically
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-08]] Bad reading
++- **Injection:** [[07-demo-control-panel|I-08]] Bad reading
+ - **Check:** Send the three bad readings. Each is rejected, logged as invalid, and the system carries on.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-15.md b/design/requirements/FR-15.md
+index cd48f14..7aa5b49 100644
+--- a/design/requirements/FR-15.md
++++ b/design/requirements/FR-15.md
+@@ -14,7 +14,7 @@ If two or more parameters on the same equipment become abnormal at the same time
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-05]] Two at once
++- **Injection:** [[07-demo-control-panel|I-05]] Two at once
+ - **Check:** Run I-05. Two separate fault records appear.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-16.md b/design/requirements/FR-16.md
+index ace53e1..66db0f7 100644
+--- a/design/requirements/FR-16.md
++++ b/design/requirements/FR-16.md
+@@ -14,7 +14,7 @@ The system shall not raise a duplicate alert for a fault condition that is alrea
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-06]] Hold and repeat
++- **Injection:** [[07-demo-control-panel|I-06]] Hold and repeat
+ - **Check:** Hold the fault: no second alert. Clear it and trigger it again: a new alert.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-17.md b/design/requirements/FR-17.md
+index 4cc6de8..9107302 100644
+--- a/design/requirements/FR-17.md
++++ b/design/requirements/FR-17.md
+@@ -14,7 +14,7 @@ The system shall support a fault lifecycle of at least: open → acknowledged 
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Acknowledge, then resolve as an Engineer. The resolve time is recorded.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-18.md b/design/requirements/FR-18.md
+index e303cf0..31b925e 100644
+--- a/design/requirements/FR-18.md
++++ b/design/requirements/FR-18.md
+@@ -14,7 +14,7 @@ An Engineer shall be able to place a piece of equipment into maintenance mode fo
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Put a machine in maintenance mode, then run I-03 on it. Readings keep coming, no new alert.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-19.md b/design/requirements/FR-19.md
+index c1685b3..13a2e36 100644
+--- a/design/requirements/FR-19.md
++++ b/design/requirements/FR-19.md
+@@ -14,7 +14,7 @@ If a piece of equipment remains in maintenance mode beyond its stated duration,
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Injection:** [[07-demo-control-panel|I-14]] Fast-forward the clock
+ - **Check:** Fast-forward past the stated maintenance time. The "Overdue" mark appears.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-20.md b/design/requirements/FR-20.md
+index d0b5ada..cb0667d 100644
+--- a/design/requirements/FR-20.md
++++ b/design/requirements/FR-20.md
+@@ -14,7 +14,7 @@ If the data storage component becomes unavailable or full, the system shall reta
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-12]] Fill storage
++- **Injection:** [[07-demo-control-panel|I-12]] Fill storage
+ - **Check:** Make storage unavailable or full. New readings are kept locally and the event is logged.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-21.md b/design/requirements/FR-21.md
+index eb5a296..f49e414 100644
+--- a/design/requirements/FR-21.md
++++ b/design/requirements/FR-21.md
+@@ -14,7 +14,7 @@ On restart after a shutdown or crash, the system shall resume monitoring using t
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-13]] Restart the system
++- **Injection:** [[07-demo-control-panel|I-13]] Restart the system
+ - **Check:** Restart the system. It resumes with the last configuration and shows status once fresh readings arrive.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-21a.md b/design/requirements/FR-21a.md
+index 79c9a5f..597b796 100644
+--- a/design/requirements/FR-21a.md
++++ b/design/requirements/FR-21a.md
+@@ -14,7 +14,7 @@ When storage use reaches 75%, the system shall send an alert to the Administrato
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-12]] Fill storage
++- **Injection:** [[07-demo-control-panel|I-12]] Fill storage
+ - **Check:** Push storage to 75% while signed in as the Administrator. Only the Administrator's bell shows the alert.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-23c.md b/design/requirements/FR-23c.md
+index c5a8dc3..bd9addf 100644
+--- a/design/requirements/FR-23c.md
++++ b/design/requirements/FR-23c.md
+@@ -14,7 +14,7 @@ A changed limit shall apply to readings received after the change.
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning
++- **Injection:** [[07-demo-control-panel|I-02]] Sustained warning
+ - **Check:** Change a limit, then replay I-02. The new limit applies to the new readings only.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-23d.md b/design/requirements/FR-23d.md
+index b153423..f1939f4 100644
+--- a/design/requirements/FR-23d.md
++++ b/design/requirements/FR-23d.md
+@@ -14,7 +14,7 @@ Each fault record shall store the limit that was in force when the fault was rai
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning
++- **Injection:** [[07-demo-control-panel|I-02]] Sustained warning
+ - **Check:** Open the fault record raised after a limit change. It shows the limit in force at that time.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-26.md b/design/requirements/FR-26.md
+index 201653e..2b0d346 100644
+--- a/design/requirements/FR-26.md
++++ b/design/requirements/FR-26.md
+@@ -14,7 +14,7 @@ A user session shall expire after 5 minutes of inactivity, requiring re-authenti
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Injection:** [[07-demo-control-panel|I-14]] Fast-forward the clock
+ - **Check:** Set a 1-minute time-out in Settings, try 0 and 6 (refused), then fast-forward the idle clock. The session ends.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-28d.md b/design/requirements/FR-28d.md
+index d6dbe50..db73752 100644
+--- a/design/requirements/FR-28d.md
++++ b/design/requirements/FR-28d.md
+@@ -14,7 +14,7 @@ After 5 failed login attempts on an account, the system should block login to th
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Injection:** [[07-demo-control-panel|I-14]] Fast-forward the clock
+ - **Check:** Fail 5 logins. The account is blocked. Fast-forward 15 minutes and it opens again.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-4.md b/design/requirements/FR-4.md
+index 1bf6bfd..1e0b282 100644
+--- a/design/requirements/FR-4.md
++++ b/design/requirements/FR-4.md
+@@ -14,7 +14,7 @@ The system shall compare incoming measurements against the defined operating lim
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning
++- **Injection:** [[07-demo-control-panel|I-02]] Sustained warning
+ - **Check:** Run I-02. The reading is flagged once it passes the limit.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-5.md b/design/requirements/FR-5.md
+index b49f315..09bb9ef 100644
+--- a/design/requirements/FR-5.md
++++ b/design/requirements/FR-5.md
+@@ -14,7 +14,7 @@ For conditions flagged by FR-4, the system shall classify the condition as norma
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-02]] Sustained warning, [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-02]] Sustained warning, [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Run I-02 for warning and I-03 for critical. The card shows the status, machine and parameter. Repeat on a machine with one abnormal level.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-6.md b/design/requirements/FR-6.md
+index 5da7c43..f9028e2 100644
+--- a/design/requirements/FR-6.md
++++ b/design/requirements/FR-6.md
+@@ -14,7 +14,7 @@ A condition flagged by FR-4 shall not be classified as a fault under FR-5 based
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-01]] One-off blip, [[09-demo-control-panel|I-02]] Sustained warning
++- **Injection:** [[07-demo-control-panel|I-01]] One-off blip, [[07-demo-control-panel|I-02]] Sustained warning
+ - **Check:** Run I-01: no fault, no alert, the live number still moves. Then run I-02: the fault is raised only after the window.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-7.md b/design/requirements/FR-7.md
+index 45d1071..2e25cb1 100644
+--- a/design/requirements/FR-7.md
++++ b/design/requirements/FR-7.md
+@@ -14,7 +14,7 @@ When the status model confirms a fault, the system shall show a pop-up alert to
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Run I-03 with an Operator and an Engineer signed in on two screens. Both get the pop-up.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-7a.md b/design/requirements/FR-7a.md
+index 323ee93..8a41214 100644
+--- a/design/requirements/FR-7a.md
++++ b/design/requirements/FR-7a.md
+@@ -14,7 +14,7 @@ The pop-up shall show the equipment, the parameter, the fault type, the severity
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Read the pop-up from I-03: equipment, parameter, fault type, severity, time.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-7b.md b/design/requirements/FR-7b.md
+index 290507a..d04683f 100644
+--- a/design/requirements/FR-7b.md
++++ b/design/requirements/FR-7b.md
+@@ -14,7 +14,7 @@ The system shall not send fault alerts to the Administrator.
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Keep an Administrator signed in during I-03. No pop-up reaches them.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-7c.md b/design/requirements/FR-7c.md
+index 990d409..9fe4dd4 100644
+--- a/design/requirements/FR-7c.md
++++ b/design/requirements/FR-7c.md
+@@ -14,7 +14,7 @@ If no Operator or Engineer is connected, the fault shall stay open and be shown
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Run I-03 with nobody signed in as Operator or Engineer. Sign in afterwards: the open fault is shown.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-8.md b/design/requirements/FR-8.md
+index f75ac71..ebad9b2 100644
+--- a/design/requirements/FR-8.md
++++ b/design/requirements/FR-8.md
+@@ -14,7 +14,7 @@ An Operator or Engineer shall be able to acknowledge an open fault from its aler
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Acknowledge the I-03 pop-up as an Operator.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-8a.md b/design/requirements/FR-8a.md
+index e5ef885..fa1db18 100644
+--- a/design/requirements/FR-8a.md
++++ b/design/requirements/FR-8a.md
+@@ -14,7 +14,7 @@ When a fault is acknowledged, the system shall record which user did it and when
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** After acknowledging, the fault record shows who and when.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-8b.md b/design/requirements/FR-8b.md
+index 1ea6c1d..2ae133b 100644
+--- a/design/requirements/FR-8b.md
++++ b/design/requirements/FR-8b.md
+@@ -14,7 +14,7 @@ Acknowledging shall not close the fault. It stays open until an Engineer marks i
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** After acknowledging, the fault is still open.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-9.md b/design/requirements/FR-9.md
+index 0d183c7..ffbfd73 100644
+--- a/design/requirements/FR-9.md
++++ b/design/requirements/FR-9.md
+@@ -14,7 +14,7 @@ The system shall record detected faults and sensor readings for later retrieval.
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Machine page history shows the fault and the readings after I-03.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/FR-9b.md b/design/requirements/FR-9b.md
+index 2b19754..68e399e 100644
+--- a/design/requirements/FR-9b.md
++++ b/design/requirements/FR-9b.md
+@@ -14,7 +14,7 @@ The readings of a normal window shall be deleted after 24 hours. The readings of
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Injection:** [[07-demo-control-panel|I-14]] Fast-forward the clock
+ - **Check:** Fast-forward 24 hours. Normal readings are gone; warning and critical readings are still there.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/NFR-1.md b/design/requirements/NFR-1.md
+index 42e9abc..42985db 100644
+--- a/design/requirements/NFR-1.md
++++ b/design/requirements/NFR-1.md
+@@ -14,7 +14,7 @@ The system shall correctly identify at least 95% of critical faults (temperature
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-17]] Run the labelled test set
++- **Injection:** [[07-demo-control-panel|I-17]] Run the labelled test set
+ - **Check:** Run the labelled set. The panel shows the percentage of critical faults found. Target 95%.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/NFR-10.md b/design/requirements/NFR-10.md
+index 5f3be8d..09e074c 100644
+--- a/design/requirements/NFR-10.md
++++ b/design/requirements/NFR-10.md
+@@ -14,7 +14,7 @@ The system shall keep statuses and warning or critical records until storage use
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-12]] Fill storage, [[09-demo-control-panel|I-14]] Fast-forward the clock
++- **Injection:** [[07-demo-control-panel|I-12]] Fill storage, [[07-demo-control-panel|I-14]] Fast-forward the clock
+ - **Check:** Fast-forward 24 hours: normal readings go, statuses and warning or critical records stay. Fill storage to 75%: still nothing deleted by the system.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/NFR-2.md b/design/requirements/NFR-2.md
+index 810f6a5..2891351 100644
+--- a/design/requirements/NFR-2.md
++++ b/design/requirements/NFR-2.md
+@@ -14,7 +14,7 @@ The system shall correctly identify at least 85% of vibration-based faults, meas
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-17]] Run the labelled test set
++- **Injection:** [[07-demo-control-panel|I-17]] Run the labelled test set
+ - **Check:** Run the labelled set. The panel shows the percentage of vibration faults found. Target 85%.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/NFR-5.md b/design/requirements/NFR-5.md
+index cf6fe2a..f343462 100644
+--- a/design/requirements/NFR-5.md
++++ b/design/requirements/NFR-5.md
+@@ -14,7 +14,7 @@ The system shall keep a record of its own uptime during each test session. Durin
+ ## How it is tested
+ 
+ - **Method:** look (draft)
+-- **Injection:** [[09-demo-control-panel|I-13]] Restart the system
++- **Injection:** [[07-demo-control-panel|I-13]] Restart the system
+ - **Check:** The panel shows logging uptime for the session. A planned restart (I-13) is not counted.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/NFR-6.md b/design/requirements/NFR-6.md
+index 55d133c..2b5d53c 100644
+--- a/design/requirements/NFR-6.md
++++ b/design/requirements/NFR-6.md
+@@ -14,7 +14,7 @@ The system shall store at least 99% of the sensor readings its data source gener
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
++- **Injection:** [[07-demo-control-panel|I-10]] Cut and restore connection
+ - **Check:** Cut and restore the link. The panel compares readings generated with readings stored. Target 99%.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/NFR-7.md b/design/requirements/NFR-7.md
+index 6b463b8..487ca06 100644
+--- a/design/requirements/NFR-7.md
++++ b/design/requirements/NFR-7.md
+@@ -14,7 +14,7 @@ The system shall keep producing valid, uncorrupted readings when the input data
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-08]] Bad reading, [[09-demo-control-panel|I-09]] Noisy signal
++- **Injection:** [[07-demo-control-panel|I-08]] Bad reading, [[07-demo-control-panel|I-09]] Noisy signal
+ - **Check:** Run I-09 and I-08. Valid readings stay valid, unusable readings are discarded.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/PR-001a.md b/design/requirements/PR-001a.md
+index 3085277..69afcf2 100644
+--- a/design/requirements/PR-001a.md
++++ b/design/requirements/PR-001a.md
+@@ -14,7 +14,7 @@ When the status is critical, the system shall show the alert immediately after t
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Run I-03. The panel shows the time from status confirmed to alert shown. 2 seconds or less.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/PR-001b.md b/design/requirements/PR-001b.md
+index 224f875..49fac5c 100644
+--- a/design/requirements/PR-001b.md
++++ b/design/requirements/PR-001b.md
+@@ -14,7 +14,7 @@ If an alert is shown more than 2 seconds after its status confirms the fault, th
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-11]] Delay the alert
++- **Injection:** [[07-demo-control-panel|I-11]] Delay the alert
+ - **Check:** Hold the alert back. It still appears, the delay is logged, and the "alerts delayed" notice shows.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/PR-003.md b/design/requirements/PR-003.md
+index ae798f4..f219007 100644
+--- a/design/requirements/PR-003.md
++++ b/design/requirements/PR-003.md
+@@ -14,7 +14,7 @@ The system shall support at least 10 pieces of equipment monitored at the same t
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-15]] Load up
++- **Injection:** [[07-demo-control-panel|I-15]] Load up
+ - **Check:** Add machines up to 10 and beyond. PR-001 and PR-002 hold.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/PR-004.md b/design/requirements/PR-004.md
+index 15a6002..f2971fc 100644
+--- a/design/requirements/PR-004.md
++++ b/design/requirements/PR-004.md
+@@ -14,7 +14,7 @@ The system shall support at least 5 dashboard users viewing the system at the sa
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-16]] Extra viewers
++- **Injection:** [[07-demo-control-panel|I-16]] Extra viewers
+ - **Check:** Open 5 dashboard sessions. PR-001 and PR-002 hold.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/PR-005.md b/design/requirements/PR-005.md
+index 5d1549b..c85b779 100644
+--- a/design/requirements/PR-005.md
++++ b/design/requirements/PR-005.md
+@@ -14,7 +14,7 @@ The system shall process at least one reading per second for every monitored par
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-15]] Load up
++- **Injection:** [[07-demo-control-panel|I-15]] Load up
+ - **Check:** Run I-15. The counter shows at least 40 readings per second being processed.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/PR-007.md b/design/requirements/PR-007.md
+index d524d1b..11cfcce 100644
+--- a/design/requirements/PR-007.md
++++ b/design/requirements/PR-007.md
+@@ -14,7 +14,7 @@ All system components shall complete startup and be actively monitoring equipmen
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-13]] Restart the system
++- **Injection:** [[07-demo-control-panel|I-13]] Restart the system
+ - **Check:** Restart the system. The panel times how long until monitoring is running. 60 seconds or less.
+ 
+ Status is one of: built, simulated, left-out, not-set. Change the `status` line above.
+diff --git a/design/requirements/UC-2.md b/design/requirements/UC-2.md
+index b27eff3..92f7573 100644
+--- a/design/requirements/UC-2.md
++++ b/design/requirements/UC-2.md
+@@ -15,6 +15,6 @@ The full steps are in the SRS. The pages that support this use case show up unde
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Walk the alert flow from I-03: pop-up, acknowledge. Include the one-off blip alternate flow with I-01.
+ 
+diff --git a/design/requirements/UC-4.md b/design/requirements/UC-4.md
+index 8647c61..e22dc3c 100644
+--- a/design/requirements/UC-4.md
++++ b/design/requirements/UC-4.md
+@@ -15,6 +15,6 @@ The full steps are in the SRS. The pages that support this use case show up unde
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-10]] Cut and restore connection
++- **Injection:** [[07-demo-control-panel|I-10]] Cut and restore connection
+ - **Check:** Run the connection flow from the panel: near, remote, cut, restore.
+ 
+diff --git a/design/requirements/UC-6.md b/design/requirements/UC-6.md
+index 402b381..b887f5f 100644
+--- a/design/requirements/UC-6.md
++++ b/design/requirements/UC-6.md
+@@ -15,6 +15,6 @@ The full steps are in the SRS. The pages that support this use case show up unde
+ ## How it is tested
+ 
+ - **Method:** inject (draft)
+-- **Injection:** [[09-demo-control-panel|I-03]] Sustained critical
++- **Injection:** [[07-demo-control-panel|I-03]] Sustained critical
+ - **Check:** Walk the maintenance flow: set maintenance, see readings continue, no alerts, then end it.
+ 
+diff --git a/design/srs-changes.md b/design/srs-changes.md
+index b844eb0..dacb9f2 100644
+--- a/design/srs-changes.md
++++ b/design/srs-changes.md
+@@ -24,7 +24,7 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
+ | 7 | A Settings page: theme, sign-out time and limits | [[FR-23a]], [[FR-26]], new | adds detail and new |
+ | 8 | Limits are the exception to Administrator-only configuration | [[FR-27]], [[FR-23a]] | fixes a clash |
+ | 9 | The Administrator cannot reset passwords, and can see the Overview | [[UC-5]], role table | adds detail |
+-| 10 | Pages 4, 5 and 6 merged into other pages | [[UC-2]], [[UC-3]], [[UC-6]] | design only, no wording change |
++| 10 | Alerts, graphs and maintenance folded into other pages instead of pages of their own | [[UC-2]], [[UC-3]], [[UC-6]] | design only, no wording change |
+ 
+ ## The detail
+ 
+@@ -50,13 +50,13 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
+ - **Now:** reports are for a chosen machine and date range ([[FR-10]], [[UC-3]]).
+ - **Suggested:** the machine page offers a graph and a report for a day, a week, a month or a year.
+ - **Limit to state in the SRS:** the readings of a normal period are deleted after 24 hours ([[FR-9b]]). Longer periods show status over time, with full readings only around warnings and faults.
+-- See [[03-machine-detail]].
++- See [[04-machine-detail]].
+ 
+ ### 5. Machines list and search (new requirement)
+ 
+ - **Suggested:** the system shows a list of all registered machines that can be filtered by type and by status. Choosing a machine opens its page. A search bar in the top bar finds a machine by name.
+ - Neither is in the SRS today, so both show as extra on the tracker.
+-- See [[11-machines-list]] and [[top-bar]].
++- See [[03-machines-list]] and [[top-bar]].
+ 
+ ### 6. Full name
+ 
+@@ -68,7 +68,7 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
+ - **Sign-out time:** no wording change to [[FR-26]]. Each person sets their own, from 1 to 5 minutes. It now sits in Settings.
+ - **Limits:** [[FR-23a]] says an Engineer changes limits "from the dashboard". **Suggested:** "from the Settings page".
+ - **Theme (new):** a person can switch the screen between light and dark. Not in the SRS, so it shows as extra.
+-- See [[07-settings]].
++- See [[05-settings]].
+ 
+ ### 8. The clash in FR-27
+ 
+@@ -80,7 +80,7 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
+ - **Decided:** the Administrator cannot reset another person's password.
+ - **Decided:** the Administrator can see the Overview but gets no fault pop-ups and no fault bell list ([[FR-7b]]).
+ - **Suggested:** the role table says the Administrator may view the Overview. Nothing else about the role changes.
+-- See [[08-admin]] and [[02-overview]].
++- See [[06-admin]] and [[02-overview]].
+ 
+ ### 10. Merged pages
+ 
+diff --git a/design/top-bar.md b/design/top-bar.md
+index d1b6bb1..a7961ca 100644
+--- a/design/top-bar.md
++++ b/design/top-bar.md
+@@ -37,10 +37,10 @@ When the name is clicked, a side bar slides in from the right:
+ | Software name | Fault-Detect, on the left. Click to go home. | none |
+ | Search bar | Finds a machine by its name and opens it. | none |
+ | Bell icon | A number on it counts faults that are acknowledged and not yet resolved. Click it to open a small window listing them. | [[srs-changes]], change 3 |
+-| Bell list | Each line is one fault. Choosing it opens that machine's [[03-machine-detail]]. When the Engineer resolves a fault, it leaves the list and the number goes down. | [[FR-17]] |
++| Bell list | Each line is one fault. Choosing it opens that machine's [[04-machine-detail]]. When the Engineer resolves a fault, it leaves the list and the number goes down. | [[FR-17]] |
+ | Fault pop-up | Separate from the bell. See [[fault-popup]]. | [[FR-7]], [[FR-7a]], [[FR-7c]] |
+ | Name, top right | The signed-in person's name. Click it to open the side bar. | none |
+-| Side bar | Shows the full name and the role, and a Settings link that opens [[07-settings]]. | none |
++| Side bar | Shows the full name and the role, and a Settings link that opens [[05-settings]]. | none |
+ 
+ ## Who sees what in the bell
+ 
+@@ -54,4 +54,4 @@ When the name is clicked, a side bar slides in from the right:
+ 
+ - Search is set to find machines by name. Nothing in the SRS asks for search, so this is a design choice and the tracker will show it as extra.
+ - The SRS does not say an account has a full name. It only says the Administrator manages accounts ([[UC-5]]). If the side bar shows a full name, the SRS needs one line saying accounts hold it.
+-- Whether the Administrator's bell shows the storage alert as a number or only on [[08-admin]] is not decided.
++- Whether the Administrator's bell shows the storage alert as a number or only on [[06-admin]] is not decided.
+-- 
+2.43.0
+
