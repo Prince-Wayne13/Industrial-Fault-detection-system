@@ -1,18 +1,29 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+// The top bar on every page: search, connection icons, bell, and the person. See design/top-bar.md.
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Icon from './Icons.jsx'
 import BellList from './BellList.jsx'
+import ConnectionIcons from './ConnectionIcons.jsx'
+import NamePanel from './NamePanel.jsx'
+import { initials } from './format.js'
 import { useUser } from './user.jsx'
 
-// Shared top bar: name, search, bell, person. See docs/design/top-bar.md
 export default function TopBar({ bell, storageAlerts, machines, mode, link }) {
-  const [bellOpen, setBellOpen] = useState(false)
-  const [sideOpen, setSideOpen] = useState(false)
+  const { user } = useUser()
+  const [open, setOpen] = useState(null)        // 'bell' | 'name' | null
   const [search, setSearch] = useState('')
   const [found, setFound] = useState(true)
-  const { user, signOut } = useUser()
+  const bar = useRef(null)
   const navigate = useNavigate()
   const count = bell.length + (storageAlerts ? 1 : 0)
-  const role = user.role
+
+  useEffect(() => {
+    const off = (e) => { if (e.key === 'Escape') setOpen(null) }
+    const away = (e) => { if (open === 'bell' && bar.current && !bar.current.querySelector('.anchor.open')?.contains(e.target)) setOpen(null) }
+    document.addEventListener('keydown', off)
+    document.addEventListener('mousedown', away)
+    return () => { document.removeEventListener('keydown', off); document.removeEventListener('mousedown', away) }
+  }, [open])
 
   const find = (e) => {
     if (e.key !== 'Enter' || !search.trim()) return
@@ -22,31 +33,30 @@ export default function TopBar({ bell, storageAlerts, machines, mode, link }) {
   }
 
   return (
-    <div className="topbar">
-      <Link to="/" className="brand">Fault-Detect</Link>
-      <input placeholder="Search machines" value={search} aria-invalid={!found} title={found ? '' : 'No machine with that name'}
-             onChange={(e) => { setSearch(e.target.value); setFound(true) }} onKeyDown={find} />
-      {role !== 'administrator' && <Link to="/machines" className="navlink first">Machines</Link>}
-      {role === 'administrator' && <Link to="/admin" className="navlink first">Admin</Link>}
-      <Link to="/demo" className="navlink">Demo</Link>
-      <Link to="/tracker" className="navlink">Tracker</Link>
-      {mode && <span className="chip" title="Connection mode">{mode === 'near' ? 'Near range · Bluetooth' : 'Remote range · Wi-Fi'}{link === 'cut' && ' · cut'}</span>}
-      <div className="bell-wrap">
-        <button onClick={() => setBellOpen(!bellOpen)} aria-label={`Bell, ${count} open`}>Bell {count > 0 && <span className="bell-count">{count}</span>}</button>
-        {bellOpen && <BellList bell={bell} storageAlerts={storageAlerts} onClose={() => setBellOpen(false)} />}
+    <header className="topbar" ref={bar}>
+      <div className="search">
+        <Icon name="search" size={18} />
+        <input type="search" placeholder="Search machines" aria-label="Search machines" value={search} aria-invalid={!found}
+               title={found ? '' : 'No machine with that name'} onChange={(e) => { setSearch(e.target.value); setFound(true) }} onKeyDown={find} />
       </div>
-      <button onClick={() => setSideOpen(true)}>{user.full_name}</button>
-      {sideOpen && (
-        <>
-          <div className="side-backdrop" onClick={() => setSideOpen(false)} />
-          <aside className="sidebar">
-            <h3>{user.full_name}</h3>
-            <p className="muted" style={{ textTransform: 'capitalize' }}>{role}</p>
-            <Link to="/settings" onClick={() => setSideOpen(false)}>Settings</Link>
-            <button className="demo-btn" onClick={signOut}>Sign out</button>
-          </aside>
-        </>
-      )}
-    </div>
+      <div className="topbar-space" />
+      <ConnectionIcons mode={mode} link={link} />
+      <div className={`anchor${open === 'bell' ? ' open' : ''}`}>
+        <button className="icon-btn" aria-label={`Faults, ${count} waiting`} aria-expanded={open === 'bell'} onClick={() => setOpen(open === 'bell' ? null : 'bell')}>
+          <Icon name="bell" />
+          {count > 0 && <span className="bell-badge">{count}</span>}
+        </button>
+        {open === 'bell' && <BellList bell={bell} storageAlerts={storageAlerts} onClose={() => setOpen(null)} />}
+      </div>
+      <button className="person" onClick={() => setOpen('name')} aria-haspopup="dialog">
+        <span className="avatar">{initials(user.full_name)}</span>
+        <span className="person-text">
+          <div className="person-name">{user.full_name}</div>
+          <div className="person-role">{user.role}</div>
+        </span>
+        <Icon name="chevron" size={16} />
+      </button>
+      {open === 'name' && <NamePanel onClose={() => setOpen(null)} />}
+    </header>
   )
 }

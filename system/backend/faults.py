@@ -39,7 +39,7 @@ class FaultStore:
                 return f
         return None
 
-    def raise_fault(self, machine_id, parameter, level, limit, confirmed_at):
+    def raise_fault(self, machine_id, parameter, level, limit, confirmed_at, value=None, reason=None):
         """Returns (fault, why). `why` is 'new', 'already open' or 'maintenance'."""
         now = clock.now()
         if self.in_maintenance(machine_id):
@@ -55,6 +55,7 @@ class FaultStore:
         latency = now - confirmed_at
         fault = {"id": self.next_id, "machine_id": machine_id, "parameter": parameter, "level": level,
                  "limit": limit,                                  # FR-23d: the limit in force when it was raised
+                 "value": value, "reason": reason,                # the reading that crossed it; reason = 'fluctuating' for a spread fault
                  "status": "open", "confirmed_at": confirmed_at, "raised_at": now,
                  "alert_latency_s": round(latency, 3), "delayed": latency > ALERT_LIMIT_S,
                  "acknowledged_by": [], "resolved_by": None, "resolved_at": None, "escalations": [], "last_normal_at": None}

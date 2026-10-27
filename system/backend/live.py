@@ -14,14 +14,14 @@ import clock
 import config
 from config import RANK
 from model import threshold_level
-from seed import PARAMETERS, Source
+from seed import NORMAL, PARAMETERS, Source
 
 BAD_VALUE = 99999      # outside every physical range, so the checker rejects it (FR-14)
 BAD_SECONDS = 5        # how long a demo bad reading lasts
-PARAM_ACTIONS = {"warning", "critical", "spike", "clear", "bad", "silent"}
+PARAM_ACTIONS = {"warning", "critical", "spike", "clear", "bad", "silent", "fluctuate"}
 NO_MACHINE = {"slow_alert_on", "slow_alert_off", "cut_link", "restore_link", "heavy_load", "remove_load"}
 IMMEDIATE = {"clear_all", "cancel", "mode_near", "mode_remote"}      # never delayed
-LABELS = {"warning": "Warning value", "critical": "Critical value", "spike": "One spike", "bad": "Bad reading", "silent": "Sensor goes silent",
+LABELS = {"warning": "Warning value", "critical": "Critical value", "spike": "One spike", "fluctuate": "Fluctuating value", "bad": "Bad reading", "silent": "Sensor goes silent",
           "clear": "Back to normal", "maintenance": "Start maintenance", "end_maintenance": "End maintenance", "slow_alert_on": "Slow alerts on",
           "slow_alert_off": "Slow alerts off", "cut_link": "Connection cut", "restore_link": "Connection restored",
           "heavy_load": "Heavy load", "remove_load": "Remove the extra machines"}
@@ -231,6 +231,13 @@ class LiveFeed:
                 self.source.silent.discard(key)
                 self.source.overrides[key] = fault_value(machine["type"], parameter, action)
                 return True, f"{machine['name']} {parameter} now reads a {action} value."
+            if action == "fluctuate":                             # SRS A.4: speed that swings up and down but never crosses the low limit
+                if config.LIMITS[machine["type"]][parameter].get("fluctuation_step") is None:
+                    return False, "Only a parameter with a fluctuation limit (pump speed) can fluctuate."
+                self.source.silent.discard(key)
+                base = NORMAL[machine["type"]][parameter]
+                self.source.overrides[key] = lambda t, b=base: b * (1.08 if int(t) % 2 else 0.92)
+                return True, f"{machine['name']} {parameter} now swings up and down."
             if action == "spike":                                 # one wrong-high second: must never become a fault (FR-6)
                 t0 = int(clock.now()) + (0 if in_step else 1)
                 value = fault_value(machine["type"], parameter, "critical")

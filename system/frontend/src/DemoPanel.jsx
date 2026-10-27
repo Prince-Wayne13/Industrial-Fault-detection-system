@@ -15,6 +15,7 @@ const LIVE = [
   ['Sustained critical', [{ action: 'critical', machine_id: 'motor-1', parameter: 'temperature' }]],
   ['Two faults at once', [{ action: 'warning', machine_id: 'motor-2', parameter: 'temperature' }, { action: 'warning', machine_id: 'motor-2', parameter: 'current' }]],
   ['Sensor goes silent', [{ action: 'silent', machine_id: 'pump-1', parameter: 'rpm' }]],
+  ['Pump speed swings', [{ action: 'fluctuate', machine_id: 'pump-1', parameter: 'rpm' }]],
   ['Bad reading', [{ action: 'bad', machine_id: 'pump-1', parameter: 'current' }]],
   ['Maintenance', [{ action: 'maintenance', machine_id: 'motor-3', minutes: 1 }]],
   ['Slow alert', [{ action: 'slow_alert_on' }, { action: 'warning', machine_id: 'motor-1', parameter: 'vibration' }]],
@@ -24,8 +25,8 @@ const LIVE = [
 
 export default function DemoPanel() {
   const { data } = useOverview()
-  const [machineId, setMachineId] = useState('')
-  const [parameter, setParameter] = useState('')
+  const [chosenMachine, setMachineId] = useState('')
+  const [chosenParameter, setParameter] = useState('')
   const [minutes, setMinutes] = useState(30)
   const [delay, setDelay] = useState(5)
   const [message, setMessage] = useState('')
@@ -33,10 +34,9 @@ export default function DemoPanel() {
   const poll = useRef(null)
 
   const machines = data?.machines ?? []
+  const machineId = chosenMachine || machines[0]?.id || ''
   const machine = machines.find((m) => m.id === machineId)
-  useEffect(() => {
-    if (!machineId && machines.length) { setMachineId(machines[0].id); setParameter(Object.keys(machines[0].parameters)[0]) }
-  }, [machines, machineId])
+  const parameter = chosenParameter in (machine?.parameters ?? {}) ? chosenParameter : Object.keys(machine?.parameters ?? {})[0] ?? ''
   useEffect(() => () => clearInterval(poll.current), [])
 
   const send = async (step) => {
@@ -45,7 +45,7 @@ export default function DemoPanel() {
     return r
   }
   const play = async (steps) => { for (const step of steps) { const r = await send(step); if (!r.ok) break } }
-  const Btn = ({ action, children }) => <button className="demo-btn" onClick={() => send({ action })}>{children}</button>
+  const btn = (action, label) => <button className="demo-btn" onClick={() => send({ action })}>{label}</button>
 
   const runChecks = async () => {
     const r = await post('/api/checks/run')
@@ -78,14 +78,14 @@ export default function DemoPanel() {
       <div className="card demo-card">
         <div className="demo-row">
           <span className="chip chip-dark">{data?.mode === 'remote' ? 'Remote range · Wi-Fi' : 'Near range · Bluetooth'}</span>
-          <Btn action="mode_near">Near range (Bluetooth)</Btn>
-          <Btn action="mode_remote">Remote range (Wi-Fi)</Btn>
+          {btn('mode_near', 'Near range (Bluetooth)')}
+          {btn('mode_remote', 'Remote range (Wi-Fi)')}
           <span className="muted">Same equipment data in both modes.</span>
         </div>
         <div className="demo-row">
           <span className="chip chip-dark">Link {data?.link === 'cut' ? `cut · ${data.pending} windows waiting` : 'up'}</span>
-          <Btn action="cut_link">Cut connection</Btn>
-          <Btn action="restore_link">Restore connection</Btn>
+          {btn('cut_link', 'Cut connection')}
+          {btn('restore_link', 'Restore connection')}
         </div>
       </div>
 
@@ -95,9 +95,9 @@ export default function DemoPanel() {
           {LIVE.map(([name, steps]) => <button key={name} className="demo-btn" onClick={() => play(steps)}>{name}</button>)}
         </div>
         <div className="demo-row">
-          <Btn action="restore_link">Restore connection</Btn>
+          {btn('restore_link', 'Restore connection')}
           <button className="demo-btn demo-btn-off" onClick={() => send({ action: 'remove_load' })}>Remove the extra machines</button>
-          <Btn action="clear_all">Reset everything</Btn>
+          {btn('clear_all', 'Reset everything')}
         </div>
       </div>
 
@@ -116,19 +116,19 @@ export default function DemoPanel() {
           </label>
         </div>
         <div className="demo-row">
-          <Btn action="warning">Warning value</Btn>
-          <Btn action="critical">Critical value</Btn>
-          <Btn action="spike">One spike</Btn>
-          <Btn action="clear">Back to normal</Btn>
-          <Btn action="bad">Bad reading (5 s)</Btn>
-          <Btn action="silent">Sensor goes silent</Btn>
+          {btn('warning', 'Warning value')}
+          {btn('critical', 'Critical value')}
+          {btn('spike', 'One spike')}
+          {btn('clear', 'Back to normal')}
+          {btn('bad', 'Bad reading (5 s)')}
+          {btn('silent', 'Sensor goes silent')}
         </div>
         <div className="demo-row">
           <label>Maintenance minutes <input type="number" min="0.1" step="0.1" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
-          <Btn action="maintenance">Start maintenance</Btn>
-          <Btn action="end_maintenance">End maintenance</Btn>
-          <Btn action="slow_alert_on">Slow alerts on</Btn>
-          <Btn action="slow_alert_off">Slow alerts off</Btn>
+          {btn('maintenance', 'Start maintenance')}
+          {btn('end_maintenance', 'End maintenance')}
+          {btn('slow_alert_on', 'Slow alerts on')}
+          {btn('slow_alert_off', 'Slow alerts off')}
         </div>
       </div>
 

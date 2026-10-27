@@ -1,0 +1,1585 @@
+diff --git a/docs/demo-click-through.md b/docs/demo-click-through.md
+new file mode 100644
+index 0000000..0f7af92
+--- /dev/null
++++ b/docs/demo-click-through.md
+@@ -0,0 +1,51 @@
++# Click-through: every screen, three roles
++
++Start: `python app.py` in `system/backend`, `npm run dev` in `system/frontend`. Use three browser tabs; each tab is its own sign-in.
++Accounts: `operator1`, `engineer1`, `admin1`. Password is `demo-password-for-` plus the username. "Demo accounts" on the sign-in page fills the form.
++Tick each line. Write the page and what looked wrong beside any line that fails.
++
++## 0. Sign in (any tab)
++- [ ] Wrong password: red notice, no sign-in.
++- [ ] Right password: lands on Overview inside the new frame (side nav, top bar).
++- [ ] Tab title and the brand at top left both say Fault-Detect.
++
++## 1. Operator (`operator1`)
++- [ ] Side nav shows Overview, Machines, Settings, and Demonstration (Demo panel, Tracker). No Admin.
++- [ ] Overview: five tiles add up (Total = machines shown). Cards grouped Motors, Water pumps, Backup power. Numbers move every second.
++- [ ] Search "pump" then Enter: opens Pump 1. Search "zzz" then Enter: box turns red.
++- [ ] Connection icons: Bluetooth glows (near range). Wi-Fi plain.
++- [ ] Demo panel, "Sustained warning": countdown bottom left, then a pop-up bottom right with machine, "Temperature is too high", the reading and the limit.
++- [ ] Pop-up stays until Acknowledge. After it: pop-up gone, bell shows 1, bell list shows the fault, choosing it opens Motor 1.
++- [ ] Machines page: filter by Type and Status. Names open the machine page.
++- [ ] Machine page: graph with Day, Week, Month, Year. Live window shows 10 slots. Operator cannot Resolve (button absent or refused).
++- [ ] Settings: change sign-out time, change password (15 characters or more). Engineer limits not editable.
++- [ ] Name panel: full name, role, Settings, Sign out. Sign out returns to sign-in.
++
++## 2. Engineer (`engineer1`)
++- [ ] Same side nav as Operator.
++- [ ] Gets its own pop-up for the same fault, and acknowledges it separately (FR-8).
++- [ ] Machine page: Resolve works; bell count drops by one. Start and end Maintenance; card shows the Maintenance tag.
++- [ ] Settings: change a limit. Too-high value refused with a message. Valid value saves and shows in the change log.
++- [ ] Demo panel, "Pump speed swings": after about 10 seconds a Pump 1 pop-up says "Speed is swinging up and down".
++- [ ] Demo panel, "Lone spike": no pop-up.
++- [ ] Demo panel, "Bad reading": Invalid tag beside the number. "Sensor goes silent": Sensor fault tag, no number.
++- [ ] Machine page: CSV report downloads.
++
++## 3. Administrator (`admin1`)
++- [ ] Side nav shows Overview, Admin, Settings. No Machines.
++- [ ] No pop-ups ever, even during "Two faults at once".
++- [ ] Bell shows the storage alert only (when storage is above 75%), titled "Storage alert".
++- [ ] Admin: storage bar, users list (add one), machines list (add and remove one), change log.
++- [ ] Administrator cannot download a report or resolve a fault (refused).
++- [ ] Try `/machines` by typing it: "Not allowed".
++
++## 4. Connection and look
++- [ ] Demo panel "Remote range": Wi-Fi icon glows, Bluetooth plain.
++- [ ] "Cut connection": both icons grey with a slash and the word Offline; yellow notice on Overview; "Restore connection" clears it and the count of waiting windows goes to 0.
++- [ ] Stop the back end: red notice "Live connection lost". Start it again: notice clears.
++- [ ] Narrow the window under 900 px: side nav shrinks to icons, nothing overlaps.
++- [ ] Press Escape with the bell open: it closes.
++- [ ] Tab through the top bar with the keyboard: every control shows a visible focus ring.
++
++## 5. End
++- [ ] Demo panel "Reset everything". Tracker page loads and shows no row marked "not set" that should be built.
+diff --git a/docs/design/segment data/limits-references.md b/docs/design/segment data/limits-references.md
+index 870a9ac..63f2830 100644
+--- a/docs/design/segment data/limits-references.md	
++++ b/docs/design/segment data/limits-references.md	
+@@ -61,8 +61,8 @@ Other numbers the engine uses:
+ - Appendix A.1: replace "(per ISO 10816-3)" with "above 4.5 mm/s RMS", add "warning above 2.8 mm/s RMS". Say the group and support used (Group 2, rigid).
+ - Appendix A.3 and A.4: add the pump current, pump RPM, motor RPM and UPS current numbers above. Keep them marked "team-selected, supported by [R2] to [R6]". They are still pending validation on real equipment.
+ - Appendix C ("Values not backed by a cited source"): the UPS current number moves out of that list only in the sense that the 105% overload start is a manufacturer practice. The rated 5 A itself is still our assumption.
+-- Pump vibration leaves a gap between 3.0 mm/s (normal below) and 5.0 mm/s (abnormal above). The code treats anything up to 5.0 as normal. Say so in A.4, or close the gap.
+-- Pump RPM "dropping or fluctuating" (A.4): only "dropping below 90%" is built. Fluctuation needs a rule such as a spread across the window. Open item.
++- Pump vibration (decided 27 Oct 2026): keep one abnormal level at 5.0 mm/s. Between 3.0 and 5.0 mm/s there is no status. Write in A.4: "3.0 mm/s is the expected running level; 5.0 mm/s is the single limit; readings between them carry no status." Cross-check [R7]: pump guidance for centreline height up to 225 mm gives 3.0, 5.5 and 7.1 mm/s, so 3.0 as expected level and 5.0 as the alert sit inside the guidance.
++- Pump RPM "dropping or fluctuating" (A.4), built 27 Oct 2026: dropping = below 90% of rated (1305 rpm). Fluctuating = the typical step between neighbouring readings in the 10-second window (the median of the 9 steps) is above 6% of the mean. Normal running steps about 1.4%, the Noisy readings demo about 3%, the demo swing (plus and minus 8%) 16%. One spike or one ramp cannot trigger it, so FR-6 holds. The 6% is team-selected, pending validation. Add one sentence to A.4 and a row to the tracker.
+ 
+ ## References
+ 
+@@ -77,6 +77,7 @@ Read on 26 October 2026. Tags match the comments in `config.py`.
+ | R4 | Littelfuse, 777 electronic overload relay, https://m.littelfuse.com/products/landing-pages/electrical/demos/777-demo-1.aspx | An undercurrent setting of 80% of full-load current is usually enough |
+ | R5 | Industrial Monitor Direct, "Configuring Thermal Overload Relays for 3-Phase Motors", https://industrialmonitordirect.com/hu/blogs/knowledgebase/configuring-thermal-overload-relays-for-3-phase-motors-setting-calculation-and-application | NEC / NEMA: overload no more than 125% of full-load current (service factor 1.15), 115% otherwise; pumps 110 to 115% |
+ | R6 | City of Winnipeg, Static UPS specification, https://legacy.winnipeg.ca/finance/findata/matmgt/documents/2011/253-2011/253-2011_NMS_263353_Static_Uninterruptible_Power_Supply.pdf ; Purdi CertaUPS C650 datasheet, https://store.purdi.com/ext/pdf/datasheet.php?id=106108 ; Schneider Electric Easy UPS 3-phase specifications, https://www.productinfo.schneider-electric.com/easyups3pmodular/990-91580-technical-specifications-easy-ups-3-phase-modular/English/ | UPS overload ratings start at 105% of rated load (105 to 125% for minutes, then 125 to 150% for a minute or less, then bypass) |
++| R7 | Europump, "Guidelines on Pump Vibration", first edition, July 2013, https://www.europump.net/files/Publications/Guides/Guidelines 0n Pump Vibration First edition Final July 2013.pdf (found by search; only the search extract was read, not the whole document) | Vibration limits for pumps with centreline height up to 225 mm, RMS velocity: 3.0, 5.5 and 7.1 mm/s. Used only as a cross-check of the SRS 3.0 and 5.0 |
+ 
+ ### Honest limits of these references
+ 
+diff --git a/docs/open-items.md b/docs/open-items.md
+index 2a8a5d0..1be8055 100644
+--- a/docs/open-items.md
++++ b/docs/open-items.md
+@@ -8,7 +8,7 @@ Everything still waiting for a decision. When an item is settled, record it in `
+ | O-5 | Is the status model the same as the logistic regression classifier? Does threshold screening still run per reading? | DD-05, DD-06, FR-4, FR-5 | | | |
+ | O-7 | What is the main store, and how do the main store and local copy stay in step? | DD-04, DD-10 | | | |
+ | O-9 | Does acknowledging leave the fault open until it is resolved? | FR-8, FR-17 | Yes. | | |
+-| O-10 | "Warning" and "abnormal" are the same first level. Use one word everywhere? | FR-5, srs-changes | Kept as is. Dashboard words live in `frontend/src/status.js`, so the change is one edit. | | |
+-| O-11 | The SRS gives no most number of machines, only at least 10 (PR-003). Is that enough? | PR-003, FR-24 | No cap in the code. Review the SRS wording. | | |
++| O-10 | "Warning" and "abnormal" are the same first level. Use one word everywhere? | FR-5, srs-changes | Proposed wording for FR-5: "A parameter with two limits has the statuses normal, warning and critical. A parameter with one limit has normal and abnormal. 'Warning' and 'abnormal' are the first level." The dashboard shows the word each parameter really has. The Overview tile counts both under "Warning". Words live in `frontend/src/status.js`, so a change is one edit. | | |
++| O-11 | The SRS gives no most number of machines, only at least 10 (PR-003). Is that enough? | PR-003, FR-24 | No cap in the code. Proposed wording for PR-003: "The system supports at least 10 machines. It was run with 11 in the heavy-load demonstration. No upper limit is set." | | |
+ 
+ The Owner and Date columns are empty on purpose. The examiners criticised open items with no owner or date.
+diff --git a/system/backend/check_all.py b/system/backend/check_all.py
+index 735165d..efea9fd 100644
+--- a/system/backend/check_all.py
++++ b/system/backend/check_all.py
+@@ -97,7 +97,21 @@ def _():
+     need(all(w["status"] == "normal" for w in s.store.local.windows("motor-1") if w["parameter"] == "temperature"), "status")
+     s2, _f = fresh("Sustained warning")
+     need(faults_of(s2)[0]["raised_at"] >= demo.T0 + 20, "fault appeared before the window ended")
+-    return "spike: no fault. Sustained: fault only when the 10-second window ended"
++    s3 = demo.new_system()                                           # SRS A.4: pump speed that swings is abnormal, one low reading is not
++    base = 1450
++    s3.connect(s3.users["operator"])
++    src = demo.Source(s3.machine_list())
++    t0 = clock.now()
++    src.overrides[("pump-1", "rpm")] = lambda t: base * (1.08 if int(t) % 2 else 0.92) if t >= t0 + 5 else None
++    demo.run(s3, 31, src)
++    rpm = [f for f in faults_of(s3) if f["parameter"] == "rpm"]
++    need(len(rpm) == 1 and rpm[0]["level"] == "abnormal" and rpm[0]["reason"] == "fluctuating", faults_of(s3))
++    s4 = demo.new_system()
++    src4 = demo.Source(s4.machine_list())
++    src4.overrides[("pump-1", "rpm")] = lambda t: 900 if int(t) == int(t0) + 8 else None
++    demo.run(s4, 31, src4)
++    need([f for f in faults_of(s4) if f["parameter"] == "rpm"] == [], "one low speed reading became a fault")
++    return "spike: no fault. Sustained: fault only when the 10-second window ended. Pump speed swing: abnormal; one low reading: none"
+ 
+ # ---------------- alerts ----------------
+ @check("FR-7", "Pop-up for every connected Operator and Engineer")
+@@ -110,8 +124,9 @@ def _():
+ def _():
+     s, _f = fresh("Sustained warning")
+     f = s.popups_for(s.users["operator"])[0]
+-    need(all(k in f for k in ("machine_id", "parameter", "level", "raised_at")), f)
+-    return "all fields present (screen in Segment 3)"
++    need(all(k in f for k in ("machine_id", "parameter", "level", "raised_at", "limit", "value")), f)
++    need(f["value"] > f["limit"], f)                                   # the pop-up can say "140 now, limit 130"
++    return "all fields present, including the reading and the limit (screen in Segment 3)"
+ 
+ @check("FR-7b", "Administrator gets no fault alerts")
+ def _():
+diff --git a/system/backend/check_report.md b/system/backend/check_report.md
+index dab05da..0cc6274 100644
+--- a/system/backend/check_report.md
++++ b/system/backend/check_report.md
+@@ -8,9 +8,9 @@
+ | FR-3a | PASS | One reading per second per parameter | 61 seconds gave 61 readings per parameter (60 stored, 1 in the open window) |
+ | FR-4 | PASS | A sustained high reading is flagged | Motor 1 temperature flagged |
+ | FR-5 | PASS | Warning, critical, and abnormal where only one level exists | motor temperature/current/vibration have 3 statuses; pump temperature, rpm, UPS and others have 2 |
+-| FR-6 | PASS | One abnormal reading is never a fault | spike: no fault. Sustained: fault only when the 10-second window ended |
++| FR-6 | PASS | One abnormal reading is never a fault | spike: no fault. Sustained: fault only when the 10-second window ended. Pump speed swing: abnormal; one low reading: none |
+ | FR-7 | PASS | Pop-up for every connected Operator and Engineer | both see it (screen in Segment 3) |
+-| FR-7a | PASS | Pop-up carries machine, parameter, type, level, time | all fields present (screen in Segment 3) |
++| FR-7a | PASS | Pop-up carries machine, parameter, type, level, time | all fields present, including the reading and the limit (screen in Segment 3) |
+ | FR-7b | PASS | Administrator gets no fault alerts | no pop-up, no bell list |
+ | FR-7c | PASS | Nobody connected: fault stays open and is shown to the next person | shown when the Operator connects |
+ | FR-8 | PASS | Each person acknowledges for themselves | Operator's pop-up goes, Engineer's stays |
+@@ -49,8 +49,8 @@
+ | FR-28d | PASS | 5 wrong passwords block the account for 15 minutes | Too many wrong passwords. The account is blocked for 15 minutes. |
+ | FR-28e | SEGMENT 5 | HTTPS certificate |  |
+ | FR-28f | PASS | Passwords stored salted and scrambled | bcrypt, different every time |
+-| NFR-1 | PASS | At least 95% of critical temperature and current faults found | 80 of 80 = 100% |
+-| NFR-2 | PASS | At least 85% of vibration faults found | 120 of 120 = 100% |
++| NFR-1 | PASS | At least 95% of critical temperature and current faults found | 160 of 160 = 100% |
++| NFR-2 | PASS | At least 85% of vibration faults found | 240 of 240 = 100% |
+ | NFR-5 | SEGMENT 5 | uptime measured over the demo |  |
+ | NFR-6 | PASS | At least 99% of readings stored, also during a cut | generated 589, local 589, online 589 |
+ | NFR-7 | PASS | Noisy data: no corrupt reading acted on | noise at 3x raises no fault; bad readings never enter a window |
+@@ -63,7 +63,7 @@
+ | PR-002 | SEGMENT 2 | reading to screen within 2 seconds |  |
+ | PR-003 | PASS | 10 machines at the same time | 10 machines, status every 10 s (screen timing in Segment 5) |
+ | PR-004 | SEGMENT 5 | 5 viewers at once |  |
+-| PR-005 | PASS | At least 40 readings per second | 183,912 readings per second processed |
++| PR-005 | PASS | At least 40 readings per second | 174,342 readings per second processed |
+ | PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 45.3 MB needed for one day; the local file is set to 512 MB |
+ | PR-007 | SEGMENT 5 | start-up within 60 seconds |  |
+ 
+diff --git a/system/backend/config.py b/system/backend/config.py
+index 1a83c4b..558ee03 100644
+--- a/system/backend/config.py
++++ b/system/backend/config.py
+@@ -55,8 +55,12 @@ LIMITS = {
+     "pump": {
+         "temperature": {"abnormal": 95},                         # [SRS A.4] bearing temperature
+         "current":     {"abnormal": 13.8, "abnormal_below": 9.6},   # 115% of rated = overload [R5]; 80% of rated = underload / dry running [R3][R4]
+-        "vibration":   {"abnormal": 5.0},                        # [SRS A.4] mm/s RMS
+-        "rpm":         {"abnormal_below": 1305},                 # [SRS A.4] same 90% rule as the motor (0.9 x 1450) [R2]
++        # [SRS A.4] normal < 3.0, abnormal > 5.0. Between 3.0 and 5.0 there is no status: one abnormal level only (decision).
++        # 3.0 is the expected running level; 5.0 is the single limit. Cross-check: pump guidance puts alert levels near 5.5 mm/s for small pumps [R7].
++        "vibration":   {"abnormal": 5.0},
++        # [SRS A.4] "dropping or fluctuating". Dropping = below 90% of rated. Fluctuating = the median step between neighbouring readings is above 6% of the mean (normal running about 1.4%, the Noisy readings demo about 3%).
++        # Normal running spreads about 1%; 6% leaves room for noise. Team-selected, pending validation.
++        "rpm":         {"abnormal_below": 1305, "fluctuation_step": 0.06},
+     },
+     "ups": {
+         "temperature": {"abnormal": 75},                         # [SRS A.3] internal temperature
+diff --git a/system/backend/faults.py b/system/backend/faults.py
+index 82d7ce4..7b7dc1b 100644
+--- a/system/backend/faults.py
++++ b/system/backend/faults.py
+@@ -39,7 +39,7 @@ class FaultStore:
+                 return f
+         return None
+ 
+-    def raise_fault(self, machine_id, parameter, level, limit, confirmed_at):
++    def raise_fault(self, machine_id, parameter, level, limit, confirmed_at, value=None, reason=None):
+         """Returns (fault, why). `why` is 'new', 'already open' or 'maintenance'."""
+         now = clock.now()
+         if self.in_maintenance(machine_id):
+@@ -55,6 +55,7 @@ class FaultStore:
+         latency = now - confirmed_at
+         fault = {"id": self.next_id, "machine_id": machine_id, "parameter": parameter, "level": level,
+                  "limit": limit,                                  # FR-23d: the limit in force when it was raised
++                 "value": value, "reason": reason,                # the reading that crossed it; reason = 'fluctuating' for a spread fault
+                  "status": "open", "confirmed_at": confirmed_at, "raised_at": now,
+                  "alert_latency_s": round(latency, 3), "delayed": latency > ALERT_LIMIT_S,
+                  "acknowledged_by": [], "resolved_by": None, "resolved_at": None, "escalations": [], "last_normal_at": None}
+diff --git a/system/backend/live.py b/system/backend/live.py
+index a8620b1..7e9b644 100644
+--- a/system/backend/live.py
++++ b/system/backend/live.py
+@@ -14,14 +14,14 @@ import clock
+ import config
+ from config import RANK
+ from model import threshold_level
+-from seed import PARAMETERS, Source
++from seed import NORMAL, PARAMETERS, Source
+ 
+ BAD_VALUE = 99999      # outside every physical range, so the checker rejects it (FR-14)
+ BAD_SECONDS = 5        # how long a demo bad reading lasts
+-PARAM_ACTIONS = {"warning", "critical", "spike", "clear", "bad", "silent"}
++PARAM_ACTIONS = {"warning", "critical", "spike", "clear", "bad", "silent", "fluctuate"}
+ NO_MACHINE = {"slow_alert_on", "slow_alert_off", "cut_link", "restore_link", "heavy_load", "remove_load"}
+ IMMEDIATE = {"clear_all", "cancel", "mode_near", "mode_remote"}      # never delayed
+-LABELS = {"warning": "Warning value", "critical": "Critical value", "spike": "One spike", "bad": "Bad reading", "silent": "Sensor goes silent",
++LABELS = {"warning": "Warning value", "critical": "Critical value", "spike": "One spike", "fluctuate": "Fluctuating value", "bad": "Bad reading", "silent": "Sensor goes silent",
+           "clear": "Back to normal", "maintenance": "Start maintenance", "end_maintenance": "End maintenance", "slow_alert_on": "Slow alerts on",
+           "slow_alert_off": "Slow alerts off", "cut_link": "Connection cut", "restore_link": "Connection restored",
+           "heavy_load": "Heavy load", "remove_load": "Remove the extra machines"}
+@@ -231,6 +231,13 @@ class LiveFeed:
+                 self.source.silent.discard(key)
+                 self.source.overrides[key] = fault_value(machine["type"], parameter, action)
+                 return True, f"{machine['name']} {parameter} now reads a {action} value."
++            if action == "fluctuate":                             # SRS A.4: speed that swings up and down but never crosses the low limit
++                if config.LIMITS[machine["type"]][parameter].get("fluctuation_step") is None:
++                    return False, "Only a parameter with a fluctuation limit (pump speed) can fluctuate."
++                self.source.silent.discard(key)
++                base = NORMAL[machine["type"]][parameter]
++                self.source.overrides[key] = lambda t, b=base: b * (1.08 if int(t) % 2 else 0.92)
++                return True, f"{machine['name']} {parameter} now swings up and down."
+             if action == "spike":                                 # one wrong-high second: must never become a fault (FR-6)
+                 t0 = int(clock.now()) + (0 if in_step else 1)
+                 value = fault_value(machine["type"], parameter, "critical")
+diff --git a/system/backend/model.py b/system/backend/model.py
+index 99ccb70..59b57e9 100644
+--- a/system/backend/model.py
++++ b/system/backend/model.py
+@@ -49,6 +49,35 @@ def limit_in_force(machine_type, parameter, level, value=None):
+     return r.get("abnormal_below")
+ 
+ 
++def fluctuation(machine_type, parameter, values):
++    """FR-4 / SRS A.4 'fluctuating'. The typical step from one reading to the next, as a share of the mean (median of the 9 steps).
++    A swing steps by a lot every second; one spike, one ramp or plain noise leave the median step small, so FR-6 still holds."""
++    if rule_for(machine_type, parameter).get("fluctuation_step") is None or len(values) < 4:
++        return None
++    mean = sum(values) / len(values)
++    if mean == 0:
++        return None
++    steps = sorted(abs(b - a) for a, b in zip(values, values[1:]))
++    n = len(steps)
++    med = steps[n // 2] if n % 2 else (steps[n // 2 - 1] + steps[n // 2]) / 2
++    return med / abs(mean)
++
++
++def is_fluctuating(machine_type, parameter, values):
++    cv = fluctuation(machine_type, parameter, values)
++    return cv is not None and cv > rule_for(machine_type, parameter)["fluctuation_step"]
++
++
++def observed_value(machine_type, parameter, values):
++    """The reading furthest past the limit, for the pop-up ('138 C now')."""
++    if not values:
++        return None
++    r = rule_for(machine_type, parameter)
++    if r.get("abnormal_below") is not None and min(values) < r["abnormal_below"] and not any(v > (r.get("abnormal") or r.get("warning") or float("inf")) for v in values):
++        return min(values)
++    return max(values)
++
++
+ def trend_check(levels, fraction=None):
+     """levels = the screening level of each clean reading in the 10-second window.
+     The window gets the highest level that at least `fraction` of its readings reach. One reading alone never does. FR-6."""
+@@ -94,6 +123,8 @@ def classify(machine_type, parameter, window_values):
+     allowed = levels_for(machine_type, parameter)
+     levels = [threshold_level(machine_type, parameter, v) for v in window_values]
+     rule_level = trend_check(levels)
++    if rule_level == "normal" and is_fluctuating(machine_type, parameter, window_values) and "abnormal" in allowed:
++        return "abnormal"                      # a steady spread over the whole window counts, one wild reading does not (std needs all 10)
+     if rule_level == "normal":
+         return "normal"
+     clf = _CLF if _CLF_TRIED else _train()
+diff --git a/system/backend/seed.py b/system/backend/seed.py
+index 802e4b4..9814fa9 100644
+--- a/system/backend/seed.py
++++ b/system/backend/seed.py
+@@ -90,6 +90,54 @@ def _band(machine_type, parameter, truth, rng):
+     return rng.uniform(r["abnormal_below"] * 0.7, r["abnormal_below"] * 0.97)
+ 
+ 
++def _clip_near(limit, side, rng, lo, hi, sd):
++    """One reading near a limit with noise. side = 'under' keeps it on the safe side, 'over' keeps it beyond."""
++    v = limit * rng.uniform(lo, hi) + rng.gauss(0, abs(limit) * sd)
++    return min(v, limit * 0.998) if side == "under" else max(v, limit * 1.005)
++
++
++def noisy_windows(rng, per_case=30):
++    """Windows close to a limit, with noise. Labels come from how each window is BUILT (NFR-1, NFR-2).
++    near_normal: every reading stays under the limit.  near_fault: every reading is over it by 1 to 6 percent.
++    brief: two to four readings over, the rest under (FR-6: never a fault).  swing: pump speed that swings (SRS A.4)."""
++    out = []
++    for mt, params in config.LIMITS.items():
++        for p, r in params.items():
++            top = r.get("warning") if r.get("warning") is not None else r.get("abnormal")
++            levels = [("warning", r["warning"]), ("critical", r["critical"])] if r.get("critical") is not None else \
++                     ([("abnormal", r["abnormal"])] if r.get("abnormal") is not None else [])
++            for _ in range(per_case):
++                if top is not None:                                                 # upper limit
++                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "near_normal",
++                                "values": [_clip_near(top, "under", rng, 0.93, 0.99, 0.015) for _ in range(config.WINDOW_S)]})
++                    k = rng.randrange(2, 5)
++                    vals = [_clip_near(top, "under", rng, 0.93, 0.99, 0.015) for _ in range(config.WINDOW_S)]
++                    for i in rng.sample(range(config.WINDOW_S), k):
++                        vals[i] = top * rng.uniform(1.02, 1.10)
++                    if r.get("critical") is None or True:
++                        vals = [min(v, r["critical"] * 0.97) if r.get("critical") is not None else v for v in vals]
++                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "brief", "values": vals})
++                    for name, lim in levels:
++                        hi = 1.06
++                        if name == "warning":
++                            hi = min(1.06, (r["critical"] * 0.97) / lim)
++                        out.append({"machine_type": mt, "parameter": p, "truth": name, "kind": "near_fault",
++                                    "values": [min(_clip_near(lim, "over", rng, 1.01, hi, 0.01), lim * hi) for _ in range(config.WINDOW_S)]})
++                else:                                                               # lower limit only
++                    low = r["abnormal_below"]
++                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "near_normal",
++                                "values": [max(low * rng.uniform(1.01, 1.07) + rng.gauss(0, low * 0.01), low * 1.002) for _ in range(config.WINDOW_S)]})
++                    out.append({"machine_type": mt, "parameter": p, "truth": "abnormal", "kind": "near_fault",
++                                "values": [min(low * rng.uniform(0.94, 0.99) + rng.gauss(0, low * 0.01), low * 0.998) for _ in range(config.WINDOW_S)]})
++                if r.get("fluctuation_cv") is not None:
++                    base = NORMAL[mt][p]
++                    out.append({"machine_type": mt, "parameter": p, "truth": "abnormal", "kind": "swing",
++                                "values": [base * (1.08 if i % 2 else 0.92) * rng.gauss(1, 0.005) for i in range(config.WINDOW_S)]})
++                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "noisy",
++                                "values": [rng.gauss(base, base * 0.03) for _ in range(config.WINDOW_S)]})
++    return out
++
++
+ def labelled_windows(rng, per_case=30):
+     """Windows of 10 values with the true answer. Includes lone spikes and half-way ramps, whose true answer is 'normal' (FR-6)."""
+     out = []
+@@ -105,11 +153,13 @@ def labelled_windows(rng, per_case=30):
+                 spike[rng.randrange(config.WINDOW_S)] = _band(mt, p, levels[-1], rng)
+                 out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "spike", "values": spike})
+                 k = rng.randrange(3, 8)
++                level = _band(mt, p, levels[0], rng)               # one level for the rest of the window, with ordinary noise (a ramp, not a swing)
+                 ramp = [rng.gauss(base, base * 0.01) for _ in range(k)] + \
+-                       [_band(mt, p, levels[0], rng) for _ in range(config.WINDOW_S - k)]
++                       [rng.gauss(level, abs(level) * 0.01) for _ in range(config.WINDOW_S - k)]
+                 out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "ramp", "values": ramp})
+                 for lv in levels:
+                     out.append({"machine_type": mt, "parameter": p, "truth": lv, "kind": "fault",
+                                 "values": [_band(mt, p, lv, rng) for _ in range(config.WINDOW_S)]})
++    out += noisy_windows(rng, per_case)
+     rng.shuffle(out)
+     return out
+diff --git a/system/backend/soak.py b/system/backend/soak.py
+new file mode 100644
+index 0000000..d09e841
+--- /dev/null
++++ b/system/backend/soak.py
+@@ -0,0 +1,82 @@
++"""Timed run for the demonstration: the real clock, the real engine, 5 minutes without stopping.
++Plays a fixed list of scenarios through the live feed (the same code the Demo page uses) and measures what happened.
++Run:  python soak.py 300 run1     (seconds, label)      Result goes to soak_<label>.json"""
++import json
++import sys
++import threading
++import time
++
++import clock
++import config
++from live import LiveFeed
++from storage import DualStore, LocalStore, OnlineStore
++from system import System
++
++SECONDS = int(sys.argv[1]) if len(sys.argv) > 1 else 300
++LABEL = sys.argv[2] if len(sys.argv) > 2 else "run"
++
++# second -> (action, machine, parameter)
++TIMELINE = {
++    5: ("spike", "motor-1", "temperature"),
++    20: ("warning", "motor-1", "temperature"),
++    60: ("clear", "motor-1", "temperature"),
++    70: ("fluctuate", "pump-1", "rpm"),
++    110: ("clear", "pump-1", "rpm"),
++    120: ("silent", "ups-1", "fan_rpm"),
++    135: ("clear", "ups-1", "fan_rpm"),
++    150: ("bad", "pump-1", "current"),
++    170: ("cut_link", None, None),
++    200: ("restore_link", None, None),
++    220: ("critical", "motor-2", "vibration"),
++    250: ("clear_all", None, None),
++    270: ("heavy_load", None, None),
++}
++
++clock.use_real()
++system = System(store=DualStore(LocalStore(":memory:", 512), OnlineStore(None, ":memory:")))
++for who in ("operator", "engineer", "administrator"):
++    system.connect(system.users[who])
++closes, emits, errors = [], [0], [0]
++feed = LiveFeed(system, emit_status=lambda w: closes.append(time.time()), emit_overview=lambda o: emits.__setitem__(0, emits[0] + 1))
++
++steps, step_ms, late = 0, [], 0
++started = time.time()
++log = []
++while steps < SECONDS:
++    tick = time.time()
++    sec = steps
++    if sec in TIMELINE:
++        a, m, p = TIMELINE[sec]
++        ok, msg = feed.inject(a, m, p)
++        log.append({"second": sec, "action": a, "machine": m, "parameter": p, "ok": ok, "message": msg})
++    try:
++        with feed.lock:
++            feed.step()
++    except Exception as e:           # noqa: BLE001
++        errors[0] += 1
++        log.append({"second": sec, "error": repr(e)})
++    steps += 1
++    took = time.time() - tick
++    step_ms.append(took * 1000)
++    if took > 1.0:
++        late += 1
++    time.sleep(max(0.0, 1.0 - took))
++wall = time.time() - started
++
++windows_gaps = sorted({round(b - a, 1) for a, b in zip(closes, closes[1:]) if b - a > 2})   # gaps between closes of different windows
++faults = list(system.faults.faults.values())
++res = {
++    "label": LABEL, "planned_seconds": SECONDS, "wall_seconds": round(wall, 1), "steps": steps, "steps_over_1s": late,
++    "errors": errors[0], "readings_received": system.engine.counts["received"], "invalid_readings": system.engine.counts["invalid"],
++    "windows_closed": system.engine.counts["windows"], "overview_updates": emits[0],
++    "step_ms_avg": round(sum(step_ms) / len(step_ms), 2), "step_ms_max": round(max(step_ms), 2),
++    "window_gap_seconds": windows_gaps,
++    "faults_raised": len(faults), "faults": [{"machine": f["machine_id"], "parameter": f["parameter"], "level": f["level"], "value": f.get("value"),
++                                            "limit": f.get("limit"), "reason": f.get("reason"), "alert_latency_s": f["alert_latency_s"], "delayed": f["delayed"]} for f in faults],
++    "max_alert_latency_s": max((f["alert_latency_s"] for f in faults), default=0),
++    "alerts_delayed": system.faults.alerts_delayed,
++    "stored_local": len(system.store.local.windows("motor-1")), "pending_online": len(system.store.pending_online),
++    "timeline": log,
++}
++json.dump(res, open(f"soak_{LABEL}.json", "w"), indent=1)
++print(json.dumps({k: v for k, v in res.items() if k not in ("timeline", "faults")}, indent=1))
+diff --git a/system/backend/system.py b/system/backend/system.py
+index 908ee52..24215fb 100644
+--- a/system/backend/system.py
++++ b/system/backend/system.py
+@@ -7,7 +7,7 @@ from admin import Admin
+ from auth import Accounts
+ from engine import Engine
+ from faults import FaultStore
+-from model import limit_in_force
++from model import fluctuation, is_fluctuating, limit_in_force, observed_value, rule_for, threshold_level
+ from seed import DEMO_MACHINES
+ from storage import DualStore, LocalStore, OnlineStore
+ 
+@@ -91,9 +91,14 @@ class System:
+             return
+         if self.alert_hold:
+             clock.advance(self.alert_hold)               # injection: hold the alert back
+-        value = max(window["readings"]) if window["readings"] else None
+-        self.faults.raise_fault(key[0], key[1], window["status"],
+-                                limit_in_force(window["machine_type"], key[1], window["status"], value), window["confirmed_at"])
++        mt, par, vals = window["machine_type"], key[1], window["readings"]
++        value = max(vals) if vals else None
++        limit = limit_in_force(mt, par, window["status"], value)
++        shown, reason = observed_value(mt, par, vals), None
++        if vals and is_fluctuating(mt, par, vals) and all(threshold_level(mt, par, v) == "normal" for v in vals):
++            limit, reason = rule_for(mt, par)["fluctuation_step"], "fluctuating"      # a spread fault: no reading crossed a limit
++            shown = round(fluctuation(mt, par, vals), 4)
++        self.faults.raise_fault(key[0], key[1], window["status"], limit, window["confirmed_at"], value=shown, reason=reason)
+ 
+     # ---- what the dashboard reads ----
+     def dashboard(self, machine_id):
+diff --git a/system/frontend/src/App.jsx b/system/frontend/src/App.jsx
+index ca79038..b2ed593 100644
+--- a/system/frontend/src/App.jsx
++++ b/system/frontend/src/App.jsx
+@@ -1,5 +1,5 @@
+ import { Navigate, Routes, Route } from 'react-router-dom'
+-import TopBar from './TopBar.jsx'
++import Layout from './Layout.jsx'
+ import SignIn from './SignIn.jsx'
+ import Overview from './Overview.jsx'
+ import MachinesList from './MachinesList.jsx'
+@@ -8,8 +8,6 @@ import Settings from './Settings.jsx'
+ import Admin from './Admin.jsx'
+ import DemoPanel from './DemoPanel.jsx'
+ import Tracker from './Tracker.jsx'
+-import FaultPopup from './FaultPopup.jsx'
+-import InjectionTimer from './InjectionTimer.jsx'
+ import { UserProvider, useUser } from './user.jsx'
+ import { useFaults } from './useFaults.js'
+ import { useOverview } from './useLive.js'
+@@ -23,14 +21,11 @@ function Require({ roles, children }) {
+ 
+ function Signed() {
+   const { user } = useUser()
+-  const { popups, bell, storage_alerts } = useFaults(user.username)
++  const faults = useFaults(user.username)
+   const { data } = useOverview()
+   const machineType = (id) => data?.machines.find((m) => m.id === id)?.type
+   return (
+-    <>
+-      <TopBar bell={bell} storageAlerts={storage_alerts} machines={data?.machines ?? []} mode={data?.mode} link={data?.link} />
+-      <FaultPopup popups={popups} machineType={machineType} />
+-      <InjectionTimer scheduled={data?.scheduled} serverTime={data?.time} />
++    <Layout faults={faults} overview={data} machineType={machineType}>
+       <Routes>
+         <Route path="/signin" element={<Navigate to="/" replace />} />
+         <Route path="/" element={<Overview />} />
+@@ -41,7 +36,7 @@ function Signed() {
+         <Route path="/demo" element={<DemoPanel />} />
+         <Route path="/tracker" element={<Tracker />} />
+       </Routes>
+-    </>
++    </Layout>
+   )
+ }
+ 
+diff --git a/system/frontend/src/BellList.jsx b/system/frontend/src/BellList.jsx
+index 7efc359..6335e10 100644
+--- a/system/frontend/src/BellList.jsx
++++ b/system/frontend/src/BellList.jsx
+@@ -1,17 +1,28 @@
+-// Bell list. Requirements: FR-8b, FR-17
+-// The faults this person acknowledged that are not resolved yet. Choosing one opens that machine's page.
++// The list under the bell: faults this person acknowledged that are not resolved yet. FR-8b, FR-17.
++// The Administrator sees the storage alert only (FR-21a, FR-7b).
+ import { Link } from 'react-router-dom'
+-import { STATUS_LABEL } from './status.js'
++import Pill from './Pill.jsx'
++import { useUser } from './user.jsx'
+ 
+ export default function BellList({ bell, storageAlerts, onClose }) {
++  const { user } = useUser()
++  const admin = user.role === 'administrator'
++  const items = admin ? [] : bell
+   return (
+-    <div className="card bell-list">
+-      {bell.length === 0 && !storageAlerts && <p className="muted">No open faults.</p>}
+-      {storageAlerts > 0 && <p className="muted">Storage is nearly full. See the Admin page.</p>}
+-      {bell.map((f) => (
+-        <Link key={f.id} to={`/machine/${f.machine_id}`} className="bell-item" onClick={onClose}>
+-          <span>{f.machine_name} · {f.parameter}</span>
+-          <span className={`badge ${f.level}`}>{STATUS_LABEL[f.level] ?? f.level}</span>
++    <div className="popover" role="dialog" aria-label="Faults">
++      <h3>{admin ? 'Storage alert' : 'Acknowledged, not resolved'}</h3>
++      {items.length === 0 && !storageAlerts && <p className="muted" style={{ margin: 0 }}>Nothing waiting.</p>}
++      {storageAlerts > 0 && (
++        <Link to="/admin" className="pop-item" onClick={onClose}>
++          <div className="row"><strong>Storage</strong><Pill level="warning" /></div>
++          <div className="small">Storage is nearly full. See the Admin page.</div>
++        </Link>
++      )}
++      {items.map((f) => (
++        <Link key={f.id} to={`/machine/${f.machine_id}`} className="pop-item" onClick={onClose}>
++          <div className="row"><strong>{f.machine_name}</strong><Pill level={f.level} /></div>
++          <div className="small">{f.parameter}</div>
++          <div className="small">{new Date(f.raised_at * 1000).toLocaleTimeString()}</div>
+         </Link>
+       ))}
+     </div>
+diff --git a/system/frontend/src/ConnectionIcons.jsx b/system/frontend/src/ConnectionIcons.jsx
+new file mode 100644
+index 0000000..1d7e95a
+--- /dev/null
++++ b/system/frontend/src/ConnectionIcons.jsx
+@@ -0,0 +1,29 @@
++// Bluetooth (near) and Wi-Fi (remote). FR-11. Three looks: active (blue glow), available, offline (grey, slashed).
++// The server decides the mode (Demo page: Near / Remote). Cutting the link puts both offline (FR-12).
++import Icon from './Icons.jsx'
++import { linkWord } from './connection.js'
++
++function stateFor(mode, link) {
++  if (!mode) return { bluetooth: 'offline', wifi: 'offline', offline: true }
++  if (link === 'cut') return { bluetooth: 'offline', wifi: 'offline', offline: true }
++  return mode === 'remote'
++    ? { bluetooth: 'available', wifi: 'active', offline: false }
++    : { bluetooth: 'active', wifi: 'available', offline: false }
++}
++
++export default function ConnectionIcons({ mode, link }) {
++  const s = stateFor(mode, link)
++  const one = (name) => (
++    <span className={`icon-btn link ${s[name]}`} role="img" aria-label={linkWord(name, s[name])} title={linkWord(name, s[name])}>
++      <Icon name={name} />
++      {s[name] === 'offline' && <span className="slash" />}
++    </span>
++  )
++  return (
++    <div className="links">
++      {one('bluetooth')}
++      {one('wifi')}
++      {s.offline && <span className="offline-word">Offline</span>}
++    </div>
++  )
++}
+diff --git a/system/frontend/src/DemoPanel.jsx b/system/frontend/src/DemoPanel.jsx
+index cc92b47..5d39ae4 100644
+--- a/system/frontend/src/DemoPanel.jsx
++++ b/system/frontend/src/DemoPanel.jsx
+@@ -15,6 +15,7 @@ const LIVE = [
+   ['Sustained critical', [{ action: 'critical', machine_id: 'motor-1', parameter: 'temperature' }]],
+   ['Two faults at once', [{ action: 'warning', machine_id: 'motor-2', parameter: 'temperature' }, { action: 'warning', machine_id: 'motor-2', parameter: 'current' }]],
+   ['Sensor goes silent', [{ action: 'silent', machine_id: 'pump-1', parameter: 'rpm' }]],
++  ['Pump speed swings', [{ action: 'fluctuate', machine_id: 'pump-1', parameter: 'rpm' }]],
+   ['Bad reading', [{ action: 'bad', machine_id: 'pump-1', parameter: 'current' }]],
+   ['Maintenance', [{ action: 'maintenance', machine_id: 'motor-3', minutes: 1 }]],
+   ['Slow alert', [{ action: 'slow_alert_on' }, { action: 'warning', machine_id: 'motor-1', parameter: 'vibration' }]],
+@@ -24,8 +25,8 @@ const LIVE = [
+ 
+ export default function DemoPanel() {
+   const { data } = useOverview()
+-  const [machineId, setMachineId] = useState('')
+-  const [parameter, setParameter] = useState('')
++  const [chosenMachine, setMachineId] = useState('')
++  const [chosenParameter, setParameter] = useState('')
+   const [minutes, setMinutes] = useState(30)
+   const [delay, setDelay] = useState(5)
+   const [message, setMessage] = useState('')
+@@ -33,10 +34,9 @@ export default function DemoPanel() {
+   const poll = useRef(null)
+ 
+   const machines = data?.machines ?? []
++  const machineId = chosenMachine || machines[0]?.id || ''
+   const machine = machines.find((m) => m.id === machineId)
+-  useEffect(() => {
+-    if (!machineId && machines.length) { setMachineId(machines[0].id); setParameter(Object.keys(machines[0].parameters)[0]) }
+-  }, [machines, machineId])
++  const parameter = chosenParameter in (machine?.parameters ?? {}) ? chosenParameter : Object.keys(machine?.parameters ?? {})[0] ?? ''
+   useEffect(() => () => clearInterval(poll.current), [])
+ 
+   const send = async (step) => {
+@@ -45,7 +45,7 @@ export default function DemoPanel() {
+     return r
+   }
+   const play = async (steps) => { for (const step of steps) { const r = await send(step); if (!r.ok) break } }
+-  const Btn = ({ action, children }) => <button className="demo-btn" onClick={() => send({ action })}>{children}</button>
++  const btn = (action, label) => <button className="demo-btn" onClick={() => send({ action })}>{label}</button>
+ 
+   const runChecks = async () => {
+     const r = await post('/api/checks/run')
+@@ -78,14 +78,14 @@ export default function DemoPanel() {
+       <div className="card demo-card">
+         <div className="demo-row">
+           <span className="chip chip-dark">{data?.mode === 'remote' ? 'Remote range · Wi-Fi' : 'Near range · Bluetooth'}</span>
+-          <Btn action="mode_near">Near range (Bluetooth)</Btn>
+-          <Btn action="mode_remote">Remote range (Wi-Fi)</Btn>
++          {btn('mode_near', 'Near range (Bluetooth)')}
++          {btn('mode_remote', 'Remote range (Wi-Fi)')}
+           <span className="muted">Same equipment data in both modes.</span>
+         </div>
+         <div className="demo-row">
+           <span className="chip chip-dark">Link {data?.link === 'cut' ? `cut · ${data.pending} windows waiting` : 'up'}</span>
+-          <Btn action="cut_link">Cut connection</Btn>
+-          <Btn action="restore_link">Restore connection</Btn>
++          {btn('cut_link', 'Cut connection')}
++          {btn('restore_link', 'Restore connection')}
+         </div>
+       </div>
+ 
+@@ -95,9 +95,9 @@ export default function DemoPanel() {
+           {LIVE.map(([name, steps]) => <button key={name} className="demo-btn" onClick={() => play(steps)}>{name}</button>)}
+         </div>
+         <div className="demo-row">
+-          <Btn action="restore_link">Restore connection</Btn>
++          {btn('restore_link', 'Restore connection')}
+           <button className="demo-btn demo-btn-off" onClick={() => send({ action: 'remove_load' })}>Remove the extra machines</button>
+-          <Btn action="clear_all">Reset everything</Btn>
++          {btn('clear_all', 'Reset everything')}
+         </div>
+       </div>
+ 
+@@ -116,19 +116,19 @@ export default function DemoPanel() {
+           </label>
+         </div>
+         <div className="demo-row">
+-          <Btn action="warning">Warning value</Btn>
+-          <Btn action="critical">Critical value</Btn>
+-          <Btn action="spike">One spike</Btn>
+-          <Btn action="clear">Back to normal</Btn>
+-          <Btn action="bad">Bad reading (5 s)</Btn>
+-          <Btn action="silent">Sensor goes silent</Btn>
++          {btn('warning', 'Warning value')}
++          {btn('critical', 'Critical value')}
++          {btn('spike', 'One spike')}
++          {btn('clear', 'Back to normal')}
++          {btn('bad', 'Bad reading (5 s)')}
++          {btn('silent', 'Sensor goes silent')}
+         </div>
+         <div className="demo-row">
+           <label>Maintenance minutes <input type="number" min="0.1" step="0.1" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
+-          <Btn action="maintenance">Start maintenance</Btn>
+-          <Btn action="end_maintenance">End maintenance</Btn>
+-          <Btn action="slow_alert_on">Slow alerts on</Btn>
+-          <Btn action="slow_alert_off">Slow alerts off</Btn>
++          {btn('maintenance', 'Start maintenance')}
++          {btn('end_maintenance', 'End maintenance')}
++          {btn('slow_alert_on', 'Slow alerts on')}
++          {btn('slow_alert_off', 'Slow alerts off')}
+         </div>
+       </div>
+ 
+diff --git a/system/frontend/src/FaultPopup.jsx b/system/frontend/src/FaultPopup.jsx
+index 38e47e5..5ffd325 100644
+--- a/system/frontend/src/FaultPopup.jsx
++++ b/system/frontend/src/FaultPopup.jsx
+@@ -1,31 +1,33 @@
+-// Fault pop-up. Requirements: FR-7, FR-7a, FR-7b, FR-7c, FR-8, FR-8a, FR-16
+-// Stays on screen until this person acknowledges it. Acknowledging does not close the fault (FR-8b).
+-import { useState } from 'react'
+-import { post } from './api.js'
+-import { STATUS_LABEL, PARAM_LABEL } from './status.js'
++// The fault pop-up (the approved design). Stays on screen until that person acknowledges it. FR-7, FR-7a, FR-7b, FR-8, FR-16.
++// Acknowledging does not close the fault (FR-8b). The Administrator never gets one: the server sends none.
++import { Link } from 'react-router-dom'
++import Pill from './Pill.jsx'
++import { PARAM_LABEL, UNITS } from './status.js'
+ 
+-export default function FaultPopup({ popups, machineType }) {
+-  const [error, setError] = useState('')
+-  if (!popups.length) return null
+-  const f = popups[0]
+-  const label = PARAM_LABEL[machineType(f.machine_id)]?.[f.parameter] ?? f.parameter
+-  const acknowledge = async () => {
+-    const r = await post(`/api/faults/${f.id}/acknowledge`)
+-    setError(r.ok ? '' : r.message)
+-  }
++export default function FaultPopup({ fault: f, machineType, onAcknowledge }) {
++  const label = PARAM_LABEL[machineType?.(f.machine_id)]?.[f.parameter] ?? f.parameter
++  const unit = UNITS[f.parameter] ?? ''
++  const num = (v) => (typeof v === 'number' ? +v.toFixed(2) : v)
++  const swing = f.reason === 'fluctuating'
++  const low = !swing && f.value != null && f.limit != null && f.value < f.limit
++  const what = swing ? `${label} is swinging up and down.` : `${label} is too ${low ? 'low' : 'high'}.`
++  const numbers = swing
++    ? `Readings change by ${(f.value * 100).toFixed(1)}% each second. Limit is ${(f.limit * 100).toFixed(0)}%.`
++    : [f.value != null && `${num(f.value)} ${unit} now.`, f.limit != null && `Limit is ${num(f.limit)} ${unit}.`].filter(Boolean).join(' ')
+   return (
+-    <div className="popup-backdrop" role="alertdialog" aria-labelledby="popup-title">
+-      <div className="card popup">
+-        <div className="card-head">
+-          <h2 id="popup-title">Fault: {f.machine_name}</h2>
+-          <span className={`badge ${f.level}`}>{STATUS_LABEL[f.level] ?? f.level}</span>
+-        </div>
+-        <p><strong>{label}</strong> is outside its limit{f.limit != null && <> (limit {f.limit})</>}.</p>
+-        <p className="muted">Raised {new Date(f.raised_at * 1000).toLocaleTimeString()}{f.delayed && ' · this alert came late'}</p>
+-        {popups.length > 1 && <p className="muted">{popups.length - 1} more waiting.</p>}
+-        {error && <p className="muted" role="status">{error}</p>}
+-        <button className="demo-btn" onClick={acknowledge}>Acknowledge</button>
++    <div className="fault-popup" role="alertdialog" aria-label={`${f.machine_name} fault`}>
++      <div className="top">
++        <Pill level={f.level} />
++        <span className="time">{new Date(f.raised_at * 1000).toLocaleTimeString()}</span>
+       </div>
++      <div className="machine">{f.machine_name}</div>
++      <div className="what">{what}</div>
++      <div className="numbers muted">{numbers}{f.delayed && ' This alert came late.'}</div>
++      <div className="actions">
++        <button className="btn btn-primary" onClick={() => onAcknowledge(f.id)}>Acknowledge</button>
++        <Link to={`/machine/${f.machine_id}`} className="btn btn-quiet">Open {f.machine_name}</Link>
++      </div>
++      <div className="reminder muted">Stays on your screen until you acknowledge it.</div>
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/Icons.jsx b/system/frontend/src/Icons.jsx
+new file mode 100644
+index 0000000..d9d9935
+--- /dev/null
++++ b/system/frontend/src/Icons.jsx
+@@ -0,0 +1,29 @@
++// Small line icons, drawn here so no icon package is needed.
++const P = {
++  mark: <><path d="M3 12h4l2.5-6 4 12 2.5-6H21" /></>,
++  grid: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
++  list: <><path d="M8 6h13M8 12h13M8 18h13" /><circle cx="4" cy="6" r="1" /><circle cx="4" cy="12" r="1" /><circle cx="4" cy="18" r="1" /></>,
++  shield: <><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z" /><path d="M9 12l2 2 4-4" /></>,
++  sliders: <><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></>,
++  play: <><circle cx="12" cy="12" r="9" /><path d="M10 8.5l5 3.5-5 3.5z" /></>,
++  check: <><path d="M9 6h11M9 12h11M9 18h11" /><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17" /></>,
++  search: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></>,
++  bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a2 2 0 0 0 3.4 0" /></>,
++  bluetooth: <><path d="M7 7l10 10-5 5V2l5 5L7 17" /></>,
++  wifi: <><path d="M5 12.5a10 10 0 0 1 14 0" /><path d="M1.5 9a15 15 0 0 1 21 0" /><path d="M8.5 16a5.5 5.5 0 0 1 7 0" /><circle cx="12" cy="19.5" r="1" /></>,
++  chevron: <><path d="M6 9l6 6 6-6" /></>,
++  close: <><path d="M6 6l12 12M18 6L6 18" /></>,
++  motor: <><circle cx="12" cy="12" r="7.5" /><circle cx="12" cy="12" r="2.5" /><path d="M12 4.5v5M12 14.5v5M4.5 12h5M14.5 12h5" /></>,
++  pump: <><path d="M12 3s-6.5 7-6.5 11.2a6.5 6.5 0 0 0 13 0C18.5 10 12 3 12 3z" /><path d="M9 14.5a3 3 0 0 0 3 3" /></>,
++  ups: <><rect x="3" y="7" width="16" height="10" rx="2" /><path d="M21 10.5v3" /><path d="M11.5 9.5l-2 3h3l-2 3" /></>,
++  logout: <><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4" /><path d="M16 8l4 4-4 4M20 12H9" /></>,
++}
++
++export default function Icon({ name, size = 20 }) {
++  return (
++    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
++         strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
++      {P[name]}
++    </svg>
++  )
++}
+diff --git a/system/frontend/src/InjectionTimer.jsx b/system/frontend/src/InjectionTimer.jsx
+index d9fc1e4..0cbff18 100644
+--- a/system/frontend/src/InjectionTimer.jsx
++++ b/system/frontend/src/InjectionTimer.jsx
+@@ -8,11 +8,11 @@ export default function InjectionTimer({ scheduled, serverTime }) {
+   const prev = useRef([])
+   const cancelled = useRef(new Set())
+   const [started, setStarted] = useState([])
+-  const [, tick] = useState(0)
++  const [now, setNow] = useState(() => Date.now())
+ 
+   useEffect(() => { if (serverTime) offset.current = serverTime - Date.now() / 1000 }, [serverTime])
+   useEffect(() => {
+-    const timer = setInterval(() => tick((x) => x + 1), 200)
++    const timer = setInterval(() => setNow(Date.now()), 200)
+     return () => clearInterval(timer)
+   }, [])
+   useEffect(() => {
+@@ -23,8 +23,8 @@ export default function InjectionTimer({ scheduled, serverTime }) {
+     if (gone.length) setStarted((s) => [...s, ...gone.map((i) => ({ id: i.id, label: i.label, until: Date.now() + 5000 }))])
+   }, [scheduled])
+ 
+-  const nowS = Date.now() / 1000 + offset.current
+-  const shown = started.filter((s) => s.until > Date.now())
++  const nowS = now / 1000 + offset.current
++  const shown = started.filter((s) => s.until > now)
+   if (!(scheduled?.length) && shown.length === 0) return null
+   return (
+     <div className="timer-corner">
+diff --git a/system/frontend/src/Layout.jsx b/system/frontend/src/Layout.jsx
+new file mode 100644
+index 0000000..116898f
+--- /dev/null
++++ b/system/frontend/src/Layout.jsx
+@@ -0,0 +1,20 @@
++// The frame around every page after sign in: side nav left, top bar on top, page in the middle, pop-ups bottom right.
++import SideNav from './SideNav.jsx'
++import TopBar from './TopBar.jsx'
++import PopupStack from './PopupStack.jsx'
++import InjectionTimer from './InjectionTimer.jsx'
++
++export default function Layout({ faults, overview, machineType, children }) {
++  const data = overview
++  return (
++    <div className="shell">
++      <SideNav />
++      <div className="main">
++        <TopBar bell={faults.bell} storageAlerts={faults.storage_alerts} machines={data?.machines ?? []} mode={data?.mode} link={data?.link} />
++        <main className="content">{children}</main>
++      </div>
++      <PopupStack popups={faults.popups} machineType={machineType} />
++      <InjectionTimer scheduled={data?.scheduled} serverTime={data?.time} />
++    </div>
++  )
++}
+diff --git a/system/frontend/src/MachineCard.jsx b/system/frontend/src/MachineCard.jsx
+index 6650307..d2ed9ff 100644
+--- a/system/frontend/src/MachineCard.jsx
++++ b/system/frontend/src/MachineCard.jsx
+@@ -1,47 +1,39 @@
+-// Machine card. Requirements: FR-1, FR-2, FR-3, FR-5, FR-13, FR-14, FR-18, FR-19, FR-24
+-// One card per machine. Status is a word and a colour, never colour alone. Click opens the machine page.
++// One machine on the Overview: live readings, status mark, and the Maintenance, Overdue, Invalid and Sensor fault marks.
++// FR-1, FR-2, FR-3, FR-5, FR-13, FR-14, FR-18, FR-19, FR-24. Choosing it opens the machine page.
+ import { Link } from 'react-router-dom'
+-import { STATUS_LABEL, UNITS, PARAM_LABEL, formatValue } from './status.js'
+-
+-function Badge({ status }) {
+-  return <span className={`badge ${status}`}>{STATUS_LABEL[status] ?? status}</span>
+-}
+-
+-function Row({ type, name, p }) {
+-  return (
+-    <div className="param-row">
+-      <span className="param-name">{PARAM_LABEL[type][name]}</span>
+-      <span className="param-value">
+-        {p.sensor_fault ? (
+-          <span className="mark mark-fault">Sensor fault</span>
+-        ) : (
+-          <>
+-            <strong>{formatValue(name, p.value)}</strong> <span className="unit">{p.value === null ? '' : UNITS[name]}</span>
+-            {p.invalid && <span className="mark mark-invalid">Invalid</span>}
+-          </>
+-        )}
+-      </span>
+-      {p.status !== 'normal' && p.status !== 'unknown' && <Badge status={p.status} />}
+-    </div>
+-  )
+-}
++import Icon from './Icons.jsx'
++import Pill from './Pill.jsx'
++import { UNITS, PARAM_LABEL, formatValue } from './status.js'
+ 
+ export default function MachineCard({ machine }) {
+   return (
+-    <Link to={`/machine/${machine.id}`} className={`card machine-card status-${machine.status}`}>
+-      <div className="card-head">
+-        <h3>{machine.name}</h3>
+-        <Badge status={machine.status} />
++    <Link to={`/machine/${machine.id}`} className="mcard" aria-label={`${machine.name}, open details`}>
++      <div className="head">
++        <span className="icon"><Icon name={machine.type} size={22} /></span>
++        <span className="name">{machine.name}</span>
++        <span className="pills">
++          {machine.maintenance && <Pill level="maintenance">Maintenance</Pill>}
++          {machine.overdue && <Pill level="critical">Overdue</Pill>}
++          <Pill level={machine.status} />
++        </span>
+       </div>
+-      {(machine.maintenance || machine.overdue) && (
+-        <div className="marks">
+-          {machine.maintenance && <span className="mark mark-maint">Maintenance</span>}
+-          {machine.overdue && <span className="mark mark-overdue">Overdue</span>}
+-        </div>
+-      )}
+-      {Object.entries(machine.parameters).map(([name, p]) => (
+-        <Row key={name} type={machine.type} name={name} p={p} />
+-      ))}
++      <dl className="reads">
++        {Object.entries(machine.parameters).map(([name, p]) => (
++          <div className="read" key={name}>
++            <dt>{PARAM_LABEL[machine.type][name]}</dt>
++            <dd>
++              {p.sensor_fault ? (
++                <span className="mark sensor">Sensor fault</span>
++              ) : (
++                <>
++                  {formatValue(name, p.value)}<span className="unit">{p.value === null ? '' : UNITS[name]}</span>
++                  {p.invalid && <span className="mark invalid">Invalid</span>}
++                </>
++              )}
++            </dd>
++          </div>
++        ))}
++      </dl>
+     </Link>
+   )
+ }
+diff --git a/system/frontend/src/MachineDetail.jsx b/system/frontend/src/MachineDetail.jsx
+index 7bbdadf..4e8e344 100644
+--- a/system/frontend/src/MachineDetail.jsx
++++ b/system/frontend/src/MachineDetail.jsx
+@@ -14,8 +14,6 @@ const when = (t) => (t ? new Date(t * 1000).toLocaleString() : '')
+ 
+ function Graph({ machineId, parameter, label, unit }) {
+   const [range, setRange] = useState('day')
+-  const [limits, setLimits] = useState(null)
+-  useEffect(() => { get('/api/limits').then(setLimits) }, [])
+   const [points, setPoints] = useState([])
+   useEffect(() => {
+     let alive = true
+diff --git a/system/frontend/src/NamePanel.jsx b/system/frontend/src/NamePanel.jsx
+new file mode 100644
+index 0000000..4f82f50
+--- /dev/null
++++ b/system/frontend/src/NamePanel.jsx
+@@ -0,0 +1,23 @@
++// The panel that slides in from the right when the name is clicked: full name, role, Settings, Sign out.
++import { Link } from 'react-router-dom'
++import Icon from './Icons.jsx'
++import Pill from './Pill.jsx'
++import { useUser } from './user.jsx'
++import { initials } from './format.js'
++
++export default function NamePanel({ onClose }) {
++  const { user, signOut } = useUser()
++  return (
++    <>
++      <div className="scrim" onClick={onClose} />
++      <aside className="panel" role="dialog" aria-label="Your account">
++        <button className="icon-btn close" onClick={onClose} aria-label="Close"><Icon name="close" /></button>
++        <div className="avatar">{initials(user.full_name)}</div>
++        <h2>{user.full_name}</h2>
++        <Pill level="role">{user.role}</Pill>
++        <Link to="/settings" className="btn btn-quiet" onClick={onClose}><Icon name="sliders" /> Settings</Link>
++        <button className="btn btn-quiet" onClick={signOut}><Icon name="logout" /> Sign out</button>
++      </aside>
++    </>
++  )
++}
+diff --git a/system/frontend/src/Overview.jsx b/system/frontend/src/Overview.jsx
+index 94a02ea..2914398 100644
+--- a/system/frontend/src/Overview.jsx
++++ b/system/frontend/src/Overview.jsx
+@@ -1,4 +1,4 @@
+-// Overview. Requirements: FR-1, FR-2, FR-3, FR-13, FR-14, FR-24, NFR-8, PR-001, PR-002, PR-001b
++// The Overview: every machine at a glance. UC-1, FR-1 to FR-3, FR-13, FR-14, FR-24, NFR-8, PR-001, PR-002.
+ import MachineCard from './MachineCard.jsx'
+ import { useOverview } from './useLive.js'
+ 
+@@ -7,6 +7,15 @@ const GROUPS = [['motor', 'Motors'], ['pump', 'Water pumps'], ['ups', 'Backup po
+ export default function Overview() {
+   const { data, connected } = useOverview()
+   if (!data) return <div className="page"><h1>Overview</h1><p className="muted">Connecting to the server…</p></div>
++  const ms = data.machines
++  const count = (fn) => ms.filter(fn).length
++  const tiles = [
++    { cls: '', label: 'Total machines', n: ms.length },
++    { cls: 'normal', label: 'Normal', n: count((m) => m.status === 'normal') },
++    { cls: 'warning', label: 'Warning', n: count((m) => m.status === 'warning' || m.status === 'abnormal') },
++    { cls: 'critical', label: 'Critical', n: count((m) => m.status === 'critical') },
++    { cls: 'maintenance', label: 'In maintenance', n: count((m) => m.maintenance) },
++  ]
+   return (
+     <div className="page">
+       {!connected && <div className="notice notice-lost">Live connection lost. The numbers below may be old. Trying again…</div>}
+@@ -14,17 +23,26 @@ export default function Overview() {
+         <div className="notice notice-delayed">Connection to the online database is cut. Readings are still collected and shown here; {data.pending} saved windows will be sent when it returns.</div>
+       )}
+       {data.alerts_delayed && <div className="notice notice-delayed">Alerts delayed: a fault alert came more than 2 seconds late.</div>}
+-      <h1>Overview</h1>
+-      {data.machines.length === 0 && (
+-        <p className="muted">No machines are registered yet. The Administrator can add them on the Admin page.</p>
+-      )}
++      <div className="page-head">
++        <h1>Overview</h1>
++        <p className="muted">Every machine, live. Choose one to see its readings, history and faults.</p>
++      </div>
++      <div className="tiles summary-tiles">
++        {tiles.map((t) => (
++          <div key={t.label} className={`tile ${t.cls}`}>
++            <span className="label">{t.label}</span>
++            <span className="num">{t.n}</span>
++          </div>
++        ))}
++      </div>
++      {ms.length === 0 && <p className="muted">No machines are registered yet. The Administrator can add them on the Admin page.</p>}
+       {GROUPS.map(([type, title]) => {
+-        const list = data.machines.filter((m) => m.type === type)
++        const list = ms.filter((m) => m.type === type)
+         if (list.length === 0) return null
+         return (
+-          <section key={type}>
+-            <h2 className="group-title">{title}</h2>
+-            <div className="card-grid">{list.map((m) => <MachineCard key={m.id} machine={m} />)}</div>
++          <section className="group" key={type}>
++            <div className="group-head"><h2>{title}</h2><span className="muted">{list.length}</span></div>
++            <div className="cards">{list.map((m) => <MachineCard key={m.id} machine={m} />)}</div>
+           </section>
+         )
+       })}
+diff --git a/system/frontend/src/Pill.jsx b/system/frontend/src/Pill.jsx
+new file mode 100644
+index 0000000..10c89c0
+--- /dev/null
++++ b/system/frontend/src/Pill.jsx
+@@ -0,0 +1,6 @@
++import { STATUS_LABEL } from './status.js'
++
++// The status tag from the fault pop-up: a dot and a word, never colour alone.
++export default function Pill({ level, children }) {
++  return <span className={`pill ${level}`}>{children || STATUS_LABEL[level] || level}</span>
++}
+diff --git a/system/frontend/src/PopupStack.jsx b/system/frontend/src/PopupStack.jsx
+new file mode 100644
+index 0000000..cb79f8c
+--- /dev/null
++++ b/system/frontend/src/PopupStack.jsx
+@@ -0,0 +1,13 @@
++// All the fault pop-ups on screen, stacked bottom right, newest last. Each stays until this person acknowledges it (FR-7, FR-8).
++import FaultPopup from './FaultPopup.jsx'
++import { post } from './api.js'
++
++export default function PopupStack({ popups, machineType }) {
++  if (!popups.length) return null
++  const acknowledge = (id) => post(`/api/faults/${id}/acknowledge`)
++  return (
++    <div className="popup-stack" aria-live="assertive">
++      {[...popups].reverse().map((p) => <FaultPopup key={p.id} fault={p} machineType={machineType} onAcknowledge={acknowledge} />)}
++    </div>
++  )
++}
+diff --git a/system/frontend/src/SideNav.jsx b/system/frontend/src/SideNav.jsx
+new file mode 100644
+index 0000000..ec193e1
+--- /dev/null
++++ b/system/frontend/src/SideNav.jsx
+@@ -0,0 +1,41 @@
++// The left navigation. Each role sees only its own pages (see design/page-map.md).
++import { NavLink } from 'react-router-dom'
++import Icon from './Icons.jsx'
++import { useUser } from './user.jsx'
++
++const LINKS = [
++  { to: '/', label: 'Overview', icon: 'grid', roles: ['operator', 'engineer', 'administrator'] },
++  { to: '/machines', label: 'Machines', icon: 'list', roles: ['operator', 'engineer'] },
++  { to: '/admin', label: 'Admin', icon: 'shield', roles: ['administrator'] },
++  { to: '/settings', label: 'Settings', icon: 'sliders', roles: ['operator', 'engineer', 'administrator'] },
++]
++const DEMO = [
++  { to: '/demo', label: 'Demo panel', icon: 'play' },
++  { to: '/tracker', label: 'Tracker', icon: 'check' },
++]
++
++function Item({ to, label, icon }) {
++  return (
++    <NavLink to={to} end={to === '/'} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} title={label}>
++      <Icon name={icon} />
++      <span>{label}</span>
++    </NavLink>
++  )
++}
++
++export default function SideNav() {
++  const { user } = useUser()
++  const role = user.role
++  return (
++    <nav className="sidenav" aria-label="Main">
++      <NavLink to="/" className="brand">
++        <span className="brand-mark"><Icon name="mark" size={22} /></span>
++        <span className="brand-text">Fault-Detect</span>
++      </NavLink>
++      {LINKS.filter((l) => l.roles.includes(role)).map((l) => <Item key={l.to} {...l} />)}
++      <div className="nav-spacer" />
++      <div className="nav-group">Demonstration</div>
++      {DEMO.map((l) => <Item key={l.to} {...l} />)}
++    </nav>
++  )
++}
+diff --git a/system/frontend/src/TopBar.jsx b/system/frontend/src/TopBar.jsx
+index c829ef8..021534f 100644
+--- a/system/frontend/src/TopBar.jsx
++++ b/system/frontend/src/TopBar.jsx
+@@ -1,18 +1,29 @@
+-import { useState } from 'react'
+-import { Link, useNavigate } from 'react-router-dom'
++// The top bar on every page: search, connection icons, bell, and the person. See design/top-bar.md.
++import { useEffect, useRef, useState } from 'react'
++import { useNavigate } from 'react-router-dom'
++import Icon from './Icons.jsx'
+ import BellList from './BellList.jsx'
++import ConnectionIcons from './ConnectionIcons.jsx'
++import NamePanel from './NamePanel.jsx'
++import { initials } from './format.js'
+ import { useUser } from './user.jsx'
+ 
+-// Shared top bar: name, search, bell, person. See docs/design/top-bar.md
+ export default function TopBar({ bell, storageAlerts, machines, mode, link }) {
+-  const [bellOpen, setBellOpen] = useState(false)
+-  const [sideOpen, setSideOpen] = useState(false)
++  const { user } = useUser()
++  const [open, setOpen] = useState(null)        // 'bell' | 'name' | null
+   const [search, setSearch] = useState('')
+   const [found, setFound] = useState(true)
+-  const { user, signOut } = useUser()
++  const bar = useRef(null)
+   const navigate = useNavigate()
+   const count = bell.length + (storageAlerts ? 1 : 0)
+-  const role = user.role
++
++  useEffect(() => {
++    const off = (e) => { if (e.key === 'Escape') setOpen(null) }
++    const away = (e) => { if (open === 'bell' && bar.current && !bar.current.querySelector('.anchor.open')?.contains(e.target)) setOpen(null) }
++    document.addEventListener('keydown', off)
++    document.addEventListener('mousedown', away)
++    return () => { document.removeEventListener('keydown', off); document.removeEventListener('mousedown', away) }
++  }, [open])
+ 
+   const find = (e) => {
+     if (e.key !== 'Enter' || !search.trim()) return
+@@ -22,31 +33,30 @@ export default function TopBar({ bell, storageAlerts, machines, mode, link }) {
+   }
+ 
+   return (
+-    <div className="topbar">
+-      <Link to="/" className="brand">Fault-Detect</Link>
+-      <input placeholder="Search machines" value={search} aria-invalid={!found} title={found ? '' : 'No machine with that name'}
+-             onChange={(e) => { setSearch(e.target.value); setFound(true) }} onKeyDown={find} />
+-      {role !== 'administrator' && <Link to="/machines" className="navlink first">Machines</Link>}
+-      {role === 'administrator' && <Link to="/admin" className="navlink first">Admin</Link>}
+-      <Link to="/demo" className="navlink">Demo</Link>
+-      <Link to="/tracker" className="navlink">Tracker</Link>
+-      {mode && <span className="chip" title="Connection mode">{mode === 'near' ? 'Near range · Bluetooth' : 'Remote range · Wi-Fi'}{link === 'cut' && ' · cut'}</span>}
+-      <div className="bell-wrap">
+-        <button onClick={() => setBellOpen(!bellOpen)} aria-label={`Bell, ${count} open`}>Bell {count > 0 && <span className="bell-count">{count}</span>}</button>
+-        {bellOpen && <BellList bell={bell} storageAlerts={storageAlerts} onClose={() => setBellOpen(false)} />}
++    <header className="topbar" ref={bar}>
++      <div className="search">
++        <Icon name="search" size={18} />
++        <input type="search" placeholder="Search machines" aria-label="Search machines" value={search} aria-invalid={!found}
++               title={found ? '' : 'No machine with that name'} onChange={(e) => { setSearch(e.target.value); setFound(true) }} onKeyDown={find} />
++      </div>
++      <div className="topbar-space" />
++      <ConnectionIcons mode={mode} link={link} />
++      <div className={`anchor${open === 'bell' ? ' open' : ''}`}>
++        <button className="icon-btn" aria-label={`Faults, ${count} waiting`} aria-expanded={open === 'bell'} onClick={() => setOpen(open === 'bell' ? null : 'bell')}>
++          <Icon name="bell" />
++          {count > 0 && <span className="bell-badge">{count}</span>}
++        </button>
++        {open === 'bell' && <BellList bell={bell} storageAlerts={storageAlerts} onClose={() => setOpen(null)} />}
+       </div>
+-      <button onClick={() => setSideOpen(true)}>{user.full_name}</button>
+-      {sideOpen && (
+-        <>
+-          <div className="side-backdrop" onClick={() => setSideOpen(false)} />
+-          <aside className="sidebar">
+-            <h3>{user.full_name}</h3>
+-            <p className="muted" style={{ textTransform: 'capitalize' }}>{role}</p>
+-            <Link to="/settings" onClick={() => setSideOpen(false)}>Settings</Link>
+-            <button className="demo-btn" onClick={signOut}>Sign out</button>
+-          </aside>
+-        </>
+-      )}
+-    </div>
++      <button className="person" onClick={() => setOpen('name')} aria-haspopup="dialog">
++        <span className="avatar">{initials(user.full_name)}</span>
++        <span className="person-text">
++          <div className="person-name">{user.full_name}</div>
++          <div className="person-role">{user.role}</div>
++        </span>
++        <Icon name="chevron" size={16} />
++      </button>
++      {open === 'name' && <NamePanel onClose={() => setOpen(null)} />}
++    </header>
+   )
+ }
+diff --git a/system/frontend/src/connection.js b/system/frontend/src/connection.js
+new file mode 100644
+index 0000000..b476527
+--- /dev/null
++++ b/system/frontend/src/connection.js
+@@ -0,0 +1,24 @@
++// Which link the dashboard uses. Bluetooth is the near-range link, Wi-Fi the remote one (FR-11).
++// Automatic mode prefers Bluetooth. A hand choice never falls back to the other link by itself.
++// See design/top-bar.md, "Connection icons".
++
++export const LINK_NAME = { bluetooth: 'Bluetooth', wifi: 'Wi-Fi' }
++
++export function resolveLink(mode, btFound, wifiFound) {
++  let active = null
++  if (mode === 'bluetooth') active = btFound ? 'bluetooth' : null
++  else if (mode === 'wifi') active = wifiFound ? 'wifi' : null
++  else active = btFound ? 'bluetooth' : wifiFound ? 'wifi' : null
++  const state = (name, found) => (!found ? 'offline' : active === name ? 'active' : 'available')
++  return {
++    active,
++    bluetooth: state('bluetooth', btFound),
++    wifi: state('wifi', wifiFound),
++    offline: active === null,
++  }
++}
++
++// The words for hover and screen readers: "Bluetooth: connected", "Wi-Fi: available", "Wi-Fi: offline".
++export function linkWord(name, state) {
++  return `${LINK_NAME[name]}: ${state === 'active' ? 'connected' : state}`
++}
+diff --git a/system/frontend/src/format.js b/system/frontend/src/format.js
+new file mode 100644
+index 0000000..aa726bf
+--- /dev/null
++++ b/system/frontend/src/format.js
+@@ -0,0 +1,2 @@
++// Two initials from a full name, for the round avatar.
++export const initials = (name) => name.split(' ').map((w) => w[0]).slice(0, 2).join('')
+diff --git a/system/frontend/src/theme.css b/system/frontend/src/theme.css
+index 22a64e8..ddedced 100644
+--- a/system/frontend/src/theme.css
++++ b/system/frontend/src/theme.css
+@@ -25,30 +25,195 @@
+   /* Text hierarchy */
+   --text-head:      #2D3748;
+   --text-body:      #4A5568;
+-  --text-muted:     #8B9BB0;
++  --text-muted:     #8B9BB0;   /* icons and decoration only: too light for small text */
+ 
+   /* Borders */
+   --border-faint:   #E5E8ED;
+   --border-light:   #D5DAE1;
++
++  /* Connection icons (top bar) */
++  --link-active:    #3F7CAC;
++  --link-glow:      rgba(63, 124, 172, 0.35);
++  --link-offline:   #8B9BB0;
++
++  /* Shape, the same as the fault pop-up */
++  --radius:         14px;
++  --radius-sm:      10px;
++  --shadow-card:    0 2px 10px rgba(44, 58, 76, 0.08);
++  --shadow-pop:     0 12px 30px rgba(44, 58, 76, 0.2);
++  --sidenav-w:      248px;
++  --topbar-h:       68px;
+ }
+ 
+ /* TODO: dark theme colours are not chosen yet. When they are, put them here:
+ :root[data-theme="dark"] { ... } */
+ 
+ * { box-sizing: border-box; }
+-body { margin: 0; background: var(--bg-canvas); color: var(--text-body);
++html, body, #root { height: 100%; }
++body { margin: 0; background: var(--bg-canvas); color: var(--text-body); font-size: 16px; line-height: 1.45;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+-h1, h2, h3 { color: var(--text-head); }
+-.page { padding: 24px; max-width: 1200px; margin: 0 auto; }
+-.card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 14px; padding: 16px; }
++h1, h2, h3 { color: var(--text-head); margin: 0; line-height: 1.2; }
++button, input, select { font: inherit; color: inherit; }
++a { color: inherit; text-decoration: none; }
++:focus-visible { outline: 3px solid var(--secondary); outline-offset: 2px; }
++
++/* ---------- Buttons (same as the pop-up) ---------- */
++.btn { min-height: 44px; padding: 0 22px; border-radius: var(--radius-sm); border: 1px solid transparent; cursor: pointer;
++       font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
++.btn-primary { background: var(--primary); color: var(--bg-card); }
++.btn-primary:hover { background: #38495f; }
++.btn-quiet { background: transparent; color: var(--primary); border-color: var(--border-light); font-weight: 400; padding: 0 14px; }
++.btn-quiet:hover { background: var(--primary-dim); }
++
++/* ---------- Status pill (same as the pop-up tag) ---------- */
++.pill { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; font-size: 12px;
++        font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-head); white-space: nowrap; }
++.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
++.pill.normal   { background: rgba(107, 142, 123, 0.22); } .pill.normal::before   { background: var(--teal); }
++.pill.warning  { background: rgba(184, 160, 106, 0.22); } .pill.warning::before  { background: var(--warning); }
++.pill.critical, .pill.abnormal { background: rgba(160, 107, 107, 0.2); }
++.pill.critical::before, .pill.abnormal::before { background: var(--red); }
++.pill.maintenance { background: rgba(123, 107, 142, 0.2); } .pill.maintenance::before { background: var(--purple); }
++.pill.role { background: var(--primary-dim); } .pill.role::before { background: var(--gold); }
++
++/* ---------- The shell ---------- */
++.shell { display: grid; grid-template-columns: var(--sidenav-w) 1fr; min-height: 100%; }
++.main { min-width: 0; display: flex; flex-direction: column; }
++.content { padding: 28px; max-width: 1280px; width: 100%; margin: 0 auto; }
++.page { padding: 0; }
+ .muted { color: var(--text-body); font-size: 14px; }
+-.topbar { display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--bg-sidebar); color: #F8F9FB; }
+-.topbar input { flex: 1; max-width: 360px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-light); }
+-.topbar button { background: transparent; color: #F8F9FB; border: 1px solid var(--bg-sidebar-hover); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+-.brand { font-weight: 700; color: var(--gold); text-decoration: none; }
++
++/* ---------- Side nav ---------- */
++.sidenav { background: var(--bg-sidebar); color: #E4EAF0; display: flex; flex-direction: column; padding: 20px 14px; gap: 6px;
++           position: sticky; top: 0; height: 100vh; }
++.sidenav .brand { display: flex; align-items: center; gap: 12px; padding: 6px 10px 22px; color: #F8F9FB; font-size: 20px; font-weight: 700; }
++.brand-mark { width: 38px; height: 38px; border-radius: 11px; background: var(--gold-dim); display: grid; place-items: center; color: var(--gold); flex: none; }
++.nav-group { margin: 14px 10px 4px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #AEBBC8; }
++.nav-link { display: flex; align-items: center; gap: 14px; min-height: 46px; padding: 0 12px; border-radius: var(--radius-sm); color: #E4EAF0; font-size: 15px; }
++.nav-link svg { color: #AEBBC8; flex: none; }
++.nav-link:hover { background: var(--bg-sidebar-hover); }
++.nav-link.active { background: var(--bg-sidebar-hover); color: #fff; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(196, 163, 90, 0.35); }
++.nav-link.active svg { color: var(--gold); }
++.nav-spacer { flex: 1; }
++
++/* ---------- Top bar ---------- */
++.topbar { position: sticky; top: 0; z-index: 20; height: var(--topbar-h); display: flex; align-items: center; gap: 14px; padding: 0 28px;
++          background: var(--bg-card); border-bottom: 1px solid var(--border-light); box-shadow: var(--shadow-card); }
++.search { flex: 1; max-width: 400px; position: relative; }
++.search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-body); }
++.search input { width: 100%; min-height: 44px; padding: 0 16px 0 44px; border-radius: 999px; border: 1px solid var(--border-light); background: var(--primary-dim); }
++.search input::placeholder { color: var(--text-body); opacity: 0.8; }
++.topbar-space { flex: 1; }
++.icon-btn { position: relative; width: 44px; height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); background: transparent;
++            display: grid; place-items: center; cursor: pointer; color: var(--text-head); }
++.icon-btn:hover { background: var(--primary-dim); }
++.bell-badge { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--gold);
++         color: var(--primary); font-size: 12px; font-weight: 700; display: grid; place-items: center; }
++.links { display: flex; align-items: center; gap: 8px; position: relative; }
++.link.active { color: var(--link-active); border-color: var(--link-active); box-shadow: 0 0 12px var(--link-glow); }
++.link.available { color: var(--text-head); }
++.link.offline { color: var(--link-offline); }
++.link .slash { position: absolute; width: 26px; height: 2px; background: var(--link-offline); transform: rotate(-45deg); border-radius: 2px; }
++.link .manual-dot { position: absolute; bottom: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
++.offline-word { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-body); }
++.switch-note { position: absolute; top: 52px; left: 0; white-space: nowrap; background: var(--primary); color: var(--bg-card); font-size: 13px; padding: 6px 12px; border-radius: var(--radius-sm); }
++.person { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px 0 6px; border-radius: 999px; border: 1px solid var(--border-light); background: transparent; cursor: pointer; }
++.person:hover { background: var(--primary-dim); }
++.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: var(--bg-card); display: grid; place-items: center; font-size: 13px; font-weight: 700; flex: none; }
++.person-text { text-align: left; line-height: 1.15; }
++.person-name { font-size: 14px; font-weight: 600; color: var(--text-head); }
++.person-role { font-size: 12px; color: var(--text-body); text-transform: capitalize; }
++
++/* ---------- Popovers and the name panel (paper cards) ---------- */
++.anchor { position: relative; }
++.popover { position: absolute; top: 56px; right: 0; width: 360px; z-index: 30; background: var(--bg-card); border: 1px solid var(--border-light);
++           border-radius: var(--radius); box-shadow: var(--shadow-pop); padding: 18px; display: flex; flex-direction: column; gap: 10px; }
++.popover h3 { font-size: 17px; }
++.popover.left { right: auto; left: 0; width: 280px; }
++.pop-item { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-faint); background: #fff; }
++.pop-item:hover { background: var(--primary-dim); }
++.pop-item .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
++.pop-item strong { font-size: 16px; color: var(--text-head); }
++.pop-item .small { font-size: 13px; color: var(--text-body); }
++.radio { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 8px; border-radius: var(--radius-sm); cursor: pointer; }
++.radio:hover { background: var(--primary-dim); }
++.scrim { position: fixed; inset: 0; background: rgba(44, 58, 76, 0.25); z-index: 40; }
++.panel { position: fixed; top: 0; right: 0; bottom: 0; width: 340px; z-index: 50; background: var(--bg-card); box-shadow: var(--shadow-pop);
++         padding: 28px 24px; display: flex; flex-direction: column; gap: 14px; animation: slide-in 0.18s ease-out; }
++.panel .avatar { width: 64px; height: 64px; font-size: 22px; }
++.panel h2 { font-size: 24px; }
++.panel .divider { height: 1px; background: var(--border-light); margin: 6px 0; }
++.panel .demo-label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-body); }
++.panel .close { align-self: flex-end; }
++.seg { display: flex; gap: 6px; flex-wrap: wrap; }
++.seg button { min-height: 40px; padding: 0 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); background: transparent; cursor: pointer; text-transform: capitalize; }
++.seg button[aria-pressed="true"] { background: var(--primary); color: var(--bg-card); border-color: var(--primary); }
++@keyframes slide-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
++
++/* ---------- Fault pop-up (the design you approved) ---------- */
++.popup-stack { position: fixed; right: 24px; bottom: 24px; z-index: 60; display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
++.fault-popup { width: 440px; max-width: calc(100vw - 32px); background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius);
++               padding: 20px 22px; box-shadow: var(--shadow-pop); display: flex; flex-direction: column; gap: 12px; animation: slide-in 0.18s ease-out; }
++.fault-popup .top { display: flex; justify-content: space-between; align-items: center; }
++.fault-popup .time { font-size: 13px; color: var(--text-body); }
++.fault-popup .machine { font-size: 24px; font-weight: 700; color: var(--text-head); line-height: 1.2; }
++.fault-popup .what { font-size: 15px; color: var(--text-head); }
++.fault-popup .numbers { font-size: 14px; }
++.fault-popup .actions { display: flex; gap: 12px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
++.fault-popup .reminder { font-size: 12.5px; }
++
++/* ---------- Overview ---------- */
++.page-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 22px; }
++.page-head h1 { font-size: 30px; }
++.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 30px; }
++.tile { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: 6px; }
++.tile .label { font-size: 14px; display: flex; align-items: center; gap: 8px; }
++.tile .label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); }
++.tile .num { font-size: 36px; font-weight: 700; color: var(--text-head); line-height: 1; }
++.tile.normal .label::before { background: var(--teal); }
++.tile.warning .label::before { background: var(--warning); }
++.tile.critical .label::before { background: var(--red); }
++.tile.maintenance .label::before { background: var(--purple); }
++.group { margin-bottom: 30px; }
++.group-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
++.group-head h2 { font-size: 20px; }
++.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
++.mcard { display: flex; flex-direction: column; gap: 14px; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius);
++         padding: 18px 20px; box-shadow: var(--shadow-card); transition: box-shadow 0.15s, transform 0.15s; }
++.mcard:hover { box-shadow: var(--shadow-pop); transform: translateY(-2px); }
++.mcard .head { display: flex; align-items: center; gap: 12px; }
++.mcard .icon { width: 42px; height: 42px; border-radius: 12px; background: var(--primary-dim); color: var(--primary); display: grid; place-items: center; flex: none; }
++.mcard .name { font-size: 20px; font-weight: 700; color: var(--text-head); flex: 1; }
++.reads { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin: 0; }
++.read dt { font-size: 13px; color: var(--text-body); margin: 0 0 2px; }
++.read dd { margin: 0; font-size: 22px; font-weight: 700; color: var(--text-head); display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
++.read dd .unit { font-size: 14px; font-weight: 400; color: var(--text-body); }
++.mark { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
++        letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-head); }
++.mark.invalid { background: rgba(184, 160, 106, 0.28); }
++.mark.sensor  { background: rgba(160, 107, 107, 0.24); }
++.sensor-text { font-size: 15px; font-weight: 700; color: var(--text-head); }
++
++@media (max-width: 900px) {
++  :root { --sidenav-w: 76px; }
++  .sidenav .brand-text, .nav-link span, .nav-group { display: none; }
++  .sidenav .brand { padding: 6px 0 18px; justify-content: center; }
++  .nav-link { justify-content: center; padding: 0; }
++  .person-text { display: none; }
++  .content { padding: 18px; }
++  .topbar { padding: 0 14px; }
++}
++@media (prefers-reduced-motion: reduce) {
++  .panel, .fault-popup { animation: none; }
++  .mcard { transition: none; }
++  .mcard:hover { transform: none; }
++}
++
++.mcard .pills { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
++.mcard .head { flex-wrap: wrap; }
++.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+ 
+ /* ---- Segment 2: live dashboard ---- */
+-.topbar .navlink { color: #F8F9FB; text-decoration: none; margin-left: auto; }
+ .group-title { margin: 28px 0 12px; }
+ .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+ .machine-card { display: block; text-decoration: none; color: inherit; border-left: 6px solid var(--border-light); }
+@@ -85,19 +250,12 @@ h1, h2, h3 { color: var(--text-head); }
+ .demo-btn:hover { background: var(--secondary); }
+ 
+ /* ---- Segment 3: faults you can act on ---- */
+-.popup-backdrop { position: fixed; inset: 0; background: rgba(44, 58, 76, 0.55); display: flex; align-items: center; justify-content: center; z-index: 50; }
+-.popup { width: min(440px, 92vw); border-left: 6px solid var(--gold); }
+-.bell-wrap { position: relative; }
+-.bell-count { background: var(--red); color: #fff; border-radius: 999px; padding: 0 7px; margin-left: 4px; font-size: 12px; }
+-.bell-list { position: absolute; right: 0; top: 42px; width: 300px; z-index: 40; color: var(--text-body); }
+ .bell-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border-faint); color: var(--text-head); text-decoration: none; font-size: 14px; }
+ .actas { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+ .actas select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border-light); }
+ .detail-head { justify-content: flex-start; gap: 12px; }
+ .detail-head h1 { margin: 8px 0; }
+ .maint-row { margin-bottom: 8px; }
+-.tiles { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+-.tile { display: grid; gap: 6px; }
+ .tile-value strong { font-size: 24px; color: var(--text-head); }
+ .range-buttons { display: flex; gap: 6px; }
+ .demo-btn-off { background: transparent; color: var(--text-body); border: 1px solid var(--border-light); }
+@@ -107,17 +265,12 @@ h1, h2, h3 { color: var(--text-head); }
+ .fault-table th, .fault-table td { text-align: left; padding: 8px; border-top: 1px solid var(--border-faint); }
+ 
+ /* ---- Segment 4 and 5: people, settings, demo, proof ---- */
+-.topbar .navlink.first { margin-left: auto; }
+-.topbar .navlink + .navlink, .topbar .navlink + .chip { margin-left: 0; }
+ .chip { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--bg-sidebar-hover); font-size: 12px; white-space: nowrap; }
+ .chip-dark { border-color: var(--border-light); color: var(--text-head); background: var(--bg-card); }
+ .signin { max-width: 460px; padding-top: 64px; }
+ .signin-card { display: grid; gap: 16px; }
+ .signin-card label, .demo-card label { display: grid; gap: 4px; font-size: 13px; }
+ .signin-card input, .demo-card input, .demo-card select { padding: 8px; border: 1px solid var(--border-light); border-radius: 8px; }
+-.side-backdrop { position: fixed; inset: 0; z-index: 59; }
+-.sidebar { position: fixed; top: 0; right: 0; bottom: 0; width: 260px; background: var(--bg-card); color: var(--text-body); padding: 24px; display: grid; align-content: start; gap: 12px; z-index: 60; box-shadow: -4px 0 16px rgba(44, 58, 76, 0.25); }
+-.sidebar a { color: var(--text-head); }
+ .bar { position: relative; height: 18px; border-radius: 9px; background: var(--bg-chart); border: 1px solid var(--border-light); overflow: hidden; }
+ .bar-fill { height: 100%; background: var(--teal); }
+ .bar-hot { background: var(--red); }
+@@ -128,7 +281,6 @@ h1, h2, h3 { color: var(--text-head); }
+ .tracker-simulated { background: var(--gold-dim); color: #6b5a2a; border-color: var(--gold); }
+ .tracker-left-out { background: var(--red-dim); color: #7a3f3f; border-color: var(--red); }
+ .tracker-not-set { background: var(--secondary-dim); color: var(--text-body); border-color: var(--border-light); }
+-.topbar input[aria-invalid="true"] { border-color: var(--red); }
+ 
+ /* ---- live window and injection countdown ---- */
+ .slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 6px; margin: 10px 0; }
+@@ -142,9 +294,58 @@ h1, h2, h3 { color: var(--text-head); }
+ .slot-warning .slot-flag { color: #6b5a2a; }
+ .slot-critical { background: var(--red-dim); border-color: var(--red); }
+ .slot-critical .slot-flag { color: #7a3f3f; }
+-.timer-corner { position: fixed; right: 16px; bottom: 16px; z-index: 45; display: grid; gap: 8px; width: min(340px, 92vw); }
++.timer-corner { position: fixed; left: calc(var(--sidenav-w) + 16px); bottom: 16px; z-index: 45; display: grid; gap: 8px; width: min(340px, 92vw); }
+ .timer-item { display: flex; align-items: center; gap: 12px; border-left: 6px solid var(--gold); padding: 10px 12px; }
+ .timer-count { font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: var(--text-head); font-variant-numeric: tabular-nums; }
+ .timer-text { display: grid; flex: 1; font-size: 13px; }
+ .timer-text span { color: var(--text-muted); }
+ .timer-started { border-left-color: var(--teal); }
++
++/* ---- kept from the old theme: pages not redesigned yet (Machine, Settings, Admin, Demo, Tracker, Sign in) ---- */
++.card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-card); }
++.tile-value strong { font-size: 24px; color: var(--text-head); }
++.search input[aria-invalid="true"] { border-color: var(--red); }
++
++/* ---- older pages brought into the new look (Machines, Machine, Settings, Admin, Demo, Tracker, Sign in) ---- */
++.page > h1 { font-size: 30px; margin-bottom: 6px; }
++.page > h2, .page h2 { font-size: 20px; margin: 26px 0 12px; }
++.page > .muted:first-of-type { margin: 0 0 18px; }
++/* the old status badge now looks like the pill: a dot and an upper-case word */
++.badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border: 0; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-head); white-space: nowrap; }
++.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); flex: none; }
++.badge.normal { background: rgba(107, 142, 123, 0.22); color: var(--text-head); } .badge.normal::before { background: var(--teal); }
++.badge.warning, .badge.abnormal { background: rgba(184, 160, 106, 0.22); color: var(--text-head); } .badge.warning::before, .badge.abnormal::before { background: var(--warning); }
++.badge.critical { background: rgba(160, 107, 107, 0.2); color: var(--text-head); } .badge.critical::before { background: var(--red); }
++.badge.unknown { background: var(--secondary-dim); color: var(--text-head); }
++/* buttons */
++.demo-btn { min-height: 44px; padding: 0 18px; border-radius: var(--radius-sm); font-weight: 600; font-size: 15px; background: var(--primary); color: var(--bg-card); border: 1px solid transparent; }
++.demo-btn:hover { background: #38495f; }
++.demo-btn-off { background: transparent; color: var(--primary); border: 1px solid var(--border-light); font-weight: 400; }
++.demo-btn-off:hover { background: var(--primary-dim); }
++.demo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
++.linkbtn { min-height: 44px; display: inline-flex; align-items: center; }
++/* forms */
++select, input:not([type]), input[type="text"], input[type="password"], input[type="number"] { min-height: 40px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); background: #fff; }
++.demo-row label, .signin-card label, .demo-card label { font-size: 14px; color: var(--text-body); }
++.demo-row { gap: 12px; }
++.demo-card { padding: 18px 20px; }
++/* tables */
++.fault-table { font-size: 14px; }
++.fault-table th { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-body); font-weight: 700; padding: 12px 14px; border-top: 0; border-bottom: 1px solid var(--border-light); }
++.fault-table td { padding: 12px 14px; border-top: 1px solid var(--border-faint); }
++.fault-table tbody tr:hover { background: var(--primary-dim); }
++.fault-table a { color: var(--primary); font-weight: 600; }
++.table-wrap { padding: 4px 6px; }
++/* marks beside readings and in tables */
++.mark { padding: 3px 10px; border-radius: 999px; border: 0; font-size: 11px; letter-spacing: 0.06em; color: var(--text-head); }
++.mark-fault, .mark-overdue { background: rgba(160, 107, 107, 0.24); }
++.mark-invalid { background: rgba(184, 160, 106, 0.28); }
++.mark-maint { background: rgba(123, 107, 142, 0.2); }
++/* machine page tiles */
++.page .tiles:not(.summary-tiles) { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
++/* sign in: no shell, centred paper card */
++.signin { max-width: 440px; margin: 0 auto; padding: 72px 16px 0; }
++.signin h1 { text-align: center; color: var(--primary); margin-bottom: 14px; }
++.signin-card { padding: 24px; box-shadow: var(--shadow-pop); }
++.slot { border-radius: var(--radius-sm); }
++.bar { border-radius: 999px; }

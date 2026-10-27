@@ -14,8 +14,6 @@ const when = (t) => (t ? new Date(t * 1000).toLocaleString() : '')
 
 function Graph({ machineId, parameter, label, unit }) {
   const [range, setRange] = useState('day')
-  const [limits, setLimits] = useState(null)
-  useEffect(() => { get('/api/limits').then(setLimits) }, [])
   const [points, setPoints] = useState([])
   useEffect(() => {
     let alive = true

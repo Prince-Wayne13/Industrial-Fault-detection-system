@@ -1,5 +1,5 @@
 import { Navigate, Routes, Route } from 'react-router-dom'
-import TopBar from './TopBar.jsx'
+import Layout from './Layout.jsx'
 import SignIn from './SignIn.jsx'
 import Overview from './Overview.jsx'
 import MachinesList from './MachinesList.jsx'
@@ -8,8 +8,6 @@ import Settings from './Settings.jsx'
 import Admin from './Admin.jsx'
 import DemoPanel from './DemoPanel.jsx'
 import Tracker from './Tracker.jsx'
-import FaultPopup from './FaultPopup.jsx'
-import InjectionTimer from './InjectionTimer.jsx'
 import { UserProvider, useUser } from './user.jsx'
 import { useFaults } from './useFaults.js'
 import { useOverview } from './useLive.js'
@@ -23,14 +21,11 @@ function Require({ roles, children }) {
 
 function Signed() {
   const { user } = useUser()
-  const { popups, bell, storage_alerts } = useFaults(user.username)
+  const faults = useFaults(user.username)
   const { data } = useOverview()
   const machineType = (id) => data?.machines.find((m) => m.id === id)?.type
   return (
-    <>
-      <TopBar bell={bell} storageAlerts={storage_alerts} machines={data?.machines ?? []} mode={data?.mode} link={data?.link} />
-      <FaultPopup popups={popups} machineType={machineType} />
-      <InjectionTimer scheduled={data?.scheduled} serverTime={data?.time} />
+    <Layout faults={faults} overview={data} machineType={machineType}>
       <Routes>
         <Route path="/signin" element={<Navigate to="/" replace />} />
         <Route path="/" element={<Overview />} />
@@ -41,7 +36,7 @@ function Signed() {
         <Route path="/demo" element={<DemoPanel />} />
         <Route path="/tracker" element={<Tracker />} />
       </Routes>
-    </>
+    </Layout>
   )
 }
 

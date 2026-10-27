@@ -1,0 +1,722 @@
+diff --git a/docs/demo-click-through.md b/docs/demo-click-through.md
+new file mode 100644
+index 0000000..0f7af92
+--- /dev/null
++++ b/docs/demo-click-through.md
+@@ -0,0 +1,51 @@
++# Click-through: every screen, three roles
++
++Start: `python app.py` in `system/backend`, `npm run dev` in `system/frontend`. Use three browser tabs; each tab is its own sign-in.
++Accounts: `operator1`, `engineer1`, `admin1`. Password is `demo-password-for-` plus the username. "Demo accounts" on the sign-in page fills the form.
++Tick each line. Write the page and what looked wrong beside any line that fails.
++
++## 0. Sign in (any tab)
++- [ ] Wrong password: red notice, no sign-in.
++- [ ] Right password: lands on Overview inside the new frame (side nav, top bar).
++- [ ] Tab title and the brand at top left both say Fault-Detect.
++
++## 1. Operator (`operator1`)
++- [ ] Side nav shows Overview, Machines, Settings, and Demonstration (Demo panel, Tracker). No Admin.
++- [ ] Overview: five tiles add up (Total = machines shown). Cards grouped Motors, Water pumps, Backup power. Numbers move every second.
++- [ ] Search "pump" then Enter: opens Pump 1. Search "zzz" then Enter: box turns red.
++- [ ] Connection icons: Bluetooth glows (near range). Wi-Fi plain.
++- [ ] Demo panel, "Sustained warning": countdown bottom left, then a pop-up bottom right with machine, "Temperature is too high", the reading and the limit.
++- [ ] Pop-up stays until Acknowledge. After it: pop-up gone, bell shows 1, bell list shows the fault, choosing it opens Motor 1.
++- [ ] Machines page: filter by Type and Status. Names open the machine page.
++- [ ] Machine page: graph with Day, Week, Month, Year. Live window shows 10 slots. Operator cannot Resolve (button absent or refused).
++- [ ] Settings: change sign-out time, change password (15 characters or more). Engineer limits not editable.
++- [ ] Name panel: full name, role, Settings, Sign out. Sign out returns to sign-in.
++
++## 2. Engineer (`engineer1`)
++- [ ] Same side nav as Operator.
++- [ ] Gets its own pop-up for the same fault, and acknowledges it separately (FR-8).
++- [ ] Machine page: Resolve works; bell count drops by one. Start and end Maintenance; card shows the Maintenance tag.
++- [ ] Settings: change a limit. Too-high value refused with a message. Valid value saves and shows in the change log.
++- [ ] Demo panel, "Pump speed swings": after about 10 seconds a Pump 1 pop-up says "Speed is swinging up and down".
++- [ ] Demo panel, "Lone spike": no pop-up.
++- [ ] Demo panel, "Bad reading": Invalid tag beside the number. "Sensor goes silent": Sensor fault tag, no number.
++- [ ] Machine page: CSV report downloads.
++
++## 3. Administrator (`admin1`)
++- [ ] Side nav shows Overview, Admin, Settings. No Machines.
++- [ ] No pop-ups ever, even during "Two faults at once".
++- [ ] Bell shows the storage alert only (when storage is above 75%), titled "Storage alert".
++- [ ] Admin: storage bar, users list (add one), machines list (add and remove one), change log.
++- [ ] Administrator cannot download a report or resolve a fault (refused).
++- [ ] Try `/machines` by typing it: "Not allowed".
++
++## 4. Connection and look
++- [ ] Demo panel "Remote range": Wi-Fi icon glows, Bluetooth plain.
++- [ ] "Cut connection": both icons grey with a slash and the word Offline; yellow notice on Overview; "Restore connection" clears it and the count of waiting windows goes to 0.
++- [ ] Stop the back end: red notice "Live connection lost". Start it again: notice clears.
++- [ ] Narrow the window under 900 px: side nav shrinks to icons, nothing overlaps.
++- [ ] Press Escape with the bell open: it closes.
++- [ ] Tab through the top bar with the keyboard: every control shows a visible focus ring.
++
++## 5. End
++- [ ] Demo panel "Reset everything". Tracker page loads and shows no row marked "not set" that should be built.
+diff --git a/docs/design/segment data/limits-references.md b/docs/design/segment data/limits-references.md
+index 870a9ac..63f2830 100644
+--- a/docs/design/segment data/limits-references.md	
++++ b/docs/design/segment data/limits-references.md	
+@@ -61,8 +61,8 @@ Other numbers the engine uses:
+ - Appendix A.1: replace "(per ISO 10816-3)" with "above 4.5 mm/s RMS", add "warning above 2.8 mm/s RMS". Say the group and support used (Group 2, rigid).
+ - Appendix A.3 and A.4: add the pump current, pump RPM, motor RPM and UPS current numbers above. Keep them marked "team-selected, supported by [R2] to [R6]". They are still pending validation on real equipment.
+ - Appendix C ("Values not backed by a cited source"): the UPS current number moves out of that list only in the sense that the 105% overload start is a manufacturer practice. The rated 5 A itself is still our assumption.
+-- Pump vibration leaves a gap between 3.0 mm/s (normal below) and 5.0 mm/s (abnormal above). The code treats anything up to 5.0 as normal. Say so in A.4, or close the gap.
+-- Pump RPM "dropping or fluctuating" (A.4): only "dropping below 90%" is built. Fluctuation needs a rule such as a spread across the window. Open item.
++- Pump vibration (decided 27 Oct 2026): keep one abnormal level at 5.0 mm/s. Between 3.0 and 5.0 mm/s there is no status. Write in A.4: "3.0 mm/s is the expected running level; 5.0 mm/s is the single limit; readings between them carry no status." Cross-check [R7]: pump guidance for centreline height up to 225 mm gives 3.0, 5.5 and 7.1 mm/s, so 3.0 as expected level and 5.0 as the alert sit inside the guidance.
++- Pump RPM "dropping or fluctuating" (A.4), built 27 Oct 2026: dropping = below 90% of rated (1305 rpm). Fluctuating = the typical step between neighbouring readings in the 10-second window (the median of the 9 steps) is above 6% of the mean. Normal running steps about 1.4%, the Noisy readings demo about 3%, the demo swing (plus and minus 8%) 16%. One spike or one ramp cannot trigger it, so FR-6 holds. The 6% is team-selected, pending validation. Add one sentence to A.4 and a row to the tracker.
+ 
+ ## References
+ 
+@@ -77,6 +77,7 @@ Read on 26 October 2026. Tags match the comments in `config.py`.
+ | R4 | Littelfuse, 777 electronic overload relay, https://m.littelfuse.com/products/landing-pages/electrical/demos/777-demo-1.aspx | An undercurrent setting of 80% of full-load current is usually enough |
+ | R5 | Industrial Monitor Direct, "Configuring Thermal Overload Relays for 3-Phase Motors", https://industrialmonitordirect.com/hu/blogs/knowledgebase/configuring-thermal-overload-relays-for-3-phase-motors-setting-calculation-and-application | NEC / NEMA: overload no more than 125% of full-load current (service factor 1.15), 115% otherwise; pumps 110 to 115% |
+ | R6 | City of Winnipeg, Static UPS specification, https://legacy.winnipeg.ca/finance/findata/matmgt/documents/2011/253-2011/253-2011_NMS_263353_Static_Uninterruptible_Power_Supply.pdf ; Purdi CertaUPS C650 datasheet, https://store.purdi.com/ext/pdf/datasheet.php?id=106108 ; Schneider Electric Easy UPS 3-phase specifications, https://www.productinfo.schneider-electric.com/easyups3pmodular/990-91580-technical-specifications-easy-ups-3-phase-modular/English/ | UPS overload ratings start at 105% of rated load (105 to 125% for minutes, then 125 to 150% for a minute or less, then bypass) |
++| R7 | Europump, "Guidelines on Pump Vibration", first edition, July 2013, https://www.europump.net/files/Publications/Guides/Guidelines 0n Pump Vibration First edition Final July 2013.pdf (found by search; only the search extract was read, not the whole document) | Vibration limits for pumps with centreline height up to 225 mm, RMS velocity: 3.0, 5.5 and 7.1 mm/s. Used only as a cross-check of the SRS 3.0 and 5.0 |
+ 
+ ### Honest limits of these references
+ 
+diff --git a/docs/open-items.md b/docs/open-items.md
+index 2a8a5d0..1be8055 100644
+--- a/docs/open-items.md
++++ b/docs/open-items.md
+@@ -8,7 +8,7 @@ Everything still waiting for a decision. When an item is settled, record it in `
+ | O-5 | Is the status model the same as the logistic regression classifier? Does threshold screening still run per reading? | DD-05, DD-06, FR-4, FR-5 | | | |
+ | O-7 | What is the main store, and how do the main store and local copy stay in step? | DD-04, DD-10 | | | |
+ | O-9 | Does acknowledging leave the fault open until it is resolved? | FR-8, FR-17 | Yes. | | |
+-| O-10 | "Warning" and "abnormal" are the same first level. Use one word everywhere? | FR-5, srs-changes | Kept as is. Dashboard words live in `frontend/src/status.js`, so the change is one edit. | | |
+-| O-11 | The SRS gives no most number of machines, only at least 10 (PR-003). Is that enough? | PR-003, FR-24 | No cap in the code. Review the SRS wording. | | |
++| O-10 | "Warning" and "abnormal" are the same first level. Use one word everywhere? | FR-5, srs-changes | Proposed wording for FR-5: "A parameter with two limits has the statuses normal, warning and critical. A parameter with one limit has normal and abnormal. 'Warning' and 'abnormal' are the first level." The dashboard shows the word each parameter really has. The Overview tile counts both under "Warning". Words live in `frontend/src/status.js`, so a change is one edit. | | |
++| O-11 | The SRS gives no most number of machines, only at least 10 (PR-003). Is that enough? | PR-003, FR-24 | No cap in the code. Proposed wording for PR-003: "The system supports at least 10 machines. It was run with 11 in the heavy-load demonstration. No upper limit is set." | | |
+ 
+ The Owner and Date columns are empty on purpose. The examiners criticised open items with no owner or date.
+diff --git a/system/backend/check_all.py b/system/backend/check_all.py
+index 735165d..efea9fd 100644
+--- a/system/backend/check_all.py
++++ b/system/backend/check_all.py
+@@ -97,7 +97,21 @@ def _():
+     need(all(w["status"] == "normal" for w in s.store.local.windows("motor-1") if w["parameter"] == "temperature"), "status")
+     s2, _f = fresh("Sustained warning")
+     need(faults_of(s2)[0]["raised_at"] >= demo.T0 + 20, "fault appeared before the window ended")
+-    return "spike: no fault. Sustained: fault only when the 10-second window ended"
++    s3 = demo.new_system()                                           # SRS A.4: pump speed that swings is abnormal, one low reading is not
++    base = 1450
++    s3.connect(s3.users["operator"])
++    src = demo.Source(s3.machine_list())
++    t0 = clock.now()
++    src.overrides[("pump-1", "rpm")] = lambda t: base * (1.08 if int(t) % 2 else 0.92) if t >= t0 + 5 else None
++    demo.run(s3, 31, src)
++    rpm = [f for f in faults_of(s3) if f["parameter"] == "rpm"]
++    need(len(rpm) == 1 and rpm[0]["level"] == "abnormal" and rpm[0]["reason"] == "fluctuating", faults_of(s3))
++    s4 = demo.new_system()
++    src4 = demo.Source(s4.machine_list())
++    src4.overrides[("pump-1", "rpm")] = lambda t: 900 if int(t) == int(t0) + 8 else None
++    demo.run(s4, 31, src4)
++    need([f for f in faults_of(s4) if f["parameter"] == "rpm"] == [], "one low speed reading became a fault")
++    return "spike: no fault. Sustained: fault only when the 10-second window ended. Pump speed swing: abnormal; one low reading: none"
+ 
+ # ---------------- alerts ----------------
+ @check("FR-7", "Pop-up for every connected Operator and Engineer")
+@@ -110,8 +124,9 @@ def _():
+ def _():
+     s, _f = fresh("Sustained warning")
+     f = s.popups_for(s.users["operator"])[0]
+-    need(all(k in f for k in ("machine_id", "parameter", "level", "raised_at")), f)
+-    return "all fields present (screen in Segment 3)"
++    need(all(k in f for k in ("machine_id", "parameter", "level", "raised_at", "limit", "value")), f)
++    need(f["value"] > f["limit"], f)                                   # the pop-up can say "140 now, limit 130"
++    return "all fields present, including the reading and the limit (screen in Segment 3)"
+ 
+ @check("FR-7b", "Administrator gets no fault alerts")
+ def _():
+diff --git a/system/backend/check_report.md b/system/backend/check_report.md
+index dab05da..0cc6274 100644
+--- a/system/backend/check_report.md
++++ b/system/backend/check_report.md
+@@ -8,9 +8,9 @@
+ | FR-3a | PASS | One reading per second per parameter | 61 seconds gave 61 readings per parameter (60 stored, 1 in the open window) |
+ | FR-4 | PASS | A sustained high reading is flagged | Motor 1 temperature flagged |
+ | FR-5 | PASS | Warning, critical, and abnormal where only one level exists | motor temperature/current/vibration have 3 statuses; pump temperature, rpm, UPS and others have 2 |
+-| FR-6 | PASS | One abnormal reading is never a fault | spike: no fault. Sustained: fault only when the 10-second window ended |
++| FR-6 | PASS | One abnormal reading is never a fault | spike: no fault. Sustained: fault only when the 10-second window ended. Pump speed swing: abnormal; one low reading: none |
+ | FR-7 | PASS | Pop-up for every connected Operator and Engineer | both see it (screen in Segment 3) |
+-| FR-7a | PASS | Pop-up carries machine, parameter, type, level, time | all fields present (screen in Segment 3) |
++| FR-7a | PASS | Pop-up carries machine, parameter, type, level, time | all fields present, including the reading and the limit (screen in Segment 3) |
+ | FR-7b | PASS | Administrator gets no fault alerts | no pop-up, no bell list |
+ | FR-7c | PASS | Nobody connected: fault stays open and is shown to the next person | shown when the Operator connects |
+ | FR-8 | PASS | Each person acknowledges for themselves | Operator's pop-up goes, Engineer's stays |
+@@ -49,8 +49,8 @@
+ | FR-28d | PASS | 5 wrong passwords block the account for 15 minutes | Too many wrong passwords. The account is blocked for 15 minutes. |
+ | FR-28e | SEGMENT 5 | HTTPS certificate |  |
+ | FR-28f | PASS | Passwords stored salted and scrambled | bcrypt, different every time |
+-| NFR-1 | PASS | At least 95% of critical temperature and current faults found | 80 of 80 = 100% |
+-| NFR-2 | PASS | At least 85% of vibration faults found | 120 of 120 = 100% |
++| NFR-1 | PASS | At least 95% of critical temperature and current faults found | 160 of 160 = 100% |
++| NFR-2 | PASS | At least 85% of vibration faults found | 240 of 240 = 100% |
+ | NFR-5 | SEGMENT 5 | uptime measured over the demo |  |
+ | NFR-6 | PASS | At least 99% of readings stored, also during a cut | generated 589, local 589, online 589 |
+ | NFR-7 | PASS | Noisy data: no corrupt reading acted on | noise at 3x raises no fault; bad readings never enter a window |
+@@ -63,7 +63,7 @@
+ | PR-002 | SEGMENT 2 | reading to screen within 2 seconds |  |
+ | PR-003 | PASS | 10 machines at the same time | 10 machines, status every 10 s (screen timing in Segment 5) |
+ | PR-004 | SEGMENT 5 | 5 viewers at once |  |
+-| PR-005 | PASS | At least 40 readings per second | 183,912 readings per second processed |
++| PR-005 | PASS | At least 40 readings per second | 174,342 readings per second processed |
+ | PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 45.3 MB needed for one day; the local file is set to 512 MB |
+ | PR-007 | SEGMENT 5 | start-up within 60 seconds |  |
+ 
+diff --git a/system/backend/config.py b/system/backend/config.py
+index 1a83c4b..558ee03 100644
+--- a/system/backend/config.py
++++ b/system/backend/config.py
+@@ -55,8 +55,12 @@ LIMITS = {
+     "pump": {
+         "temperature": {"abnormal": 95},                         # [SRS A.4] bearing temperature
+         "current":     {"abnormal": 13.8, "abnormal_below": 9.6},   # 115% of rated = overload [R5]; 80% of rated = underload / dry running [R3][R4]
+-        "vibration":   {"abnormal": 5.0},                        # [SRS A.4] mm/s RMS
+-        "rpm":         {"abnormal_below": 1305},                 # [SRS A.4] same 90% rule as the motor (0.9 x 1450) [R2]
++        # [SRS A.4] normal < 3.0, abnormal > 5.0. Between 3.0 and 5.0 there is no status: one abnormal level only (decision).
++        # 3.0 is the expected running level; 5.0 is the single limit. Cross-check: pump guidance puts alert levels near 5.5 mm/s for small pumps [R7].
++        "vibration":   {"abnormal": 5.0},
++        # [SRS A.4] "dropping or fluctuating". Dropping = below 90% of rated. Fluctuating = the median step between neighbouring readings is above 6% of the mean (normal running about 1.4%, the Noisy readings demo about 3%).
++        # Normal running spreads about 1%; 6% leaves room for noise. Team-selected, pending validation.
++        "rpm":         {"abnormal_below": 1305, "fluctuation_step": 0.06},
+     },
+     "ups": {
+         "temperature": {"abnormal": 75},                         # [SRS A.3] internal temperature
+diff --git a/system/backend/faults.py b/system/backend/faults.py
+index 82d7ce4..7b7dc1b 100644
+--- a/system/backend/faults.py
++++ b/system/backend/faults.py
+@@ -39,7 +39,7 @@ class FaultStore:
+                 return f
+         return None
+ 
+-    def raise_fault(self, machine_id, parameter, level, limit, confirmed_at):
++    def raise_fault(self, machine_id, parameter, level, limit, confirmed_at, value=None, reason=None):
+         """Returns (fault, why). `why` is 'new', 'already open' or 'maintenance'."""
+         now = clock.now()
+         if self.in_maintenance(machine_id):
+@@ -55,6 +55,7 @@ class FaultStore:
+         latency = now - confirmed_at
+         fault = {"id": self.next_id, "machine_id": machine_id, "parameter": parameter, "level": level,
+                  "limit": limit,                                  # FR-23d: the limit in force when it was raised
++                 "value": value, "reason": reason,                # the reading that crossed it; reason = 'fluctuating' for a spread fault
+                  "status": "open", "confirmed_at": confirmed_at, "raised_at": now,
+                  "alert_latency_s": round(latency, 3), "delayed": latency > ALERT_LIMIT_S,
+                  "acknowledged_by": [], "resolved_by": None, "resolved_at": None, "escalations": [], "last_normal_at": None}
+diff --git a/system/backend/live.py b/system/backend/live.py
+index a8620b1..7e9b644 100644
+--- a/system/backend/live.py
++++ b/system/backend/live.py
+@@ -14,14 +14,14 @@ import clock
+ import config
+ from config import RANK
+ from model import threshold_level
+-from seed import PARAMETERS, Source
++from seed import NORMAL, PARAMETERS, Source
+ 
+ BAD_VALUE = 99999      # outside every physical range, so the checker rejects it (FR-14)
+ BAD_SECONDS = 5        # how long a demo bad reading lasts
+-PARAM_ACTIONS = {"warning", "critical", "spike", "clear", "bad", "silent"}
++PARAM_ACTIONS = {"warning", "critical", "spike", "clear", "bad", "silent", "fluctuate"}
+ NO_MACHINE = {"slow_alert_on", "slow_alert_off", "cut_link", "restore_link", "heavy_load", "remove_load"}
+ IMMEDIATE = {"clear_all", "cancel", "mode_near", "mode_remote"}      # never delayed
+-LABELS = {"warning": "Warning value", "critical": "Critical value", "spike": "One spike", "bad": "Bad reading", "silent": "Sensor goes silent",
++LABELS = {"warning": "Warning value", "critical": "Critical value", "spike": "One spike", "fluctuate": "Fluctuating value", "bad": "Bad reading", "silent": "Sensor goes silent",
+           "clear": "Back to normal", "maintenance": "Start maintenance", "end_maintenance": "End maintenance", "slow_alert_on": "Slow alerts on",
+           "slow_alert_off": "Slow alerts off", "cut_link": "Connection cut", "restore_link": "Connection restored",
+           "heavy_load": "Heavy load", "remove_load": "Remove the extra machines"}
+@@ -231,6 +231,13 @@ class LiveFeed:
+                 self.source.silent.discard(key)
+                 self.source.overrides[key] = fault_value(machine["type"], parameter, action)
+                 return True, f"{machine['name']} {parameter} now reads a {action} value."
++            if action == "fluctuate":                             # SRS A.4: speed that swings up and down but never crosses the low limit
++                if config.LIMITS[machine["type"]][parameter].get("fluctuation_step") is None:
++                    return False, "Only a parameter with a fluctuation limit (pump speed) can fluctuate."
++                self.source.silent.discard(key)
++                base = NORMAL[machine["type"]][parameter]
++                self.source.overrides[key] = lambda t, b=base: b * (1.08 if int(t) % 2 else 0.92)
++                return True, f"{machine['name']} {parameter} now swings up and down."
+             if action == "spike":                                 # one wrong-high second: must never become a fault (FR-6)
+                 t0 = int(clock.now()) + (0 if in_step else 1)
+                 value = fault_value(machine["type"], parameter, "critical")
+diff --git a/system/backend/model.py b/system/backend/model.py
+index 99ccb70..59b57e9 100644
+--- a/system/backend/model.py
++++ b/system/backend/model.py
+@@ -49,6 +49,35 @@ def limit_in_force(machine_type, parameter, level, value=None):
+     return r.get("abnormal_below")
+ 
+ 
++def fluctuation(machine_type, parameter, values):
++    """FR-4 / SRS A.4 'fluctuating'. The typical step from one reading to the next, as a share of the mean (median of the 9 steps).
++    A swing steps by a lot every second; one spike, one ramp or plain noise leave the median step small, so FR-6 still holds."""
++    if rule_for(machine_type, parameter).get("fluctuation_step") is None or len(values) < 4:
++        return None
++    mean = sum(values) / len(values)
++    if mean == 0:
++        return None
++    steps = sorted(abs(b - a) for a, b in zip(values, values[1:]))
++    n = len(steps)
++    med = steps[n // 2] if n % 2 else (steps[n // 2 - 1] + steps[n // 2]) / 2
++    return med / abs(mean)
++
++
++def is_fluctuating(machine_type, parameter, values):
++    cv = fluctuation(machine_type, parameter, values)
++    return cv is not None and cv > rule_for(machine_type, parameter)["fluctuation_step"]
++
++
++def observed_value(machine_type, parameter, values):
++    """The reading furthest past the limit, for the pop-up ('138 C now')."""
++    if not values:
++        return None
++    r = rule_for(machine_type, parameter)
++    if r.get("abnormal_below") is not None and min(values) < r["abnormal_below"] and not any(v > (r.get("abnormal") or r.get("warning") or float("inf")) for v in values):
++        return min(values)
++    return max(values)
++
++
+ def trend_check(levels, fraction=None):
+     """levels = the screening level of each clean reading in the 10-second window.
+     The window gets the highest level that at least `fraction` of its readings reach. One reading alone never does. FR-6."""
+@@ -94,6 +123,8 @@ def classify(machine_type, parameter, window_values):
+     allowed = levels_for(machine_type, parameter)
+     levels = [threshold_level(machine_type, parameter, v) for v in window_values]
+     rule_level = trend_check(levels)
++    if rule_level == "normal" and is_fluctuating(machine_type, parameter, window_values) and "abnormal" in allowed:
++        return "abnormal"                      # a steady spread over the whole window counts, one wild reading does not (std needs all 10)
+     if rule_level == "normal":
+         return "normal"
+     clf = _CLF if _CLF_TRIED else _train()
+diff --git a/system/backend/seed.py b/system/backend/seed.py
+index 802e4b4..9814fa9 100644
+--- a/system/backend/seed.py
++++ b/system/backend/seed.py
+@@ -90,6 +90,54 @@ def _band(machine_type, parameter, truth, rng):
+     return rng.uniform(r["abnormal_below"] * 0.7, r["abnormal_below"] * 0.97)
+ 
+ 
++def _clip_near(limit, side, rng, lo, hi, sd):
++    """One reading near a limit with noise. side = 'under' keeps it on the safe side, 'over' keeps it beyond."""
++    v = limit * rng.uniform(lo, hi) + rng.gauss(0, abs(limit) * sd)
++    return min(v, limit * 0.998) if side == "under" else max(v, limit * 1.005)
++
++
++def noisy_windows(rng, per_case=30):
++    """Windows close to a limit, with noise. Labels come from how each window is BUILT (NFR-1, NFR-2).
++    near_normal: every reading stays under the limit.  near_fault: every reading is over it by 1 to 6 percent.
++    brief: two to four readings over, the rest under (FR-6: never a fault).  swing: pump speed that swings (SRS A.4)."""
++    out = []
++    for mt, params in config.LIMITS.items():
++        for p, r in params.items():
++            top = r.get("warning") if r.get("warning") is not None else r.get("abnormal")
++            levels = [("warning", r["warning"]), ("critical", r["critical"])] if r.get("critical") is not None else \
++                     ([("abnormal", r["abnormal"])] if r.get("abnormal") is not None else [])
++            for _ in range(per_case):
++                if top is not None:                                                 # upper limit
++                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "near_normal",
++                                "values": [_clip_near(top, "under", rng, 0.93, 0.99, 0.015) for _ in range(config.WINDOW_S)]})
++                    k = rng.randrange(2, 5)
++                    vals = [_clip_near(top, "under", rng, 0.93, 0.99, 0.015) for _ in range(config.WINDOW_S)]
++                    for i in rng.sample(range(config.WINDOW_S), k):
++                        vals[i] = top * rng.uniform(1.02, 1.10)
++                    if r.get("critical") is None or True:
++                        vals = [min(v, r["critical"] * 0.97) if r.get("critical") is not None else v for v in vals]
++                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "brief", "values": vals})
++                    for name, lim in levels:
++                        hi = 1.06
++                        if name == "warning":
++                            hi = min(1.06, (r["critical"] * 0.97) / lim)
++                        out.append({"machine_type": mt, "parameter": p, "truth": name, "kind": "near_fault",
++                                    "values": [min(_clip_near(lim, "over", rng, 1.01, hi, 0.01), lim * hi) for _ in range(config.WINDOW_S)]})
++                else:                                                               # lower limit only
++                    low = r["abnormal_below"]
++                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "near_normal",
++                                "values": [max(low * rng.uniform(1.01, 1.07) + rng.gauss(0, low * 0.01), low * 1.002) for _ in range(config.WINDOW_S)]})
++                    out.append({"machine_type": mt, "parameter": p, "truth": "abnormal", "kind": "near_fault",
++                                "values": [min(low * rng.uniform(0.94, 0.99) + rng.gauss(0, low * 0.01), low * 0.998) for _ in range(config.WINDOW_S)]})
++                if r.get("fluctuation_cv") is not None:
++                    base = NORMAL[mt][p]
++                    out.append({"machine_type": mt, "parameter": p, "truth": "abnormal", "kind": "swing",
++                                "values": [base * (1.08 if i % 2 else 0.92) * rng.gauss(1, 0.005) for i in range(config.WINDOW_S)]})
++                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "noisy",
++                                "values": [rng.gauss(base, base * 0.03) for _ in range(config.WINDOW_S)]})
++    return out
++
++
+ def labelled_windows(rng, per_case=30):
+     """Windows of 10 values with the true answer. Includes lone spikes and half-way ramps, whose true answer is 'normal' (FR-6)."""
+     out = []
+@@ -105,11 +153,13 @@ def labelled_windows(rng, per_case=30):
+                 spike[rng.randrange(config.WINDOW_S)] = _band(mt, p, levels[-1], rng)
+                 out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "spike", "values": spike})
+                 k = rng.randrange(3, 8)
++                level = _band(mt, p, levels[0], rng)               # one level for the rest of the window, with ordinary noise (a ramp, not a swing)
+                 ramp = [rng.gauss(base, base * 0.01) for _ in range(k)] + \
+-                       [_band(mt, p, levels[0], rng) for _ in range(config.WINDOW_S - k)]
++                       [rng.gauss(level, abs(level) * 0.01) for _ in range(config.WINDOW_S - k)]
+                 out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "ramp", "values": ramp})
+                 for lv in levels:
+                     out.append({"machine_type": mt, "parameter": p, "truth": lv, "kind": "fault",
+                                 "values": [_band(mt, p, lv, rng) for _ in range(config.WINDOW_S)]})
++    out += noisy_windows(rng, per_case)
+     rng.shuffle(out)
+     return out
+diff --git a/system/backend/soak.py b/system/backend/soak.py
+new file mode 100644
+index 0000000..d09e841
+--- /dev/null
++++ b/system/backend/soak.py
+@@ -0,0 +1,82 @@
++"""Timed run for the demonstration: the real clock, the real engine, 5 minutes without stopping.
++Plays a fixed list of scenarios through the live feed (the same code the Demo page uses) and measures what happened.
++Run:  python soak.py 300 run1     (seconds, label)      Result goes to soak_<label>.json"""
++import json
++import sys
++import threading
++import time
++
++import clock
++import config
++from live import LiveFeed
++from storage import DualStore, LocalStore, OnlineStore
++from system import System
++
++SECONDS = int(sys.argv[1]) if len(sys.argv) > 1 else 300
++LABEL = sys.argv[2] if len(sys.argv) > 2 else "run"
++
++# second -> (action, machine, parameter)
++TIMELINE = {
++    5: ("spike", "motor-1", "temperature"),
++    20: ("warning", "motor-1", "temperature"),
++    60: ("clear", "motor-1", "temperature"),
++    70: ("fluctuate", "pump-1", "rpm"),
++    110: ("clear", "pump-1", "rpm"),
++    120: ("silent", "ups-1", "fan_rpm"),
++    135: ("clear", "ups-1", "fan_rpm"),
++    150: ("bad", "pump-1", "current"),
++    170: ("cut_link", None, None),
++    200: ("restore_link", None, None),
++    220: ("critical", "motor-2", "vibration"),
++    250: ("clear_all", None, None),
++    270: ("heavy_load", None, None),
++}
++
++clock.use_real()
++system = System(store=DualStore(LocalStore(":memory:", 512), OnlineStore(None, ":memory:")))
++for who in ("operator", "engineer", "administrator"):
++    system.connect(system.users[who])
++closes, emits, errors = [], [0], [0]
++feed = LiveFeed(system, emit_status=lambda w: closes.append(time.time()), emit_overview=lambda o: emits.__setitem__(0, emits[0] + 1))
++
++steps, step_ms, late = 0, [], 0
++started = time.time()
++log = []
++while steps < SECONDS:
++    tick = time.time()
++    sec = steps
++    if sec in TIMELINE:
++        a, m, p = TIMELINE[sec]
++        ok, msg = feed.inject(a, m, p)
++        log.append({"second": sec, "action": a, "machine": m, "parameter": p, "ok": ok, "message": msg})
++    try:
++        with feed.lock:
++            feed.step()
++    except Exception as e:           # noqa: BLE001
++        errors[0] += 1
++        log.append({"second": sec, "error": repr(e)})
++    steps += 1
++    took = time.time() - tick
++    step_ms.append(took * 1000)
++    if took > 1.0:
++        late += 1
++    time.sleep(max(0.0, 1.0 - took))
++wall = time.time() - started
++
++windows_gaps = sorted({round(b - a, 1) for a, b in zip(closes, closes[1:]) if b - a > 2})   # gaps between closes of different windows
++faults = list(system.faults.faults.values())
++res = {
++    "label": LABEL, "planned_seconds": SECONDS, "wall_seconds": round(wall, 1), "steps": steps, "steps_over_1s": late,
++    "errors": errors[0], "readings_received": system.engine.counts["received"], "invalid_readings": system.engine.counts["invalid"],
++    "windows_closed": system.engine.counts["windows"], "overview_updates": emits[0],
++    "step_ms_avg": round(sum(step_ms) / len(step_ms), 2), "step_ms_max": round(max(step_ms), 2),
++    "window_gap_seconds": windows_gaps,
++    "faults_raised": len(faults), "faults": [{"machine": f["machine_id"], "parameter": f["parameter"], "level": f["level"], "value": f.get("value"),
++                                            "limit": f.get("limit"), "reason": f.get("reason"), "alert_latency_s": f["alert_latency_s"], "delayed": f["delayed"]} for f in faults],
++    "max_alert_latency_s": max((f["alert_latency_s"] for f in faults), default=0),
++    "alerts_delayed": system.faults.alerts_delayed,
++    "stored_local": len(system.store.local.windows("motor-1")), "pending_online": len(system.store.pending_online),
++    "timeline": log,
++}
++json.dump(res, open(f"soak_{LABEL}.json", "w"), indent=1)
++print(json.dumps({k: v for k, v in res.items() if k not in ("timeline", "faults")}, indent=1))
+diff --git a/system/backend/system.py b/system/backend/system.py
+index 908ee52..24215fb 100644
+--- a/system/backend/system.py
++++ b/system/backend/system.py
+@@ -7,7 +7,7 @@ from admin import Admin
+ from auth import Accounts
+ from engine import Engine
+ from faults import FaultStore
+-from model import limit_in_force
++from model import fluctuation, is_fluctuating, limit_in_force, observed_value, rule_for, threshold_level
+ from seed import DEMO_MACHINES
+ from storage import DualStore, LocalStore, OnlineStore
+ 
+@@ -91,9 +91,14 @@ class System:
+             return
+         if self.alert_hold:
+             clock.advance(self.alert_hold)               # injection: hold the alert back
+-        value = max(window["readings"]) if window["readings"] else None
+-        self.faults.raise_fault(key[0], key[1], window["status"],
+-                                limit_in_force(window["machine_type"], key[1], window["status"], value), window["confirmed_at"])
++        mt, par, vals = window["machine_type"], key[1], window["readings"]
++        value = max(vals) if vals else None
++        limit = limit_in_force(mt, par, window["status"], value)
++        shown, reason = observed_value(mt, par, vals), None
++        if vals and is_fluctuating(mt, par, vals) and all(threshold_level(mt, par, v) == "normal" for v in vals):
++            limit, reason = rule_for(mt, par)["fluctuation_step"], "fluctuating"      # a spread fault: no reading crossed a limit
++            shown = round(fluctuation(mt, par, vals), 4)
++        self.faults.raise_fault(key[0], key[1], window["status"], limit, window["confirmed_at"], value=shown, reason=reason)
+ 
+     # ---- what the dashboard reads ----
+     def dashboard(self, machine_id):
+diff --git a/system/frontend/src/DemoPanel.jsx b/system/frontend/src/DemoPanel.jsx
+index cc92b47..5d39ae4 100644
+--- a/system/frontend/src/DemoPanel.jsx
++++ b/system/frontend/src/DemoPanel.jsx
+@@ -15,6 +15,7 @@ const LIVE = [
+   ['Sustained critical', [{ action: 'critical', machine_id: 'motor-1', parameter: 'temperature' }]],
+   ['Two faults at once', [{ action: 'warning', machine_id: 'motor-2', parameter: 'temperature' }, { action: 'warning', machine_id: 'motor-2', parameter: 'current' }]],
+   ['Sensor goes silent', [{ action: 'silent', machine_id: 'pump-1', parameter: 'rpm' }]],
++  ['Pump speed swings', [{ action: 'fluctuate', machine_id: 'pump-1', parameter: 'rpm' }]],
+   ['Bad reading', [{ action: 'bad', machine_id: 'pump-1', parameter: 'current' }]],
+   ['Maintenance', [{ action: 'maintenance', machine_id: 'motor-3', minutes: 1 }]],
+   ['Slow alert', [{ action: 'slow_alert_on' }, { action: 'warning', machine_id: 'motor-1', parameter: 'vibration' }]],
+@@ -24,8 +25,8 @@ const LIVE = [
+ 
+ export default function DemoPanel() {
+   const { data } = useOverview()
+-  const [machineId, setMachineId] = useState('')
+-  const [parameter, setParameter] = useState('')
++  const [chosenMachine, setMachineId] = useState('')
++  const [chosenParameter, setParameter] = useState('')
+   const [minutes, setMinutes] = useState(30)
+   const [delay, setDelay] = useState(5)
+   const [message, setMessage] = useState('')
+@@ -33,10 +34,9 @@ export default function DemoPanel() {
+   const poll = useRef(null)
+ 
+   const machines = data?.machines ?? []
++  const machineId = chosenMachine || machines[0]?.id || ''
+   const machine = machines.find((m) => m.id === machineId)
+-  useEffect(() => {
+-    if (!machineId && machines.length) { setMachineId(machines[0].id); setParameter(Object.keys(machines[0].parameters)[0]) }
+-  }, [machines, machineId])
++  const parameter = chosenParameter in (machine?.parameters ?? {}) ? chosenParameter : Object.keys(machine?.parameters ?? {})[0] ?? ''
+   useEffect(() => () => clearInterval(poll.current), [])
+ 
+   const send = async (step) => {
+@@ -45,7 +45,7 @@ export default function DemoPanel() {
+     return r
+   }
+   const play = async (steps) => { for (const step of steps) { const r = await send(step); if (!r.ok) break } }
+-  const Btn = ({ action, children }) => <button className="demo-btn" onClick={() => send({ action })}>{children}</button>
++  const btn = (action, label) => <button className="demo-btn" onClick={() => send({ action })}>{label}</button>
+ 
+   const runChecks = async () => {
+     const r = await post('/api/checks/run')
+@@ -78,14 +78,14 @@ export default function DemoPanel() {
+       <div className="card demo-card">
+         <div className="demo-row">
+           <span className="chip chip-dark">{data?.mode === 'remote' ? 'Remote range · Wi-Fi' : 'Near range · Bluetooth'}</span>
+-          <Btn action="mode_near">Near range (Bluetooth)</Btn>
+-          <Btn action="mode_remote">Remote range (Wi-Fi)</Btn>
++          {btn('mode_near', 'Near range (Bluetooth)')}
++          {btn('mode_remote', 'Remote range (Wi-Fi)')}
+           <span className="muted">Same equipment data in both modes.</span>
+         </div>
+         <div className="demo-row">
+           <span className="chip chip-dark">Link {data?.link === 'cut' ? `cut · ${data.pending} windows waiting` : 'up'}</span>
+-          <Btn action="cut_link">Cut connection</Btn>
+-          <Btn action="restore_link">Restore connection</Btn>
++          {btn('cut_link', 'Cut connection')}
++          {btn('restore_link', 'Restore connection')}
+         </div>
+       </div>
+ 
+@@ -95,9 +95,9 @@ export default function DemoPanel() {
+           {LIVE.map(([name, steps]) => <button key={name} className="demo-btn" onClick={() => play(steps)}>{name}</button>)}
+         </div>
+         <div className="demo-row">
+-          <Btn action="restore_link">Restore connection</Btn>
++          {btn('restore_link', 'Restore connection')}
+           <button className="demo-btn demo-btn-off" onClick={() => send({ action: 'remove_load' })}>Remove the extra machines</button>
+-          <Btn action="clear_all">Reset everything</Btn>
++          {btn('clear_all', 'Reset everything')}
+         </div>
+       </div>
+ 
+@@ -116,19 +116,19 @@ export default function DemoPanel() {
+           </label>
+         </div>
+         <div className="demo-row">
+-          <Btn action="warning">Warning value</Btn>
+-          <Btn action="critical">Critical value</Btn>
+-          <Btn action="spike">One spike</Btn>
+-          <Btn action="clear">Back to normal</Btn>
+-          <Btn action="bad">Bad reading (5 s)</Btn>
+-          <Btn action="silent">Sensor goes silent</Btn>
++          {btn('warning', 'Warning value')}
++          {btn('critical', 'Critical value')}
++          {btn('spike', 'One spike')}
++          {btn('clear', 'Back to normal')}
++          {btn('bad', 'Bad reading (5 s)')}
++          {btn('silent', 'Sensor goes silent')}
+         </div>
+         <div className="demo-row">
+           <label>Maintenance minutes <input type="number" min="0.1" step="0.1" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
+-          <Btn action="maintenance">Start maintenance</Btn>
+-          <Btn action="end_maintenance">End maintenance</Btn>
+-          <Btn action="slow_alert_on">Slow alerts on</Btn>
+-          <Btn action="slow_alert_off">Slow alerts off</Btn>
++          {btn('maintenance', 'Start maintenance')}
++          {btn('end_maintenance', 'End maintenance')}
++          {btn('slow_alert_on', 'Slow alerts on')}
++          {btn('slow_alert_off', 'Slow alerts off')}
+         </div>
+       </div>
+ 
+diff --git a/system/frontend/src/FaultPopup.jsx b/system/frontend/src/FaultPopup.jsx
+index 7f91ffd..5ffd325 100644
+--- a/system/frontend/src/FaultPopup.jsx
++++ b/system/frontend/src/FaultPopup.jsx
+@@ -2,10 +2,18 @@
+ // Acknowledging does not close the fault (FR-8b). The Administrator never gets one: the server sends none.
+ import { Link } from 'react-router-dom'
+ import Pill from './Pill.jsx'
+-import { PARAM_LABEL } from './status.js'
++import { PARAM_LABEL, UNITS } from './status.js'
+ 
+ export default function FaultPopup({ fault: f, machineType, onAcknowledge }) {
+   const label = PARAM_LABEL[machineType?.(f.machine_id)]?.[f.parameter] ?? f.parameter
++  const unit = UNITS[f.parameter] ?? ''
++  const num = (v) => (typeof v === 'number' ? +v.toFixed(2) : v)
++  const swing = f.reason === 'fluctuating'
++  const low = !swing && f.value != null && f.limit != null && f.value < f.limit
++  const what = swing ? `${label} is swinging up and down.` : `${label} is too ${low ? 'low' : 'high'}.`
++  const numbers = swing
++    ? `Readings change by ${(f.value * 100).toFixed(1)}% each second. Limit is ${(f.limit * 100).toFixed(0)}%.`
++    : [f.value != null && `${num(f.value)} ${unit} now.`, f.limit != null && `Limit is ${num(f.limit)} ${unit}.`].filter(Boolean).join(' ')
+   return (
+     <div className="fault-popup" role="alertdialog" aria-label={`${f.machine_name} fault`}>
+       <div className="top">
+@@ -13,8 +21,8 @@ export default function FaultPopup({ fault: f, machineType, onAcknowledge }) {
+         <span className="time">{new Date(f.raised_at * 1000).toLocaleTimeString()}</span>
+       </div>
+       <div className="machine">{f.machine_name}</div>
+-      <div className="what">{label} is outside its limit.</div>
+-      <div className="numbers muted">{f.limit != null && <>Limit is {f.limit}. </>}{f.delayed && 'This alert came late.'}</div>
++      <div className="what">{what}</div>
++      <div className="numbers muted">{numbers}{f.delayed && ' This alert came late.'}</div>
+       <div className="actions">
+         <button className="btn btn-primary" onClick={() => onAcknowledge(f.id)}>Acknowledge</button>
+         <Link to={`/machine/${f.machine_id}`} className="btn btn-quiet">Open {f.machine_name}</Link>
+diff --git a/system/frontend/src/InjectionTimer.jsx b/system/frontend/src/InjectionTimer.jsx
+index d9fc1e4..0cbff18 100644
+--- a/system/frontend/src/InjectionTimer.jsx
++++ b/system/frontend/src/InjectionTimer.jsx
+@@ -8,11 +8,11 @@ export default function InjectionTimer({ scheduled, serverTime }) {
+   const prev = useRef([])
+   const cancelled = useRef(new Set())
+   const [started, setStarted] = useState([])
+-  const [, tick] = useState(0)
++  const [now, setNow] = useState(() => Date.now())
+ 
+   useEffect(() => { if (serverTime) offset.current = serverTime - Date.now() / 1000 }, [serverTime])
+   useEffect(() => {
+-    const timer = setInterval(() => tick((x) => x + 1), 200)
++    const timer = setInterval(() => setNow(Date.now()), 200)
+     return () => clearInterval(timer)
+   }, [])
+   useEffect(() => {
+@@ -23,8 +23,8 @@ export default function InjectionTimer({ scheduled, serverTime }) {
+     if (gone.length) setStarted((s) => [...s, ...gone.map((i) => ({ id: i.id, label: i.label, until: Date.now() + 5000 }))])
+   }, [scheduled])
+ 
+-  const nowS = Date.now() / 1000 + offset.current
+-  const shown = started.filter((s) => s.until > Date.now())
++  const nowS = now / 1000 + offset.current
++  const shown = started.filter((s) => s.until > now)
+   if (!(scheduled?.length) && shown.length === 0) return null
+   return (
+     <div className="timer-corner">
+diff --git a/system/frontend/src/MachineDetail.jsx b/system/frontend/src/MachineDetail.jsx
+index 7bbdadf..4e8e344 100644
+--- a/system/frontend/src/MachineDetail.jsx
++++ b/system/frontend/src/MachineDetail.jsx
+@@ -14,8 +14,6 @@ const when = (t) => (t ? new Date(t * 1000).toLocaleString() : '')
+ 
+ function Graph({ machineId, parameter, label, unit }) {
+   const [range, setRange] = useState('day')
+-  const [limits, setLimits] = useState(null)
+-  useEffect(() => { get('/api/limits').then(setLimits) }, [])
+   const [points, setPoints] = useState([])
+   useEffect(() => {
+     let alive = true
+diff --git a/system/frontend/src/theme.css b/system/frontend/src/theme.css
+index 03b9e1b..ddedced 100644
+--- a/system/frontend/src/theme.css
++++ b/system/frontend/src/theme.css
+@@ -305,3 +305,47 @@ a { color: inherit; text-decoration: none; }
+ .card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-card); }
+ .tile-value strong { font-size: 24px; color: var(--text-head); }
+ .search input[aria-invalid="true"] { border-color: var(--red); }
++
++/* ---- older pages brought into the new look (Machines, Machine, Settings, Admin, Demo, Tracker, Sign in) ---- */
++.page > h1 { font-size: 30px; margin-bottom: 6px; }
++.page > h2, .page h2 { font-size: 20px; margin: 26px 0 12px; }
++.page > .muted:first-of-type { margin: 0 0 18px; }
++/* the old status badge now looks like the pill: a dot and an upper-case word */
++.badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border: 0; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-head); white-space: nowrap; }
++.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); flex: none; }
++.badge.normal { background: rgba(107, 142, 123, 0.22); color: var(--text-head); } .badge.normal::before { background: var(--teal); }
++.badge.warning, .badge.abnormal { background: rgba(184, 160, 106, 0.22); color: var(--text-head); } .badge.warning::before, .badge.abnormal::before { background: var(--warning); }
++.badge.critical { background: rgba(160, 107, 107, 0.2); color: var(--text-head); } .badge.critical::before { background: var(--red); }
++.badge.unknown { background: var(--secondary-dim); color: var(--text-head); }
++/* buttons */
++.demo-btn { min-height: 44px; padding: 0 18px; border-radius: var(--radius-sm); font-weight: 600; font-size: 15px; background: var(--primary); color: var(--bg-card); border: 1px solid transparent; }
++.demo-btn:hover { background: #38495f; }
++.demo-btn-off { background: transparent; color: var(--primary); border: 1px solid var(--border-light); font-weight: 400; }
++.demo-btn-off:hover { background: var(--primary-dim); }
++.demo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
++.linkbtn { min-height: 44px; display: inline-flex; align-items: center; }
++/* forms */
++select, input:not([type]), input[type="text"], input[type="password"], input[type="number"] { min-height: 40px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); background: #fff; }
++.demo-row label, .signin-card label, .demo-card label { font-size: 14px; color: var(--text-body); }
++.demo-row { gap: 12px; }
++.demo-card { padding: 18px 20px; }
++/* tables */
++.fault-table { font-size: 14px; }
++.fault-table th { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-body); font-weight: 700; padding: 12px 14px; border-top: 0; border-bottom: 1px solid var(--border-light); }
++.fault-table td { padding: 12px 14px; border-top: 1px solid var(--border-faint); }
++.fault-table tbody tr:hover { background: var(--primary-dim); }
++.fault-table a { color: var(--primary); font-weight: 600; }
++.table-wrap { padding: 4px 6px; }
++/* marks beside readings and in tables */
++.mark { padding: 3px 10px; border-radius: 999px; border: 0; font-size: 11px; letter-spacing: 0.06em; color: var(--text-head); }
++.mark-fault, .mark-overdue { background: rgba(160, 107, 107, 0.24); }
++.mark-invalid { background: rgba(184, 160, 106, 0.28); }
++.mark-maint { background: rgba(123, 107, 142, 0.2); }
++/* machine page tiles */
++.page .tiles:not(.summary-tiles) { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
++/* sign in: no shell, centred paper card */
++.signin { max-width: 440px; margin: 0 auto; padding: 72px 16px 0; }
++.signin h1 { text-align: center; color: var(--primary); margin-bottom: 14px; }
++.signin-card { padding: 24px; box-shadow: var(--shadow-pop); }
++.slot { border-radius: var(--radius-sm); }
++.bar { border-radius: 999px; }

@@ -90,6 +90,54 @@ def _band(machine_type, parameter, truth, rng):
     return rng.uniform(r["abnormal_below"] * 0.7, r["abnormal_below"] * 0.97)
 
 
+def _clip_near(limit, side, rng, lo, hi, sd):
+    """One reading near a limit with noise. side = 'under' keeps it on the safe side, 'over' keeps it beyond."""
+    v = limit * rng.uniform(lo, hi) + rng.gauss(0, abs(limit) * sd)
+    return min(v, limit * 0.998) if side == "under" else max(v, limit * 1.005)
+
+
+def noisy_windows(rng, per_case=30):
+    """Windows close to a limit, with noise. Labels come from how each window is BUILT (NFR-1, NFR-2).
+    near_normal: every reading stays under the limit.  near_fault: every reading is over it by 1 to 6 percent.
+    brief: two to four readings over, the rest under (FR-6: never a fault).  swing: pump speed that swings (SRS A.4)."""
+    out = []
+    for mt, params in config.LIMITS.items():
+        for p, r in params.items():
+            top = r.get("warning") if r.get("warning") is not None else r.get("abnormal")
+            levels = [("warning", r["warning"]), ("critical", r["critical"])] if r.get("critical") is not None else \
+                     ([("abnormal", r["abnormal"])] if r.get("abnormal") is not None else [])
+            for _ in range(per_case):
+                if top is not None:                                                 # upper limit
+                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "near_normal",
+                                "values": [_clip_near(top, "under", rng, 0.93, 0.99, 0.015) for _ in range(config.WINDOW_S)]})
+                    k = rng.randrange(2, 5)
+                    vals = [_clip_near(top, "under", rng, 0.93, 0.99, 0.015) for _ in range(config.WINDOW_S)]
+                    for i in rng.sample(range(config.WINDOW_S), k):
+                        vals[i] = top * rng.uniform(1.02, 1.10)
+                    if r.get("critical") is None or True:
+                        vals = [min(v, r["critical"] * 0.97) if r.get("critical") is not None else v for v in vals]
+                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "brief", "values": vals})
+                    for name, lim in levels:
+                        hi = 1.06
+                        if name == "warning":
+                            hi = min(1.06, (r["critical"] * 0.97) / lim)
+                        out.append({"machine_type": mt, "parameter": p, "truth": name, "kind": "near_fault",
+                                    "values": [min(_clip_near(lim, "over", rng, 1.01, hi, 0.01), lim * hi) for _ in range(config.WINDOW_S)]})
+                else:                                                               # lower limit only
+                    low = r["abnormal_below"]
+                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "near_normal",
+                                "values": [max(low * rng.uniform(1.01, 1.07) + rng.gauss(0, low * 0.01), low * 1.002) for _ in range(config.WINDOW_S)]})
+                    out.append({"machine_type": mt, "parameter": p, "truth": "abnormal", "kind": "near_fault",
+                                "values": [min(low * rng.uniform(0.94, 0.99) + rng.gauss(0, low * 0.01), low * 0.998) for _ in range(config.WINDOW_S)]})
+                if r.get("fluctuation_cv") is not None:
+                    base = NORMAL[mt][p]
+                    out.append({"machine_type": mt, "parameter": p, "truth": "abnormal", "kind": "swing",
+                                "values": [base * (1.08 if i % 2 else 0.92) * rng.gauss(1, 0.005) for i in range(config.WINDOW_S)]})
+                    out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "noisy",
+                                "values": [rng.gauss(base, base * 0.03) for _ in range(config.WINDOW_S)]})
+    return out
+
+
 def labelled_windows(rng, per_case=30):
     """Windows of 10 values with the true answer. Includes lone spikes and half-way ramps, whose true answer is 'normal' (FR-6)."""
     out = []
@@ -105,11 +153,13 @@ def labelled_windows(rng, per_case=30):
                 spike[rng.randrange(config.WINDOW_S)] = _band(mt, p, levels[-1], rng)
                 out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "spike", "values": spike})
                 k = rng.randrange(3, 8)
+                level = _band(mt, p, levels[0], rng)               # one level for the rest of the window, with ordinary noise (a ramp, not a swing)
                 ramp = [rng.gauss(base, base * 0.01) for _ in range(k)] + \
-                       [_band(mt, p, levels[0], rng) for _ in range(config.WINDOW_S - k)]
+                       [rng.gauss(level, abs(level) * 0.01) for _ in range(config.WINDOW_S - k)]
                 out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "ramp", "values": ramp})
                 for lv in levels:
                     out.append({"machine_type": mt, "parameter": p, "truth": lv, "kind": "fault",
                                 "values": [_band(mt, p, lv, rng) for _ in range(config.WINDOW_S)]})
+    out += noisy_windows(rng, per_case)
     rng.shuffle(out)
     return out

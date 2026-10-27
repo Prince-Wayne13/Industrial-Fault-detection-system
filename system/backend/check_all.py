@@ -97,7 +97,21 @@ def _():
     need(all(w["status"] == "normal" for w in s.store.local.windows("motor-1") if w["parameter"] == "temperature"), "status")
     s2, _f = fresh("Sustained warning")
     need(faults_of(s2)[0]["raised_at"] >= demo.T0 + 20, "fault appeared before the window ended")
-    return "spike: no fault. Sustained: fault only when the 10-second window ended"
+    s3 = demo.new_system()                                           # SRS A.4: pump speed that swings is abnormal, one low reading is not
+    base = 1450
+    s3.connect(s3.users["operator"])
+    src = demo.Source(s3.machine_list())
+    t0 = clock.now()
+    src.overrides[("pump-1", "rpm")] = lambda t: base * (1.08 if int(t) % 2 else 0.92) if t >= t0 + 5 else None
+    demo.run(s3, 31, src)
+    rpm = [f for f in faults_of(s3) if f["parameter"] == "rpm"]
+    need(len(rpm) == 1 and rpm[0]["level"] == "abnormal" and rpm[0]["reason"] == "fluctuating", faults_of(s3))
+    s4 = demo.new_system()
+    src4 = demo.Source(s4.machine_list())
+    src4.overrides[("pump-1", "rpm")] = lambda t: 900 if int(t) == int(t0) + 8 else None
+    demo.run(s4, 31, src4)
+    need([f for f in faults_of(s4) if f["parameter"] == "rpm"] == [], "one low speed reading became a fault")
+    return "spike: no fault. Sustained: fault only when the 10-second window ended. Pump speed swing: abnormal; one low reading: none"
 
 # ---------------- alerts ----------------
 @check("FR-7", "Pop-up for every connected Operator and Engineer")
@@ -110,8 +124,9 @@ def _():
 def _():
     s, _f = fresh("Sustained warning")
     f = s.popups_for(s.users["operator"])[0]
-    need(all(k in f for k in ("machine_id", "parameter", "level", "raised_at")), f)
-    return "all fields present (screen in Segment 3)"
+    need(all(k in f for k in ("machine_id", "parameter", "level", "raised_at", "limit", "value")), f)
+    need(f["value"] > f["limit"], f)                                   # the pop-up can say "140 now, limit 130"
+    return "all fields present, including the reading and the limit (screen in Segment 3)"
 
 @check("FR-7b", "Administrator gets no fault alerts")
 def _():

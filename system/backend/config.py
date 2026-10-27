@@ -55,8 +55,12 @@ LIMITS = {
     "pump": {
         "temperature": {"abnormal": 95},                         # [SRS A.4] bearing temperature
         "current":     {"abnormal": 13.8, "abnormal_below": 9.6},   # 115% of rated = overload [R5]; 80% of rated = underload / dry running [R3][R4]
-        "vibration":   {"abnormal": 5.0},                        # [SRS A.4] mm/s RMS
-        "rpm":         {"abnormal_below": 1305},                 # [SRS A.4] same 90% rule as the motor (0.9 x 1450) [R2]
+        # [SRS A.4] normal < 3.0, abnormal > 5.0. Between 3.0 and 5.0 there is no status: one abnormal level only (decision).
+        # 3.0 is the expected running level; 5.0 is the single limit. Cross-check: pump guidance puts alert levels near 5.5 mm/s for small pumps [R7].
+        "vibration":   {"abnormal": 5.0},
+        # [SRS A.4] "dropping or fluctuating". Dropping = below 90% of rated. Fluctuating = the median step between neighbouring readings is above 6% of the mean (normal running about 1.4%, the Noisy readings demo about 3%).
+        # Normal running spreads about 1%; 6% leaves room for noise. Team-selected, pending validation.
+        "rpm":         {"abnormal_below": 1305, "fluctuation_step": 0.06},
     },
     "ups": {
         "temperature": {"abnormal": 75},                         # [SRS A.3] internal temperature

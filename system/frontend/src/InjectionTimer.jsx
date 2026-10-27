@@ -8,11 +8,11 @@ export default function InjectionTimer({ scheduled, serverTime }) {
   const prev = useRef([])
   const cancelled = useRef(new Set())
   const [started, setStarted] = useState([])
-  const [, tick] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => { if (serverTime) offset.current = serverTime - Date.now() / 1000 }, [serverTime])
   useEffect(() => {
-    const timer = setInterval(() => tick((x) => x + 1), 200)
+    const timer = setInterval(() => setNow(Date.now()), 200)
     return () => clearInterval(timer)
   }, [])
   useEffect(() => {
@@ -23,8 +23,8 @@ export default function InjectionTimer({ scheduled, serverTime }) {
     if (gone.length) setStarted((s) => [...s, ...gone.map((i) => ({ id: i.id, label: i.label, until: Date.now() + 5000 }))])
   }, [scheduled])
 
-  const nowS = Date.now() / 1000 + offset.current
-  const shown = started.filter((s) => s.until > Date.now())
+  const nowS = now / 1000 + offset.current
+  const shown = started.filter((s) => s.until > now)
   if (!(scheduled?.length) && shown.length === 0) return null
   return (
     <div className="timer-corner">

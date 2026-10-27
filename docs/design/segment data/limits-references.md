@@ -61,8 +61,8 @@ Other numbers the engine uses:
 - Appendix A.1: replace "(per ISO 10816-3)" with "above 4.5 mm/s RMS", add "warning above 2.8 mm/s RMS". Say the group and support used (Group 2, rigid).
 - Appendix A.3 and A.4: add the pump current, pump RPM, motor RPM and UPS current numbers above. Keep them marked "team-selected, supported by [R2] to [R6]". They are still pending validation on real equipment.
 - Appendix C ("Values not backed by a cited source"): the UPS current number moves out of that list only in the sense that the 105% overload start is a manufacturer practice. The rated 5 A itself is still our assumption.
-- Pump vibration leaves a gap between 3.0 mm/s (normal below) and 5.0 mm/s (abnormal above). The code treats anything up to 5.0 as normal. Say so in A.4, or close the gap.
-- Pump RPM "dropping or fluctuating" (A.4): only "dropping below 90%" is built. Fluctuation needs a rule such as a spread across the window. Open item.
+- Pump vibration (decided 27 Oct 2026): keep one abnormal level at 5.0 mm/s. Between 3.0 and 5.0 mm/s there is no status. Write in A.4: "3.0 mm/s is the expected running level; 5.0 mm/s is the single limit; readings between them carry no status." Cross-check [R7]: pump guidance for centreline height up to 225 mm gives 3.0, 5.5 and 7.1 mm/s, so 3.0 as expected level and 5.0 as the alert sit inside the guidance.
+- Pump RPM "dropping or fluctuating" (A.4), built 27 Oct 2026: dropping = below 90% of rated (1305 rpm). Fluctuating = the typical step between neighbouring readings in the 10-second window (the median of the 9 steps) is above 6% of the mean. Normal running steps about 1.4%, the Noisy readings demo about 3%, the demo swing (plus and minus 8%) 16%. One spike or one ramp cannot trigger it, so FR-6 holds. The 6% is team-selected, pending validation. Add one sentence to A.4 and a row to the tracker.
 
 ## References
 
@@ -77,6 +77,7 @@ Read on 26 October 2026. Tags match the comments in `config.py`.
 | R4 | Littelfuse, 777 electronic overload relay, https://m.littelfuse.com/products/landing-pages/electrical/demos/777-demo-1.aspx | An undercurrent setting of 80% of full-load current is usually enough |
 | R5 | Industrial Monitor Direct, "Configuring Thermal Overload Relays for 3-Phase Motors", https://industrialmonitordirect.com/hu/blogs/knowledgebase/configuring-thermal-overload-relays-for-3-phase-motors-setting-calculation-and-application | NEC / NEMA: overload no more than 125% of full-load current (service factor 1.15), 115% otherwise; pumps 110 to 115% |
 | R6 | City of Winnipeg, Static UPS specification, https://legacy.winnipeg.ca/finance/findata/matmgt/documents/2011/253-2011/253-2011_NMS_263353_Static_Uninterruptible_Power_Supply.pdf ; Purdi CertaUPS C650 datasheet, https://store.purdi.com/ext/pdf/datasheet.php?id=106108 ; Schneider Electric Easy UPS 3-phase specifications, https://www.productinfo.schneider-electric.com/easyups3pmodular/990-91580-technical-specifications-easy-ups-3-phase-modular/English/ | UPS overload ratings start at 105% of rated load (105 to 125% for minutes, then 125 to 150% for a minute or less, then bypass) |
+| R7 | Europump, "Guidelines on Pump Vibration", first edition, July 2013, https://www.europump.net/files/Publications/Guides/Guidelines 0n Pump Vibration First edition Final July 2013.pdf (found by search; only the search extract was read, not the whole document) | Vibration limits for pumps with centreline height up to 225 mm, RMS velocity: 3.0, 5.5 and 7.1 mm/s. Used only as a cross-check of the SRS 3.0 and 5.0 |
 
 ### Honest limits of these references
 

@@ -49,6 +49,35 @@ def limit_in_force(machine_type, parameter, level, value=None):
     return r.get("abnormal_below")
 
 
+def fluctuation(machine_type, parameter, values):
+    """FR-4 / SRS A.4 'fluctuating'. The typical step from one reading to the next, as a share of the mean (median of the 9 steps).
+    A swing steps by a lot every second; one spike, one ramp or plain noise leave the median step small, so FR-6 still holds."""
+    if rule_for(machine_type, parameter).get("fluctuation_step") is None or len(values) < 4:
+        return None
+    mean = sum(values) / len(values)
+    if mean == 0:
+        return None
+    steps = sorted(abs(b - a) for a, b in zip(values, values[1:]))
+    n = len(steps)
+    med = steps[n // 2] if n % 2 else (steps[n // 2 - 1] + steps[n // 2]) / 2
+    return med / abs(mean)
+
+
+def is_fluctuating(machine_type, parameter, values):
+    cv = fluctuation(machine_type, parameter, values)
+    return cv is not None and cv > rule_for(machine_type, parameter)["fluctuation_step"]
+
+
+def observed_value(machine_type, parameter, values):
+    """The reading furthest past the limit, for the pop-up ('138 C now')."""
+    if not values:
+        return None
+    r = rule_for(machine_type, parameter)
+    if r.get("abnormal_below") is not None and min(values) < r["abnormal_below"] and not any(v > (r.get("abnormal") or r.get("warning") or float("inf")) for v in values):
+        return min(values)
+    return max(values)
+
+
 def trend_check(levels, fraction=None):
     """levels = the screening level of each clean reading in the 10-second window.
     The window gets the highest level that at least `fraction` of its readings reach. One reading alone never does. FR-6."""
@@ -94,6 +123,8 @@ def classify(machine_type, parameter, window_values):
     allowed = levels_for(machine_type, parameter)
     levels = [threshold_level(machine_type, parameter, v) for v in window_values]
     rule_level = trend_check(levels)
+    if rule_level == "normal" and is_fluctuating(machine_type, parameter, window_values) and "abnormal" in allowed:
+        return "abnormal"                      # a steady spread over the whole window counts, one wild reading does not (std needs all 10)
     if rule_level == "normal":
         return "normal"
     clf = _CLF if _CLF_TRIED else _train()

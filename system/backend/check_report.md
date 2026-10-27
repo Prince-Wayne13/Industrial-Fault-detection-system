@@ -8,9 +8,9 @@
 | FR-3a | PASS | One reading per second per parameter | 61 seconds gave 61 readings per parameter (60 stored, 1 in the open window) |
 | FR-4 | PASS | A sustained high reading is flagged | Motor 1 temperature flagged |
 | FR-5 | PASS | Warning, critical, and abnormal where only one level exists | motor temperature/current/vibration have 3 statuses; pump temperature, rpm, UPS and others have 2 |
-| FR-6 | PASS | One abnormal reading is never a fault | spike: no fault. Sustained: fault only when the 10-second window ended |
+| FR-6 | PASS | One abnormal reading is never a fault | spike: no fault. Sustained: fault only when the 10-second window ended. Pump speed swing: abnormal; one low reading: none |
 | FR-7 | PASS | Pop-up for every connected Operator and Engineer | both see it (screen in Segment 3) |
-| FR-7a | PASS | Pop-up carries machine, parameter, type, level, time | all fields present (screen in Segment 3) |
+| FR-7a | PASS | Pop-up carries machine, parameter, type, level, time | all fields present, including the reading and the limit (screen in Segment 3) |
 | FR-7b | PASS | Administrator gets no fault alerts | no pop-up, no bell list |
 | FR-7c | PASS | Nobody connected: fault stays open and is shown to the next person | shown when the Operator connects |
 | FR-8 | PASS | Each person acknowledges for themselves | Operator's pop-up goes, Engineer's stays |
@@ -49,8 +49,8 @@
 | FR-28d | PASS | 5 wrong passwords block the account for 15 minutes | Too many wrong passwords. The account is blocked for 15 minutes. |
 | FR-28e | SEGMENT 5 | HTTPS certificate |  |
 | FR-28f | PASS | Passwords stored salted and scrambled | bcrypt, different every time |
-| NFR-1 | PASS | At least 95% of critical temperature and current faults found | 80 of 80 = 100% |
-| NFR-2 | PASS | At least 85% of vibration faults found | 120 of 120 = 100% |
+| NFR-1 | PASS | At least 95% of critical temperature and current faults found | 160 of 160 = 100% |
+| NFR-2 | PASS | At least 85% of vibration faults found | 240 of 240 = 100% |
 | NFR-5 | SEGMENT 5 | uptime measured over the demo |  |
 | NFR-6 | PASS | At least 99% of readings stored, also during a cut | generated 589, local 589, online 589 |
 | NFR-7 | PASS | Noisy data: no corrupt reading acted on | noise at 3x raises no fault; bad readings never enter a window |
@@ -63,7 +63,7 @@
 | PR-002 | SEGMENT 2 | reading to screen within 2 seconds |  |
 | PR-003 | PASS | 10 machines at the same time | 10 machines, status every 10 s (screen timing in Segment 5) |
 | PR-004 | SEGMENT 5 | 5 viewers at once |  |
-| PR-005 | PASS | At least 40 readings per second | 183,912 readings per second processed |
+| PR-005 | PASS | At least 40 readings per second | 174,342 readings per second processed |
 | PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 45.3 MB needed for one day; the local file is set to 512 MB |
 | PR-007 | SEGMENT 5 | start-up within 60 seconds |  |
 

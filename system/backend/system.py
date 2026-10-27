@@ -7,7 +7,7 @@ from admin import Admin
 from auth import Accounts
 from engine import Engine
 from faults import FaultStore
-from model import limit_in_force
+from model import fluctuation, is_fluctuating, limit_in_force, observed_value, rule_for, threshold_level
 from seed import DEMO_MACHINES
 from storage import DualStore, LocalStore, OnlineStore
 
@@ -91,9 +91,14 @@ class System:
             return
         if self.alert_hold:
             clock.advance(self.alert_hold)               # injection: hold the alert back
-        value = max(window["readings"]) if window["readings"] else None
-        self.faults.raise_fault(key[0], key[1], window["status"],
-                                limit_in_force(window["machine_type"], key[1], window["status"], value), window["confirmed_at"])
+        mt, par, vals = window["machine_type"], key[1], window["readings"]
+        value = max(vals) if vals else None
+        limit = limit_in_force(mt, par, window["status"], value)
+        shown, reason = observed_value(mt, par, vals), None
+        if vals and is_fluctuating(mt, par, vals) and all(threshold_level(mt, par, v) == "normal" for v in vals):
+            limit, reason = rule_for(mt, par)["fluctuation_step"], "fluctuating"      # a spread fault: no reading crossed a limit
+            shown = round(fluctuation(mt, par, vals), 4)
+        self.faults.raise_fault(key[0], key[1], window["status"], limit, window["confirmed_at"], value=shown, reason=reason)
 
     # ---- what the dashboard reads ----
     def dashboard(self, machine_id):
