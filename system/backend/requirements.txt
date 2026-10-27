@@ -7,3 +7,4 @@ bcrypt
 numpy
 scikit-learn
 psycopg2-binary
+cryptography

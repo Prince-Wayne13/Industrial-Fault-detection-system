@@ -63,7 +63,7 @@
 | PR-002 | SEGMENT 2 | reading to screen within 2 seconds |  |
 | PR-003 | PASS | 10 machines at the same time | 10 machines, status every 10 s (screen timing in Segment 5) |
 | PR-004 | SEGMENT 5 | 5 viewers at once |  |
-| PR-005 | PASS | At least 40 readings per second | 177,098 readings per second processed |
+| PR-005 | PASS | At least 40 readings per second | 183,912 readings per second processed |
 | PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 45.3 MB needed for one day; the local file is set to 512 MB |
 | PR-007 | SEGMENT 5 | start-up within 60 seconds |  |
 

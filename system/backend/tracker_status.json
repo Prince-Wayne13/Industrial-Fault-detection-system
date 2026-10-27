@@ -1,0 +1,11 @@
+{
+  "FR-10": {"status": "built", "note": "History and report on the machine page (Segment 3)."},
+  "FR-11": {"status": "simulated", "note": "Near range (Bluetooth) and remote range (Wi-Fi) are selectable on the demo panel; both are simulated."},
+  "FR-12": {"status": "simulated", "note": "Cut and restore on the demo panel. The online database is a second local file unless DATABASE_URL is set."},
+  "FR-28e": {"status": "built", "note": "HTTPS when HTTPS=adhoc, or SSL_CERT and SSL_KEY, are set (see SETUP.md). Plain HTTP otherwise."},
+  "NFR-5": {"status": "simulated", "note": "Uptime is measured over the demo session, not a long run. See measured numbers."},
+  "NFR-8": {"status": "built", "note": "Every machine is on the Overview."},
+  "PR-002": {"status": "built", "note": "Server time per reading is measured below."},
+  "PR-004": {"status": "built", "note": "Viewer count and peak are measured below. Open 5 tabs."},
+  "PR-007": {"status": "built", "note": "Start-up time is measured below."}
+}

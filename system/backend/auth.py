@@ -142,8 +142,9 @@ class Accounts:
         self.sessions[session.token] = session
         return session, ""
 
-    def session_for(self, token):
-        """The live session, or None. None means the person must sign in (FR-28), also after the idle time ran out (FR-26)."""
+    def session_for(self, token, touch=True):
+        """The live session, or None. None means the person must sign in (FR-28), also after the idle time ran out (FR-26).
+        touch=False is for calls the screen makes by itself (live data); only a person's own action keeps the session alive."""
         session = self.sessions.get(token)
         if session is None:
             return None
@@ -151,7 +152,8 @@ class Accounts:
         if now - session.last_active > session.timeout_min * 60:
             del self.sessions[token]
             return None
-        session.last_active = now
+        if touch:
+            session.last_active = now
         return session
 
     def set_session_minutes(self, token, minutes):

@@ -1,0 +1,473 @@
+diff --git a/README-LIVE-WINDOW.md b/README-LIVE-WINDOW.md
+new file mode 100644
+index 0000000..fbbf2d7
+--- /dev/null
++++ b/README-LIVE-WINDOW.md
+@@ -0,0 +1,20 @@
++# Live window and injection countdown
++
++Apply `fault-detect-live-window.patch` on top of Segments 4 and 5. No new packages.
++
++## What you see
++- **Machine page, "Window and graph":** pick a parameter. "This 10-second window" shows one tile per second as the readings arrive,
++  each with its own level (Normal, Warning/Abnormal, Critical, as a word and a colour). Under it, "Last window" shows the ten readings
++  of the window that just closed and the status it got. A single high reading shows as one flagged tile while the window stays Normal.
++- **Demo page, "Start in":** choose Now, 3, 5, 7, 10 or 15 seconds. The injection does not start at once. A card in the bottom-right
++  corner of every signed-in screen counts down ("Starts in 5 s", 4, 3, ...), then shows "Started". Cancel removes it before it starts.
++  Reset, mode changes and Cancel are always immediate.
++
++## How the status is decided (for the examiners)
++1. Each reading is screened against the limits (FR-4).
++2. When the 10 seconds end, the trend check asks how much of the window was over a limit. Today the whole window must be (`TREND_FRACTION = 1.0` in `config.py`). One reading never flags a window (FR-6).
++3. Only a flagged window goes to the logistic regression classifier, which assigns warning or critical (DD-05). If scikit-learn is missing the rule level is used.
++
++## Changed
++`live.py` (window readings, last window, level of each reading, scheduled injections), `app.py` (delay and cancel, trend fraction on `/api/limits`),
++frontend: `LiveWindow.jsx` and `InjectionTimer.jsx` (new), `MachineDetail.jsx`, `DemoPanel.jsx`, `App.jsx`, `useLive.js`, `theme.css`.
+diff --git a/system/backend/app.py b/system/backend/app.py
+index 5e80f58..0481836 100644
+--- a/system/backend/app.py
++++ b/system/backend/app.py
+@@ -257,7 +257,8 @@ def report():
+ @authed()
+ def limits():
+     with feed.lock:
+-        return jsonify({"limits": config.LIMITS, "history": system.admin.limit_history()[::-1][:50]})
++        return jsonify({"limits": config.LIMITS, "history": system.admin.limit_history()[::-1][:50],
++                        "trend_fraction": config.TREND_FRACTION, "window_s": config.WINDOW_S})
+ 
+ 
+ @app.post("/api/limits")
+@@ -333,7 +334,12 @@ def admin_remove_machine(machine_id):
+ @authed(touch=True)
+ def demo():
+     body = request.get_json(silent=True) or {}
+-    ok, message = feed.inject(body.get("action"), body.get("machine_id"), body.get("parameter"), body.get("minutes"))
++    try:
++        delay = min(max(float(body.get("delay") or 0), 0.0), 120.0)
++    except (TypeError, ValueError):
++        delay = 0.0
++    ok, message = feed.inject(body.get("action"), body.get("machine_id"), body.get("parameter"), body.get("minutes"),
++                              delay=delay, schedule_id=body.get("schedule_id"))
+     return _result(ok, message)
+ 
+ 
+diff --git a/system/backend/live.py b/system/backend/live.py
+index 45b8911..a8620b1 100644
+--- a/system/backend/live.py
++++ b/system/backend/live.py
+@@ -13,10 +13,18 @@ import traceback
+ import clock
+ import config
+ from config import RANK
++from model import threshold_level
+ from seed import PARAMETERS, Source
+ 
+ BAD_VALUE = 99999      # outside every physical range, so the checker rejects it (FR-14)
+ BAD_SECONDS = 5        # how long a demo bad reading lasts
++PARAM_ACTIONS = {"warning", "critical", "spike", "clear", "bad", "silent"}
++NO_MACHINE = {"slow_alert_on", "slow_alert_off", "cut_link", "restore_link", "heavy_load", "remove_load"}
++IMMEDIATE = {"clear_all", "cancel", "mode_near", "mode_remote"}      # never delayed
++LABELS = {"warning": "Warning value", "critical": "Critical value", "spike": "One spike", "bad": "Bad reading", "silent": "Sensor goes silent",
++          "clear": "Back to normal", "maintenance": "Start maintenance", "end_maintenance": "End maintenance", "slow_alert_on": "Slow alerts on",
++          "slow_alert_off": "Slow alerts off", "cut_link": "Connection cut", "restore_link": "Connection restored",
++          "heavy_load": "Heavy load", "remove_load": "Remove the extra machines"}
+ UNKNOWN = {"value": None, "invalid": False, "sensor_fault": False, "status": "unknown"}
+ 
+ 
+@@ -39,6 +47,9 @@ class LiveFeed:
+         self.source = Source(system.machine_list())
+         self.bad = {}                    # (machine_id, parameter) -> time the bad readings stop
+         self.running = False
++        self.scheduled = []              # demo actions waiting for their start time: shown as a countdown on every screen
++        self.last_window = {}            # (machine_id, parameter) -> the last closed window: values, level of each reading, status
++        self._next_id = 1
+         self.mode = "near"               # FR-11: simulated near-range (Bluetooth) or remote-range (Wi-Fi) mode
+         self.started = clock.real()
+         self.ready_at = None             # PR-007: set when the first second of data has gone out
+@@ -53,14 +64,21 @@ class LiveFeed:
+ 
+         def live(reading):
+             send_live(reading)
+-            self._safe(self.emit_reading, reading)                       # stream 1, straight to the dashboard
++            level = None
++            mtype = engine.machines.get(reading.get("machine_id"))
++            if reading.get("valid") and mtype and isinstance(reading.get("value"), (int, float)):
++                level = threshold_level(mtype, reading["parameter"], reading["value"])
++            self._safe(self.emit_reading, {**reading, "level": level})   # stream 1, straight to the dashboard, with the level of this one reading
+             ms = (clock.real() - self._arrived) * 1000
+             self.latency["n"] += 1
+             self.latency["sum"] += ms
+             self.latency["max"] = max(self.latency["max"], ms)
+ 
+         def status(window):
+-            self._safe(self.emit_status, {k: window[k] for k in ("machine_id", "parameter", "status", "end_time")})
++            levels = [threshold_level(window["machine_type"], window["parameter"], v) for v in window["readings"]]
++            summary = {"values": window["readings"], "levels": levels, "status": window["status"], "start": window["start_time"]}
++            self.last_window[(window["machine_id"], window["parameter"])] = summary
++            self._safe(self.emit_status, {**{k: window[k] for k in ("machine_id", "parameter", "status", "end_time")}, **summary})
+             send_status(window)                                          # stream 2: status goes out first, then faults are raised
+ 
+         engine.send_live, engine.send_status = live, status
+@@ -75,6 +93,10 @@ class LiveFeed:
+     # ---- the loop ----
+     def step(self):
+         t = clock.now()
++        due = [i for i in self.scheduled if i["at"] <= t]
++        self.scheduled = [i for i in self.scheduled if i["at"] > t]
++        for i in due:
++            self._apply(i["action"], i["machine_id"], i["parameter"], i["minutes"], in_step=True)
+         self.source.machines = self.system.machine_list()
+         for r in self.source.readings_at(t):
+             if self.bad.get((r["machine_id"], r["parameter"]), 0) > t:
+@@ -111,21 +133,51 @@ class LiveFeed:
+             machines = []
+             for m in s.machine_list():
+                 dash = s.dashboard(m["id"])
+-                params = {p: dash.get(p) or dict(UNKNOWN) for p in PARAMETERS[m["type"]]}
++                params = {}
++                for p in PARAMETERS[m["type"]]:
++                    buf = s.engine.buffer.get((m["id"], p), [])
++                    params[p] = {**(dash.get(p) or UNKNOWN),
++                                 "window": {"start": s.engine.window_started, "length": config.WINDOW_S,
++                                            "readings": [[round(t, 3), v, threshold_level(m["type"], p, v)] for t, v in buf]},
++                                 "last": self.last_window.get((m["id"], p))}
+                 worst = max((v["status"] for v in params.values()), key=lambda x: RANK.get(x, -1))
+                 machines.append({**m, "status": worst, "maintenance": s.faults.in_maintenance(m["id"]),
+                                  "overdue": s.faults.overdue(m["id"]), "parameters": params})
+             return {"machines": machines, "alerts_delayed": s.faults.alerts_delayed, "time": clock.now(), "mode": self.mode,
+-                    "link": "up" if s.store.online.available else "cut", "pending": len(s.store.pending_online)}
++                    "link": "up" if s.store.online.available else "cut", "pending": len(s.store.pending_online),
++                    "scheduled": [{"id": i["id"], "label": i["label"], "at": i["at"]} for i in self.scheduled]}
+ 
+     def _person(self, role):
+         return next((u for u in self.system.accounts.users.values() if u.role == role), None)
+ 
+     # ---- demo control ----
+-    def inject(self, action, machine_id=None, parameter=None, minutes=None):
++    def inject(self, action, machine_id=None, parameter=None, minutes=None, delay=0, schedule_id=None):
++        """Start a demo action now, or after `delay` seconds. A delayed action shows as a countdown on every screen."""
++        with self.lock:
++            s = self.system
++            if action == "cancel":
++                before = len(self.scheduled)
++                self.scheduled = [i for i in self.scheduled if i["id"] != schedule_id]
++                return len(self.scheduled) < before, "Cancelled." if len(self.scheduled) < before else "Nothing to cancel."
++            if delay and delay > 0 and action not in IMMEDIATE:
++                machine = s.machines.get(machine_id)
++                if action not in NO_MACHINE and machine is None:
++                    return False, "Choose a machine."
++                if action in PARAM_ACTIONS and parameter not in PARAMETERS[machine["type"]]:
++                    return False, "Choose a parameter."
++                label = LABELS.get(action, action) + (f" · {machine['name']}" if machine and action not in NO_MACHINE else "") \
++                    + (f" {parameter}" if action in PARAM_ACTIONS else "")
++                self.scheduled.append({"id": self._next_id, "action": action, "machine_id": machine_id, "parameter": parameter,
++                                       "minutes": minutes, "at": clock.now() + delay, "label": label})
++                self._next_id += 1
++                return True, f"{label} starts in {int(delay)} seconds."
++            return self._apply(action, machine_id, parameter, minutes)
++
++    def _apply(self, action, machine_id=None, parameter=None, minutes=None, in_step=False):
+         with self.lock:
+             s = self.system
+             if action == "clear_all":
++                self.scheduled.clear()
+                 self.source.overrides.clear()
+                 self.source.silent.clear()
+                 self.bad.clear()
+@@ -180,7 +232,7 @@ class LiveFeed:
+                 self.source.overrides[key] = fault_value(machine["type"], parameter, action)
+                 return True, f"{machine['name']} {parameter} now reads a {action} value."
+             if action == "spike":                                 # one wrong-high second: must never become a fault (FR-6)
+-                t0 = int(clock.now()) + 1
++                t0 = int(clock.now()) + (0 if in_step else 1)
+                 value = fault_value(machine["type"], parameter, "critical")
+                 self.source.overrides[key] = lambda t, t0=t0, v=value: v if int(t) == t0 else None
+                 return True, f"{machine['name']} {parameter} has one spike."
+diff --git a/system/frontend/src/App.jsx b/system/frontend/src/App.jsx
+index dfdbb25..ca79038 100644
+--- a/system/frontend/src/App.jsx
++++ b/system/frontend/src/App.jsx
+@@ -9,6 +9,7 @@ import Admin from './Admin.jsx'
+ import DemoPanel from './DemoPanel.jsx'
+ import Tracker from './Tracker.jsx'
+ import FaultPopup from './FaultPopup.jsx'
++import InjectionTimer from './InjectionTimer.jsx'
+ import { UserProvider, useUser } from './user.jsx'
+ import { useFaults } from './useFaults.js'
+ import { useOverview } from './useLive.js'
+@@ -29,6 +30,7 @@ function Signed() {
+     <>
+       <TopBar bell={bell} storageAlerts={storage_alerts} machines={data?.machines ?? []} mode={data?.mode} link={data?.link} />
+       <FaultPopup popups={popups} machineType={machineType} />
++      <InjectionTimer scheduled={data?.scheduled} serverTime={data?.time} />
+       <Routes>
+         <Route path="/signin" element={<Navigate to="/" replace />} />
+         <Route path="/" element={<Overview />} />
+diff --git a/system/frontend/src/DemoPanel.jsx b/system/frontend/src/DemoPanel.jsx
+index a5a3067..cc92b47 100644
+--- a/system/frontend/src/DemoPanel.jsx
++++ b/system/frontend/src/DemoPanel.jsx
+@@ -27,6 +27,7 @@ export default function DemoPanel() {
+   const [machineId, setMachineId] = useState('')
+   const [parameter, setParameter] = useState('')
+   const [minutes, setMinutes] = useState(30)
++  const [delay, setDelay] = useState(5)
+   const [message, setMessage] = useState('')
+   const [checks, setChecks] = useState(null)
+   const poll = useRef(null)
+@@ -39,7 +40,7 @@ export default function DemoPanel() {
+   useEffect(() => () => clearInterval(poll.current), [])
+ 
+   const send = async (step) => {
+-    const r = await post('/api/demo', { machine_id: machineId, parameter, minutes: Number(minutes), ...step })
++    const r = await post('/api/demo', { machine_id: machineId, parameter, minutes: Number(minutes), delay: Number(delay), ...step })
+     setMessage(r.message)
+     return r
+   }
+@@ -61,6 +62,16 @@ export default function DemoPanel() {
+     <div className="page">
+       <h1>Demo control panel</h1>
+       <p className="muted">Changes what the simulated sensors send. Watch the <Link to="/">Overview</Link> react. Open a second tab and sign in as someone else to show two people at once.</p>
++      <div className="card demo-card">
++        <div className="demo-row">
++          <label>Start in
++            <select value={delay} onChange={(e) => setDelay(e.target.value)}>
++              {[[0, 'Now'], [3, '3 seconds'], [5, '5 seconds'], [7, '7 seconds'], [10, '10 seconds'], [15, '15 seconds']].map(([v, t]) => <option key={v} value={v}>{t}</option>)}
++            </select>
++          </label>
++          <span className="muted">A countdown shows in the corner of every screen, then the injection starts. Reset, mode changes and Cancel are always immediate.</span>
++        </div>
++      </div>
+       {message && <p className="notice notice-delayed" role="status">{message}</p>}
+ 
+       <h2>Connection</h2>
+diff --git a/system/frontend/src/InjectionTimer.jsx b/system/frontend/src/InjectionTimer.jsx
+new file mode 100644
+index 0000000..d9fc1e4
+--- /dev/null
++++ b/system/frontend/src/InjectionTimer.jsx
+@@ -0,0 +1,49 @@
++// Countdown in the corner for a demo injection that has not started yet. Requirements: FR-11, FR-12 (demo)
++// The server sends the start time with each snapshot. The count is worked out here against the server's clock.
++import { useEffect, useRef, useState } from 'react'
++import { post } from './api.js'
++
++export default function InjectionTimer({ scheduled, serverTime }) {
++  const offset = useRef(0)
++  const prev = useRef([])
++  const cancelled = useRef(new Set())
++  const [started, setStarted] = useState([])
++  const [, tick] = useState(0)
++
++  useEffect(() => { if (serverTime) offset.current = serverTime - Date.now() / 1000 }, [serverTime])
++  useEffect(() => {
++    const timer = setInterval(() => tick((x) => x + 1), 200)
++    return () => clearInterval(timer)
++  }, [])
++  useEffect(() => {
++    const list = scheduled ?? []
++    const ids = new Set(list.map((i) => i.id))
++    const gone = prev.current.filter((i) => !ids.has(i.id) && !cancelled.current.has(i.id))
++    prev.current = list
++    if (gone.length) setStarted((s) => [...s, ...gone.map((i) => ({ id: i.id, label: i.label, until: Date.now() + 5000 }))])
++  }, [scheduled])
++
++  const nowS = Date.now() / 1000 + offset.current
++  const shown = started.filter((s) => s.until > Date.now())
++  if (!(scheduled?.length) && shown.length === 0) return null
++  return (
++    <div className="timer-corner">
++      {(scheduled ?? []).map((i) => {
++        const left = Math.max(0, i.at - nowS)
++        return (
++          <div className="card timer-item" key={i.id}>
++            <div className="timer-count" aria-hidden="true">{Math.ceil(left)}</div>
++            <div className="timer-text">
++              <strong>{left > 0 ? `Starts in ${Math.ceil(left)} s` : 'Starting now'}</strong>
++              <span>{i.label}</span>
++            </div>
++            <button className="demo-btn demo-btn-off" onClick={() => { cancelled.current.add(i.id); post('/api/demo', { action: 'cancel', schedule_id: i.id }) }}>Cancel</button>
++          </div>
++        )
++      })}
++      {shown.map((s) => (
++        <div className="card timer-item timer-started" key={`s${s.id}`}><div className="timer-text"><strong>Started</strong><span>{s.label}</span></div></div>
++      ))}
++    </div>
++  )
++}
+diff --git a/system/frontend/src/LiveWindow.jsx b/system/frontend/src/LiveWindow.jsx
+new file mode 100644
+index 0000000..497f8c3
+--- /dev/null
++++ b/system/frontend/src/LiveWindow.jsx
+@@ -0,0 +1,69 @@
++// The live 10-second window of one parameter. Requirements: FR-3a, FR-4, FR-5, FR-6, FR-18
++// Every reading as it arrives, with its own level, so a spike is seen. The window's status is set when the 10 seconds end.
++import { STATUS_LABEL, formatValue } from './status.js'
++
++const SLOT = { normal: 'slot-normal', warning: 'slot-warning', abnormal: 'slot-warning', critical: 'slot-critical' }
++
++function limitText(rule) {
++  const parts = []
++  if (rule.warning != null) parts.push(`warning above ${rule.warning}`)
++  if (rule.critical != null) parts.push(`critical above ${rule.critical}`)
++  if (rule.abnormal != null) parts.push(`abnormal above ${rule.abnormal}`)
++  if (rule.abnormal_below != null) parts.push(`abnormal below ${rule.abnormal_below}`)
++  return parts.join(' · ')
++}
++
++function Slots({ items, total, parameter }) {
++  return (
++    <div className="slots">
++      {Array.from({ length: total }, (_, i) => {
++        const it = items[i]
++        return (
++          <div key={i} className={`slot ${it ? SLOT[it.level] ?? 'slot-normal' : 'slot-empty'}`}>
++            <span className="slot-n">{i + 1}</span>
++            <strong>{it ? formatValue(parameter, it.value) : '·'}</strong>
++            {it && it.level !== 'normal' && <span className="slot-flag">{STATUS_LABEL[it.level] ?? it.level}</span>}
++          </div>
++        )
++      })}
++    </div>
++  )
++}
++
++export default function LiveWindow({ machine, parameter, label, unit, rule, fraction }) {
++  const p = machine.parameters[parameter]
++  if (!p) return null
++  const length = p.window?.length ?? 10
++  const now = (p.window?.readings ?? []).map(([, value, level]) => ({ value, level }))
++  const last = p.last ? p.last.values.map((value, i) => ({ value, level: p.last.levels[i] })) : []
++  const over = now.filter((r) => r.level !== 'normal').length
++  const lastOver = last.filter((r) => r.level !== 'normal').length
++  const rule_text = fraction >= 1 ? 'Every reading in a window must be over a limit before the window is flagged.' : `At least ${Math.round(fraction * 100)}% of a window must be over a limit before it is flagged.`
++
++  return (
++    <div className="card">
++      <div className="card-head">
++        <h3>{label} {unit && <span className="unit">({unit})</span>} · this 10-second window</h3>
++        <span className="muted">{now.length} of {length} seconds</span>
++      </div>
++      <div className="bar" role="img" aria-label={`${now.length} of ${length} seconds`}><div className="bar-fill" style={{ width: `${(now.length / length) * 100}%` }} /></div>
++      <Slots items={now} total={length} parameter={parameter} />
++      <p className="muted">
++        {over > 0 ? `${over} of ${now.length} readings so far are over a limit. ` : 'No reading so far is over a limit. '}
++        The status is set when the 10 seconds end. {rule_text}
++      </p>
++
++      <div className="card-head top-gap">
++        <h3>Last window</h3>
++        {p.last && <span className={`badge ${p.last.status}`}>{STATUS_LABEL[p.last.status] ?? p.last.status}</span>}
++      </div>
++      {p.last ? (
++        <>
++          <Slots items={last} total={Math.max(length, last.length)} parameter={parameter} />
++          {lastOver > 0 && p.last.status === 'normal' && <p className="muted">{lastOver} reading{lastOver > 1 ? 's were' : ' was'} over a limit, but not enough of the window: the status stayed Normal.</p>}
++        </>
++      ) : <p className="muted">The first window ends within 10 seconds of the server starting.</p>}
++      {limitText(rule) && <p className="muted">Limits: {limitText(rule)}</p>}
++    </div>
++  )
++}
+diff --git a/system/frontend/src/MachineDetail.jsx b/system/frontend/src/MachineDetail.jsx
+index e9670cc..7bbdadf 100644
+--- a/system/frontend/src/MachineDetail.jsx
++++ b/system/frontend/src/MachineDetail.jsx
+@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
+ import { get, post, live, download } from './api.js'
+ import { useOverview } from './useLive.js'
+ import { useUser } from './user.jsx'
++import LiveWindow from './LiveWindow.jsx'
+ import { STATUS_LABEL, UNITS, PARAM_LABEL, formatValue } from './status.js'
+ 
+ const RANGES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']]
+@@ -13,6 +14,8 @@ const when = (t) => (t ? new Date(t * 1000).toLocaleString() : '')
+ 
+ function Graph({ machineId, parameter, label, unit }) {
+   const [range, setRange] = useState('day')
++  const [limits, setLimits] = useState(null)
++  useEffect(() => { get('/api/limits').then(setLimits) }, [])
+   const [points, setPoints] = useState([])
+   useEffect(() => {
+     let alive = true
+@@ -117,7 +120,7 @@ export default function MachineDetail() {
+         ))}
+       </div>
+ 
+-      <h2>Graph</h2>
++      <h2>Window and graph</h2>
+       <div className="demo-row">
+         <label>Parameter
+           <select value={parameter} onChange={(e) => setParameter(e.target.value)}>
+@@ -135,6 +138,10 @@ export default function MachineDetail() {
+           </>
+         )}
+       </div>
++      {parameter && limits?.limits && (
++        <LiveWindow machine={machine} parameter={parameter} label={labels[parameter]} unit={UNITS[parameter]}
++                    rule={limits.limits[machine.type]?.[parameter] ?? {}} fraction={limits.trend_fraction ?? 1} />
++      )}
+       {parameter && <Graph machineId={id} parameter={parameter} label={labels[parameter]} unit={UNITS[parameter]} />}
+ 
+       <h2>History and faults</h2>
+diff --git a/system/frontend/src/theme.css b/system/frontend/src/theme.css
+index 061bc81..22a64e8 100644
+--- a/system/frontend/src/theme.css
++++ b/system/frontend/src/theme.css
+@@ -129,3 +129,22 @@ h1, h2, h3 { color: var(--text-head); }
+ .tracker-left-out { background: var(--red-dim); color: #7a3f3f; border-color: var(--red); }
+ .tracker-not-set { background: var(--secondary-dim); color: var(--text-body); border-color: var(--border-light); }
+ .topbar input[aria-invalid="true"] { border-color: var(--red); }
++
++/* ---- live window and injection countdown ---- */
++.slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 6px; margin: 10px 0; }
++.slot { display: grid; gap: 2px; justify-items: center; padding: 6px 4px; border-radius: 8px; border: 1px solid var(--border-light); font-size: 14px; min-height: 64px; align-content: center; }
++.slot-n { font-size: 10px; color: var(--text-muted); }
++.slot strong { font-variant-numeric: tabular-nums; color: var(--text-head); }
++.slot-flag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
++.slot-empty { border-style: dashed; color: var(--text-muted); }
++.slot-normal { background: var(--teal-dim); border-color: var(--teal); }
++.slot-warning { background: var(--warning-dim); border-color: var(--warning); }
++.slot-warning .slot-flag { color: #6b5a2a; }
++.slot-critical { background: var(--red-dim); border-color: var(--red); }
++.slot-critical .slot-flag { color: #7a3f3f; }
++.timer-corner { position: fixed; right: 16px; bottom: 16px; z-index: 45; display: grid; gap: 8px; width: min(340px, 92vw); }
++.timer-item { display: flex; align-items: center; gap: 12px; border-left: 6px solid var(--gold); padding: 10px 12px; }
++.timer-count { font-size: 32px; font-weight: 700; min-width: 44px; text-align: center; color: var(--text-head); font-variant-numeric: tabular-nums; }
++.timer-text { display: grid; flex: 1; font-size: 13px; }
++.timer-text span { color: var(--text-muted); }
++.timer-started { border-left-color: var(--teal); }
+diff --git a/system/frontend/src/useLive.js b/system/frontend/src/useLive.js
+index 3cdcc89..08a783b 100644
+--- a/system/frontend/src/useLive.js
++++ b/system/frontend/src/useLive.js
+@@ -11,7 +11,15 @@ function patchReading(data, r) {
+       const p = m.parameters[r.parameter]
+       if (m.id !== r.machine_id || !p) return m
+       const value = typeof r.value === 'number' ? r.value : null
+-      return { ...m, parameters: { ...m.parameters, [r.parameter]: { ...p, value, invalid: !r.valid, sensor_fault: false } } }
++      let window = p.window
++      if (r.valid && value !== null) {
++        const length = window?.length ?? 10
++        let start = window?.start ?? null
++        let readings = window?.readings ?? []
++        if (start === null || r.time - start >= length) { start = r.time; readings = [] }   // the reading that ends a window starts the next one
++        window = { start, length, readings: [...readings, [r.time, value, r.level]] }
++      }
++      return { ...m, parameters: { ...m.parameters, [r.parameter]: { ...p, value, invalid: !r.valid, sensor_fault: false, window } } }
+     }),
+   }
+ }
+@@ -22,7 +30,8 @@ function patchStatus(data, w) {
+     machines: data.machines.map((m) => {
+       const p = m.parameters[w.parameter]
+       if (m.id !== w.machine_id || !p) return m
+-      const parameters = { ...m.parameters, [w.parameter]: { ...p, status: w.status } }
++      const last = { values: w.values, levels: w.levels, status: w.status, start: w.start }
++      const parameters = { ...m.parameters, [w.parameter]: { ...p, status: w.status, last } }
+       return { ...m, parameters, status: worst(parameters) }
+     }),
+   }

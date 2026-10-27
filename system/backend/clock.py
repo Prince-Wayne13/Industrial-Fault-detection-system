@@ -14,6 +14,11 @@ def now():
     return (_fixed if _fixed is not None else time.time()) + _offset
 
 
+def real():
+    """The computer clock, for measuring how long something took (start-up, uptime, reading time). Never moved by set_time or advance."""
+    return time.time()
+
+
 def set_time(t):
     global _fixed
     _fixed = float(t)

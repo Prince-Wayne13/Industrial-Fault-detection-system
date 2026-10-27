@@ -1,0 +1,2524 @@
+diff --git a/.gitignore b/.gitignore
+index e22f1d6..298238d 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -10,3 +10,7 @@ backend/.env
+ frontend/node_modules/
+ frontend/dist/
+ .obsidian/
++system/backend/*.db
++system/backend/__pycache__/
++system/frontend/node_modules/
++system/frontend/dist/
+diff --git a/README-SEGMENT-2.md b/README-SEGMENT-2.md
+new file mode 100644
+index 0000000..fc87e0b
+--- /dev/null
++++ b/README-SEGMENT-2.md
+@@ -0,0 +1,26 @@
++# Segment 2: live dashboard
++
++Unzip over the repo (Design branch). Then:
++
++    cd system/backend && python app.py          # server, port 5000
++    cd system/frontend && npm install && npm run dev
++
++Open the Vite address. The Overview shows every machine with live numbers. Open **Demo** in the top bar to inject
++a warning or critical value, a bad reading, a silent sensor, maintenance mode or slow alerts.
++
++## What changed
++- `backend/live.py` (new): real-time simulated sensors through the real engine. Readings go out at once (`reading`),
++  statuses go out when a window closes (`status`) and are saved by the engine, a snapshot goes out each second (`overview`).
++- `backend/app.py`: starts the feed; `/api/overview`, `/api/demo`, socket events. Uses real files `local_store.db` and `online_store.db`
++  (delete them to start clean).
++- `frontend`: `Overview`, `MachineCard`, `DemoPanel`, `useLive.js`, `status.js`, `TopBar` (Demo link), `theme.css`.
++
++## Decisions taken
++- Warning = abnormal for now. Both words exist; wording lives in `status.js` (open item O-10).
++- A card opens the machine page for every role, the Administrator too.
++- A resolved fault does not reopen; a return of the problem is a new fault.
++- No cap on machines in the code. The SRS gives only "at least 10" (PR-003). Flagged for review (O-11).
++- Dark theme later. Sign-in is Segment 4, so the demo endpoint has no login yet.
++
++## Not in this segment
++Fault pop-up, bell, machine page content (Segment 3). Sign-in and roles on screen (Segment 4).
+diff --git a/README-SEGMENT-3.md b/README-SEGMENT-3.md
+new file mode 100644
+index 0000000..ddac493
+--- /dev/null
++++ b/README-SEGMENT-3.md
+@@ -0,0 +1,19 @@
++# Segment 3: faults you can act on
++
++Unzip over the repo (Design branch). Run as in Segment 2 (`python app.py`, `npm run dev`).
++
++## Show
++Open the Demo page, make Motor 1 temperature a warning value, wait about 10 seconds. Use the "Act as" picker in the top bar
++to switch between Operator, Engineer and Administrator.
++
++- Operator and Engineer get the pop-up; the Administrator never does. Each acknowledges for themselves; the fault stays open.
++- Acknowledged faults appear in that person's bell. Only an Engineer resolves (on the machine page); the bell count then drops.
++- Machine page: live readings, graph (Day, Week, Month, Year), fault history, maintenance switch (Engineer), Generate report (Operator, Engineer; CSV).
++
++## Decisions taken
++- "Act as" stands in for sign-in until Segment 4. The API trusts the user name sent with each call. Not secure; for the demo only.
++- A pop-up is any open fault the person has not acknowledged, so a person who opens the app later still gets it (FR-7c).
++- A resolved fault does not reopen. If the problem is still there, the next window raises a new fault.
++- Week, Month and Year graphs show only the windows that remain, because normal readings go after 24 hours (FR-9b).
++- The report is a CSV: performance per parameter, the faults, and faults that recurred.
++- Administrator's bell shows the storage alert count only (FR-7b, FR-21a).
+diff --git a/README-SEGMENT-4-5.md b/README-SEGMENT-4-5.md
+new file mode 100644
+index 0000000..c2d0226
+--- /dev/null
++++ b/README-SEGMENT-4-5.md
+@@ -0,0 +1,54 @@
++# Segments 4 and 5: people, settings, demonstration and proof
++
++Unzip over the repo (Design branch). Then:
++
++    cd system/backend && pip install -r requirements.txt && python app.py
++    cd system/frontend && npm install && npm run dev
++
++Open the Vite address. Sign in with a demo account (Demo accounts on the sign-in page). Delete `system/backend/local_store.db`
++and `online_store.db` first if you want a clean start.
++
++HTTPS (FR-28e): start the server with `HTTPS=adhoc python app.py` (self-made certificate, the browser warns once), or set
++`SSL_CERT` and `SSL_KEY` to a real certificate. Start Vite with `BACKEND=https://127.0.0.1:5000 npm run dev`.
++
++## Segment 4: people and settings
++- Real sign-in replaces "Act as". The token is checked on every call, and the role is enforced on the server, not only on screen.
++- The live connection also needs a signed-in token.
++- Sign-out after the person's own idle time (1 to 5 minutes). Only the person's own activity keeps the session alive; live data does not.
++- Name side bar: full name, role, Settings, Sign out.
++- Settings: sign-out time, change own password, Engineer-only limits table with change history. The theme is light only (dark later).
++- Admin (Administrator only): storage bar with the alert level, users, machines, change log.
++- Machines page (Operator, Engineer): filter by type and status, open fault count.
++- Accounts are saved in the database, so they survive a restart.
++
++## Segment 5: demonstration and proof
++- Demo page: near range (Bluetooth) or remote range (Wi-Fi) mode, cut and restore the connection, 11 scenarios played live,
++  manual injection, "Run all checks" for the scenarios shown as results.
++- Tracker page: every requirement as built, simulated, left out or not set, with the last check result, and the measured numbers
++  (accuracy, alert time, reading time, machines, viewers, readings per second, storage, start-up time, uptime).
++- `tracker_status.json` holds the status notes that the check script cannot decide (FR-11, FR-12, NFR-5 simulated; others built).
++- Check script: 56 PASS, 0 FAIL. FR-25 failed once on the way (new files read the computer clock); fixed with `clock.real()`.
++
++## Decisions taken
++- Live scenarios: normal running, lone spike, sustained warning, sustained critical, two faults at once, sensor goes silent,
++  bad reading, maintenance, slow alert, connection cut, heavy load. Shown as results: storage fills up, storage fails, restart,
++  fault returns, limit change, nobody connected, noisy readings, labelled test set, login checks, old data.
++- Near and remote mode only change the label and the top bar chip. Both show the same data (the pass rule of FR-11).
++- Cutting the connection stops saving to the online database only. Collecting and showing carry on (FR-12). Restoring sends what waited.
++- Each browser tab is its own sign-in, so two people can be shown on one laptop.
++- Any signed-in person may use the Demo page. The 5-minute run is easiest from an Administrator tab.
++- The Administrator cannot reset passwords; each person changes their own.
++
++## Before the demo
++- Add noisy windows near the limits to the labelled set, or NFR-1 and NFR-2 stay at an easy 100%.
++- Time the 5-minute run twice without stopping.
++- Run "Run all checks" once on the demo laptop so the Tracker shows fresh results (about 100 seconds).
++- Open 5 tabs to show PR-004 (viewers on the Tracker page).
++
++## Known gaps
++- Lockout counters and sessions are in memory; a server restart signs everyone out.
++- The PostgreSQL branch is still not run against a server.
++- "Pump RPM fluctuating" (SRS A.4) is still not built. Pump vibration still has the 3.0 to 5.0 mm/s gap.
++- Uptime (NFR-5) is measured for the demo session only.
++- Screens were built and checked through the API and a build; no full click-through in a browser yet.
++- Open items O-10 (warning vs abnormal wording) and O-11 (machine count) are still open.
+diff --git a/STEP-LOG.md b/STEP-LOG.md
+new file mode 100644
+index 0000000..51e2e54
+--- /dev/null
++++ b/STEP-LOG.md
+@@ -0,0 +1,45 @@
++# Step log
++
++Last updated: 27 Oct 2026 (later). Branch: Design.
++
++## Done
++
++| Segment | What | Delivered | Proof |
++| --- | --- | --- | --- |
++| 1 Foundation | Engine, faults, storage, accounts, admin, 21 of 22 seeded scenarios, check script, limits references | `fault-detect-segment1.zip` | `check_all.py`: 56 PASS, 0 FAIL |
++| 2 Live dashboard | Real-time simulated sensors through the engine, live Overview, machine cards, Sensor fault / Invalid / Maintenance / Overdue marks, "Alerts delayed" notice, demo injection panel | `fault-detect-segment2.zip` | Run once: live numbers, critical status, Invalid mark and Sensor fault mark all showed |
++| 3 Faults you can act on | Fault pop-up, bell list, acknowledge per person, Engineer-only resolve, maintenance switch, machine page with graph (Day/Week/Month/Year) and fault history, CSV report, "Act as" picker | `fault-detect-segment3.zip` | Run once over the API: pop-up, Administrator gets none, Operator refused resolve, Engineer resolved, report made, Administrator refused report |
++| 4 People and settings | Real sign-in with roles enforced on the server, idle sign-out, name side bar, Settings (sign-out time, password, Engineer limits), Admin (storage, users, machines, change log), Machines page, accounts in the database | `fault-detect-segment4-5.zip` | Run over the API: wrong password refused, Engineer refused Admin, limit change refused then saved, user added, live connection refused without a token |
++| 5 Demonstration and proof | Demo page (near/remote, cut/restore, 11 live scenarios, run all checks), requirements tracker, measured numbers, HTTPS | `fault-detect-segment4-5.zip` | Check script: 56 PASS, 0 FAIL. HTTPS served. Heavy load ran 11 machines at 37 readings per second. Link cut kept 41 windows and sent them on restore |
++
++## Decisions taken so far
++- Warning = abnormal for now; wording lives in `frontend/src/status.js` (open item O-10).
++- No machine cap in the code; SRS only says at least 10 (O-11).
++- A resolved fault never reopens; a new fault is raised if the problem persists.
++- Administrator can open a machine page from a card.
++- Dark theme later.
++- Real sign-in replaced "Act as" (Segment 4).
++
++## Known gaps
++- NFR-1 and NFR-2 show 100%: the labelled test set is built from the same limits. Add noisy windows near the limits before the demo.
++- PostgreSQL branch is written but not run against a server.
++- Sessions and lockout counters are in memory; accounts are in the database.
++- "Pump RPM fluctuating" (SRS A.4) is not built, only "below 90%".
++- Pump vibration has a gap between 3.0 and 5.0 mm/s; the code treats it as normal.
++- Week, Month and Year graphs only show windows that remain after the 24-hour clean-up (FR-9b).
++- Any signed-in person can use the Demo page (demo only).
++- The Segment 2 and 3 screens were built and run once; no full browser walk-through yet.
++
++## Next
++
++**Before the demo (yours to decide or do)**
++- Noisy windows near the limits in the labelled set (NFR-1, NFR-2)
++- Two timed 5-minute runs without stopping
++- Click through every screen once in a browser, in the three roles
++- Settle open items O-10 (warning vs abnormal) and O-11 (machine count)
++
++**Still open in the code**
++- Pump RPM fluctuating (SRS A.4); pump vibration gap between 3.0 and 5.0 mm/s
++- PostgreSQL run against a real server
++- Dark theme
++- Sessions and lockout counters survive a restart
+diff --git a/docs/open-items.md b/docs/open-items.md
+index 99d378a..2a8a5d0 100644
+--- a/docs/open-items.md
++++ b/docs/open-items.md
+@@ -8,5 +8,7 @@ Everything still waiting for a decision. When an item is settled, record it in `
+ | O-5 | Is the status model the same as the logistic regression classifier? Does threshold screening still run per reading? | DD-05, DD-06, FR-4, FR-5 | | | |
+ | O-7 | What is the main store, and how do the main store and local copy stay in step? | DD-04, DD-10 | | | |
+ | O-9 | Does acknowledging leave the fault open until it is resolved? | FR-8, FR-17 | Yes. | | |
++| O-10 | "Warning" and "abnormal" are the same first level. Use one word everywhere? | FR-5, srs-changes | Kept as is. Dashboard words live in `frontend/src/status.js`, so the change is one edit. | | |
++| O-11 | The SRS gives no most number of machines, only at least 10 (PR-003). Is that enough? | PR-003, FR-24 | No cap in the code. Review the SRS wording. | | |
+ 
+ The Owner and Date columns are empty on purpose. The examiners criticised open items with no owner or date.
+diff --git a/system/backend/app.py b/system/backend/app.py
+index 28f0b01..5e80f58 100644
+--- a/system/backend/app.py
++++ b/system/backend/app.py
+@@ -1,24 +1,390 @@
+-"""The Flask server. Run it with:  python app.py"""
+-from flask import Flask, jsonify
++"""The Flask server. Run it with:  python app.py   (from system/backend)
++
++Segment 2: the engine runs on simulated sensors in real time. Every reading goes straight to the screens over the live
++connection ('reading'), every status goes out the moment its window closes ('status'), and a full snapshot goes out each
++second ('overview'). Statuses and faults are saved to both stores by the engine itself.
++Segment 3: faults, acknowledge, resolve, maintenance, history, report.
++Segment 4: sign-in with a token, roles enforced here (not only on screen), settings, limits, admin.
++Segment 5: demo control, requirements tracker, measured numbers, HTTPS."""
++import base64
++import os
++
++import clock
++
++_BOOT = clock.real()                                      # PR-007: start-up time is measured from here
++from functools import wraps
++
++from flask import Flask, Response, g, jsonify, request
+ from flask_cors import CORS
+-from flask_socketio import SocketIO
+-from seed import DEMO_MACHINES, PARAMETERS
++from flask_socketio import SocketIO, emit
++
++import config
++import proof
++import reports
++from auth import User, can
++from live import LiveFeed
++from seed import PARAMETERS
++from storage import DualStore, LocalStore, OnlineStore
++from system import DEMO_USERS, System
+ 
+ app = Flask(__name__)
+ CORS(app)
+ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+ 
++clock.use_real()
++system = System(store=DualStore(LocalStore(), OnlineStore()), restarted=True)     # FR-21: carries on with the saved settings and faults
++feed = LiveFeed(system,
++                emit_reading=lambda r: socketio.emit("reading", r),
++                emit_status=lambda w: socketio.emit("status", w),
++                emit_overview=lambda o: socketio.emit("overview", o))
++feed.started = _BOOT
++viewers = set()
++peak = {"viewers": 0}
++
++_persist = system.faults.persist                         # tell every screen when a fault is raised, acknowledged or resolved
++
++
++def _persist_and_tell(fault):
++    _persist(fault)
++    socketio.emit("faults_changed")
++
++
++system.faults.persist = _persist_and_tell
++
++
++# ---- accounts live in the database (the local store's settings), so they survive a restart ----
++def save_accounts():
++    system.store.local.put_setting("users", [
++        {"username": u.username, "full_name": u.full_name, "role": u.role, "session_min": u.session_min,
++         "pw_hash": base64.b64encode(u.pw_hash).decode()} for u in system.accounts.users.values()])
++
++
++def load_accounts():
++    rows = system.store.local.get_setting("users")
++    if rows:
++        system.accounts.users.clear()
++        for r in rows:
++            system.accounts.users[r["username"]] = User(r["username"], r["full_name"], r["role"], base64.b64decode(r["pw_hash"]), r["session_min"])
++        system.users.clear()
++        for key, (uname, _, _) in DEMO_USERS.items():
++            if uname in system.accounts.users:
++                system.users[key] = system.accounts.users[uname]
++    else:
++        save_accounts()
++
++
++load_accounts()
++
++
++# ---- who is calling ----
++def _token():
++    h = request.headers.get("Authorization", "")
++    return h[7:] if h.startswith("Bearer ") else ""
++
++
++def authed(action=None, touch=False):
++    """FR-28: sign in first. FR-27: the role is checked here. touch=True means this call is a person's own action, so it keeps
++    the session alive (FR-26); calls the screen makes by itself do not."""
++    def deco(fn):
++        @wraps(fn)
++        def wrapper(*a, **k):
++            with feed.lock:
++                session = system.accounts.session_for(_token(), touch)
++                user = system.accounts.users.get(session.username) if session else None
++            if user is None:
++                return jsonify({"ok": False, "message": "Sign in first."}), 401
++            if action and not can(user.role, action):
++                return jsonify({"ok": False, "message": "Your role cannot do that."}), 403
++            g.user = user
++            return fn(*a, **k)
++        return wrapper
++    return deco
++
++
++def _fault(f):
++    return {**f, "machine_name": system.machines.get(f["machine_id"], {}).get("name", f["machine_id"])}
++
++
++def _me(user):
++    return {"username": user.username, "full_name": user.full_name, "role": user.role, "session_min": user.session_min}
++
++
++def _result(ok, message="", **extra):
++    return jsonify({"ok": ok, "message": message, **extra}), (200 if ok else 400)
++
+ 
+ @app.get("/api/health")
+ def health():
+     return jsonify({"ok": True})
+ 
+ 
++# ---- sign in (FR-26, FR-28 to FR-28d) ----
++@app.post("/api/signin")
++def signin():
++    body = request.get_json(silent=True) or {}
++    with feed.lock:
++        session, message = system.accounts.sign_in(str(body.get("username", "")), str(body.get("password", "")))
++        if session is None:
++            return jsonify({"ok": False, "message": message}), 401
++        return jsonify({"ok": True, "token": session.token, "user": _me(system.accounts.users[session.username])})
++
++
++@app.post("/api/signout")
++@authed()
++def signout():
++    with feed.lock:
++        system.accounts.sign_out(_token())
++    return jsonify({"ok": True})
++
++
++@app.get("/api/me")
++@authed()
++def me():
++    return jsonify(_me(g.user))
++
++
++@app.post("/api/me/ping")
++@authed(touch=True)
++def ping():
++    return jsonify({"ok": True})
++
++
++@app.post("/api/me/password")
++@authed(touch=True)
++def change_password():
++    body = request.get_json(silent=True) or {}
++    with feed.lock:
++        ok, message = system.accounts.change_own_password(g.user, str(body.get("old", "")), str(body.get("new", "")))
++        if ok:
++            save_accounts()
++    return _result(ok, message)
++
++
++@app.post("/api/me/session")
++@authed(touch=True)
++def session_minutes():
++    body = request.get_json(silent=True) or {}
++    with feed.lock:
++        ok, message = system.accounts.set_session_minutes(_token(), body.get("minutes"))
++        if ok:
++            save_accounts()
++    return _result(ok, message)
++
++
++# ---- machines and live data ----
+ @app.get("/api/machines")
++@authed()
+ def machines():
+-    return jsonify([{**m, "parameters": PARAMETERS[m["type"]]} for m in DEMO_MACHINES])
++    with feed.lock:
++        return jsonify([{**m, "parameters": PARAMETERS[m["type"]]} for m in system.machine_list()])
++
++
++@app.get("/api/overview")
++@authed()
++def overview():
++    return jsonify(feed.snapshot())
++
++
++# ---- faults ----
++@app.get("/api/faults")
++@authed()
++def faults():
++    """For one person: the pop-ups (open, not acknowledged by them) and the bell list (open, acknowledged by them). FR-7, FR-8b."""
++    with feed.lock:
++        user = g.user
++        return jsonify({"popups": [_fault(f) for f in system.faults.popups_for(user)],
++                        "bell": [_fault(f) for f in system.faults.bell_for(user)],
++                        "storage_alerts": len(system.store.admin_alerts) if user.role == "administrator" else 0})
++
++
++@app.get("/api/faults/history")
++@authed()
++def fault_history():
++    """FR-10: everyone can view fault history."""
++    with feed.lock:
++        return jsonify([_fault(f) for f in sorted(system.faults.history(request.args.get("machine_id")), key=lambda f: -f["raised_at"])])
++
++
++@app.post("/api/faults/<int:fault_id>/acknowledge")
++@authed(touch=True)
++def acknowledge(fault_id):
++    with feed.lock:
++        ok, message = system.faults.acknowledge(fault_id, g.user)
++    return _result(ok, message)
++
++
++@app.post("/api/faults/<int:fault_id>/resolve")
++@authed(touch=True)
++def resolve(fault_id):
++    with feed.lock:
++        ok, message = system.faults.resolve(fault_id, g.user)
++    return _result(ok, message)
++
++
++@app.post("/api/machines/<machine_id>/maintenance")
++@authed(touch=True)
++def maintenance(machine_id):
++    body = request.get_json(silent=True) or {}
++    with feed.lock:
++        if machine_id not in system.machines:
++            return _result(False, "Unknown machine.")
++        if body.get("on"):
++            ok, message = system.faults.set_maintenance(machine_id, body.get("minutes"), g.user)
++        else:
++            ok, message = system.faults.end_maintenance(machine_id, g.user)
++    return _result(ok, message)
++
++
++@app.get("/api/machines/<machine_id>/history")
++@authed()
++def machine_history(machine_id):
++    span = reports.RANGES.get(request.args.get("range", "day"), 86400)
++    with feed.lock:
++        return jsonify(reports.history(system, machine_id, request.args.get("parameter"), span))
++
++
++@app.get("/api/report")
++@authed("report", touch=True)
++def report():
++    """FR-10: Operators and Engineers make reports."""
++    with feed.lock:
++        text = reports.report(system, request.args.get("machine_id") or None, reports.RANGES.get(request.args.get("range", "day"), 86400))
++    return Response(text, mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=fault-report.csv"})
++
++
++# ---- limits (FR-23, FR-23a, FR-23b) ----
++@app.get("/api/limits")
++@authed()
++def limits():
++    with feed.lock:
++        return jsonify({"limits": config.LIMITS, "history": system.admin.limit_history()[::-1][:50]})
++
++
++@app.post("/api/limits")
++@authed("change_limits", touch=True)
++def change_limit():
++    body = request.get_json(silent=True) or {}
++    with feed.lock:
++        ok, message = system.admin.change_limit(g.user, body.get("machine_type"), body.get("parameter"), **(body.get("limits") or {}))
++    return _result(ok, message)
++
++
++# ---- admin (FR-21a, FR-22, FR-27) ----
++@app.get("/api/admin")
++@authed("manage_users")
++def admin_view():
++    with feed.lock:
++        st = system.store
++        return jsonify({
++            "users": [{"username": u.username, "full_name": u.full_name, "role": u.role} for u in system.accounts.users.values()],
++            "machines": system.machine_list(),
++            "storage": {"used": round(st.local.used_fraction(), 4), "cap_mb": config.LOCAL_STORAGE_CAP_MB, "alert_at": config.STORAGE_ALERT_AT,
++                        "online_available": st.online.available, "online_simulated": st.online.simulated, "pending": len(st.pending_online),
++                        "temp_buffer": len(st.temp_buffer), "alerts": len(st.admin_alerts), "events": st.events[-15:][::-1]},
++            "change_log": system.admin.change_log[::-1][:100]})
++
++
++@app.post("/api/admin/users")
++@authed("manage_users", touch=True)
++def admin_add_user():
++    body = request.get_json(silent=True) or {}
++    with feed.lock:
++        user, message = system.admin.add_user(g.user, str(body.get("username", "")).strip(), str(body.get("full_name", "")).strip(),
++                                               body.get("role"), str(body.get("password", "")))
++        if user:
++            save_accounts()
++    return _result(user is not None, message)
++
++
++@app.delete("/api/admin/users/<username>")
++@authed("manage_users", touch=True)
++def admin_remove_user(username):
++    with feed.lock:
++        if username == g.user.username:
++            return _result(False, "You cannot remove your own account.")
++        ok, message = system.admin.remove_user(g.user, username)
++        if ok:
++            save_accounts()
++    return _result(ok, message)
++
++
++@app.post("/api/admin/machines")
++@authed("manage_machines", touch=True)
++def admin_add_machine():
++    body = request.get_json(silent=True) or {}
++    machine_id = str(body.get("id", "")).strip()
++    if not machine_id or " " in machine_id:
++        return _result(False, "Give the machine an id without spaces.")
++    with feed.lock:
++        ok, message = system.admin.register_machine(g.user, machine_id, str(body.get("name") or machine_id).strip(), body.get("type"))
++    return _result(ok, message)
++
++
++@app.delete("/api/admin/machines/<machine_id>")
++@authed("manage_machines", touch=True)
++def admin_remove_machine(machine_id):
++    with feed.lock:
++        ok, message = system.admin.remove_machine(g.user, machine_id)
++    return _result(ok, message)
++
++
++# ---- demo control (Segment 5). Any signed-in person may use it, so the presenter can work from any tab. ----
++@app.post("/api/demo")
++@authed(touch=True)
++def demo():
++    body = request.get_json(silent=True) or {}
++    ok, message = feed.inject(body.get("action"), body.get("machine_id"), body.get("parameter"), body.get("minutes"))
++    return _result(ok, message)
++
++
++# ---- proof (Segment 5) ----
++@app.get("/api/requirements")
++@authed()
++def requirements():
++    return jsonify(proof.requirements())
++
++
++@app.post("/api/checks/run")
++@authed(touch=True)
++def run_checks():
++    return _result(proof.start_checks(), "Checks started." )
++
++
++@app.get("/api/checks/status")
++@authed()
++def checks_status():
++    return jsonify(proof.checks_status())
++
++
++@app.get("/api/metrics")
++@authed()
++def metrics():
++    with feed.lock:
++        return jsonify(proof.metrics(feed, len(viewers), peak["viewers"]))
++
++
++# ---- the live connection: a signed-in token is needed (FR-28) ----
++@socketio.on("connect")
++def on_connect(auth=None):
++    with feed.lock:
++        session = system.accounts.session_for((auth or {}).get("token", ""), touch=False)
++    if session is None:
++        return False
++    viewers.add(request.sid)
++    peak["viewers"] = max(peak["viewers"], len(viewers))
++    emit("overview", feed.snapshot())
++
++
++@socketio.on("disconnect")
++def on_disconnect(*args):
++    viewers.discard(request.sid)
+ 
+ 
+ if __name__ == "__main__":
+-    # FR-28e: for https, give the server a certificate (see SETUP.md, "Secure connection").
+-    socketio.run(app, host="127.0.0.1", port=5000, allow_unsafe_werkzeug=True)
++    socketio.start_background_task(feed.run)
++    options = {}
++    if os.getenv("SSL_CERT") and os.getenv("SSL_KEY"):         # FR-28e: a real certificate
++        options["ssl_context"] = (os.environ["SSL_CERT"], os.environ["SSL_KEY"])
++    elif os.getenv("HTTPS") == "adhoc":                        # FR-28e: a self-made certificate, for the demo
++        options["ssl_context"] = "adhoc"
++    socketio.run(app, host="127.0.0.1", port=5000, allow_unsafe_werkzeug=True, **options)
+diff --git a/system/backend/auth.py b/system/backend/auth.py
+index a87c960..018e13c 100644
+--- a/system/backend/auth.py
++++ b/system/backend/auth.py
+@@ -142,8 +142,9 @@ class Accounts:
+         self.sessions[session.token] = session
+         return session, ""
+ 
+-    def session_for(self, token):
+-        """The live session, or None. None means the person must sign in (FR-28), also after the idle time ran out (FR-26)."""
++    def session_for(self, token, touch=True):
++        """The live session, or None. None means the person must sign in (FR-28), also after the idle time ran out (FR-26).
++        touch=False is for calls the screen makes by itself (live data); only a person's own action keeps the session alive."""
+         session = self.sessions.get(token)
+         if session is None:
+             return None
+@@ -151,7 +152,8 @@ class Accounts:
+         if now - session.last_active > session.timeout_min * 60:
+             del self.sessions[token]
+             return None
+-        session.last_active = now
++        if touch:
++            session.last_active = now
+         return session
+ 
+     def set_session_minutes(self, token, minutes):
+diff --git a/system/backend/check_report.md b/system/backend/check_report.md
+index a814145..dab05da 100644
+--- a/system/backend/check_report.md
++++ b/system/backend/check_report.md
+@@ -63,7 +63,7 @@
+ | PR-002 | SEGMENT 2 | reading to screen within 2 seconds |  |
+ | PR-003 | PASS | 10 machines at the same time | 10 machines, status every 10 s (screen timing in Segment 5) |
+ | PR-004 | SEGMENT 5 | 5 viewers at once |  |
+-| PR-005 | PASS | At least 40 readings per second | 177,098 readings per second processed |
++| PR-005 | PASS | At least 40 readings per second | 183,912 readings per second processed |
+ | PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 45.3 MB needed for one day; the local file is set to 512 MB |
+ | PR-007 | SEGMENT 5 | start-up within 60 seconds |  |
+ 
+diff --git a/system/backend/clock.py b/system/backend/clock.py
+index d9a79b0..666c38f 100644
+--- a/system/backend/clock.py
++++ b/system/backend/clock.py
+@@ -14,6 +14,11 @@ def now():
+     return (_fixed if _fixed is not None else time.time()) + _offset
+ 
+ 
++def real():
++    """The computer clock, for measuring how long something took (start-up, uptime, reading time). Never moved by set_time or advance."""
++    return time.time()
++
++
+ def set_time(t):
+     global _fixed
+     _fixed = float(t)
+diff --git a/system/backend/live.py b/system/backend/live.py
+new file mode 100644
+index 0000000..45b8911
+--- /dev/null
++++ b/system/backend/live.py
+@@ -0,0 +1,198 @@
++"""The live feed for the dashboard. Segment 2. FR-3a one reading per second, FR-13, FR-14, FR-18, FR-19, PR-001b, PR-002.
++
++Plays the simulated sensors in real time through the real engine (System.ingest). Two things go out to the screens:
++  stream 1  every reading, the moment it arrives (emit_reading)
++  stream 2  every status, the moment a 10-second window closes (emit_status); the engine saves it to both stores
++plus one full snapshot per second (emit_overview) that carries the marks: Sensor fault, Invalid, Maintenance, Overdue, Alerts delayed.
++
++inject() is the demo control (the Demo page calls it). It changes what the simulated sensors send; nothing else."""
++import threading
++import time
++import traceback
++
++import clock
++import config
++from config import RANK
++from seed import PARAMETERS, Source
++
++BAD_VALUE = 99999      # outside every physical range, so the checker rejects it (FR-14)
++BAD_SECONDS = 5        # how long a demo bad reading lasts
++UNKNOWN = {"value": None, "invalid": False, "sensor_fault": False, "status": "unknown"}
++
++
++def fault_value(machine_type, parameter, level):
++    """A value that sits in the given level for this parameter, taken from the limits in force."""
++    r = config.LIMITS[machine_type][parameter]
++    if r.get("critical") is not None:
++        return round(r["critical"] * 1.07, 2) if level == "critical" else round((r["warning"] + r["critical"]) / 2, 2)
++    if r.get("abnormal") is not None:
++        return round(r["abnormal"] * 1.1, 2)
++    if r.get("abnormal_below") is not None:
++        return round(r["abnormal_below"] * 0.8, 2)
++    return None
++
++
++class LiveFeed:
++    def __init__(self, system, emit_reading=None, emit_status=None, emit_overview=None):
++        self.system = system
++        self.lock = threading.RLock()
++        self.source = Source(system.machine_list())
++        self.bad = {}                    # (machine_id, parameter) -> time the bad readings stop
++        self.running = False
++        self.mode = "near"               # FR-11: simulated near-range (Bluetooth) or remote-range (Wi-Fi) mode
++        self.started = clock.real()
++        self.ready_at = None             # PR-007: set when the first second of data has gone out
++        self.latency = {"n": 0, "sum": 0.0, "max": 0.0}   # PR-002: a reading's time inside the server, in milliseconds
++        self._arrived = clock.real()
++        self._cleaned = clock.real()      # FR-9b: the 24-hour clean-up runs once an hour
++        self.emit_reading = emit_reading or (lambda r: None)
++        self.emit_status = emit_status or (lambda w: None)
++        self.emit_overview = emit_overview or (lambda o: None)
++        engine = system.engine
++        send_live, send_status = engine.send_live, engine.send_status
++
++        def live(reading):
++            send_live(reading)
++            self._safe(self.emit_reading, reading)                       # stream 1, straight to the dashboard
++            ms = (clock.real() - self._arrived) * 1000
++            self.latency["n"] += 1
++            self.latency["sum"] += ms
++            self.latency["max"] = max(self.latency["max"], ms)
++
++        def status(window):
++            self._safe(self.emit_status, {k: window[k] for k in ("machine_id", "parameter", "status", "end_time")})
++            send_status(window)                                          # stream 2: status goes out first, then faults are raised
++
++        engine.send_live, engine.send_status = live, status
++
++    @staticmethod
++    def _safe(fn, arg):
++        try:
++            fn(arg)
++        except Exception:                # a screen that cannot be reached must never stop the engine (NFR-7)
++            traceback.print_exc()
++
++    # ---- the loop ----
++    def step(self):
++        t = clock.now()
++        self.source.machines = self.system.machine_list()
++        for r in self.source.readings_at(t):
++            if self.bad.get((r["machine_id"], r["parameter"]), 0) > t:
++                r["value"] = BAD_VALUE
++            self._arrived = clock.real()
++            self.system.ingest(r)
++        self.bad = {k: until for k, until in self.bad.items() if until > t}
++        self.system.engine.check_silence(t)
++        self._safe(self.emit_overview, self.snapshot())
++        if self.ready_at is None:
++            self.ready_at = clock.real()
++        if clock.real() - self._cleaned > 3600:
++            self._cleaned = clock.real()
++            self.system.store.cleanup()
++
++    def run(self):
++        self.running = True
++        while self.running:
++            started = clock.real()
++            try:
++                with self.lock:
++                    self.step()
++            except Exception:
++                traceback.print_exc()
++            time.sleep(max(0.0, 1.0 - (clock.real() - started)))
++
++    def stop(self):
++        self.running = False
++
++    # ---- what the dashboard reads ----
++    def snapshot(self):
++        with self.lock:
++            s = self.system
++            machines = []
++            for m in s.machine_list():
++                dash = s.dashboard(m["id"])
++                params = {p: dash.get(p) or dict(UNKNOWN) for p in PARAMETERS[m["type"]]}
++                worst = max((v["status"] for v in params.values()), key=lambda x: RANK.get(x, -1))
++                machines.append({**m, "status": worst, "maintenance": s.faults.in_maintenance(m["id"]),
++                                 "overdue": s.faults.overdue(m["id"]), "parameters": params})
++            return {"machines": machines, "alerts_delayed": s.faults.alerts_delayed, "time": clock.now(), "mode": self.mode,
++                    "link": "up" if s.store.online.available else "cut", "pending": len(s.store.pending_online)}
++
++    def _person(self, role):
++        return next((u for u in self.system.accounts.users.values() if u.role == role), None)
++
++    # ---- demo control ----
++    def inject(self, action, machine_id=None, parameter=None, minutes=None):
++        with self.lock:
++            s = self.system
++            if action == "clear_all":
++                self.source.overrides.clear()
++                self.source.silent.clear()
++                self.bad.clear()
++                s.alert_hold = 0.0
++                engineer = self._person("engineer")
++                for mid in list(s.faults.maintenance):
++                    s.faults.end_maintenance(mid, engineer)
++                if not s.store.online.available:
++                    s.store.restore_online()
++                return True, "Everything back to normal running."
++            if action in ("mode_near", "mode_remote"):
++                self.mode = "near" if action == "mode_near" else "remote"
++                return True, "Near range (Bluetooth) mode." if self.mode == "near" else "Remote range (Wi-Fi) mode."
++            if action == "cut_link":
++                s.store.online.set_available(False)               # FR-12: collecting and showing carry on; saving to the online database waits
++                return True, "Connection to the online database cut. Data is kept here."
++            if action == "restore_link":
++                sent = s.store.restore_online()
++                return True, f"Connection restored. {sent} saved windows sent."
++            if action == "heavy_load":                            # PR-003: 10 or more machines at once
++                admin = self._person("administrator")
++                if admin is None:
++                    return False, "No Administrator account to register machines."
++                kinds = ["motor", "pump", "ups"]
++                for i in range(1, 7):
++                    mid = f"load-{i}"
++                    if mid not in s.machines:
++                        s.admin.register_machine(admin, mid, f"{kinds[i % 3].title()} L{i}", kinds[i % 3])
++                return True, f"{len(s.machines)} machines registered."
++            if action == "remove_load":
++                admin = self._person("administrator")
++                for mid in [m for m in s.machines if m.startswith("load-")]:
++                    s.admin.remove_machine(admin, mid)
++                return True, f"{len(s.machines)} machines registered."
++            if action in ("slow_alert_on", "slow_alert_off"):
++                s.alert_hold = 3.0 if action == "slow_alert_on" else 0.0
++                return True, "Alerts will come late." if s.alert_hold else "Alerts are on time again."
++            machine = s.machines.get(machine_id)
++            if machine is None:
++                return False, "Choose a machine."
++            if action == "maintenance":
++                ok, msg = s.faults.set_maintenance(machine_id, minutes if minutes else 30, self._person("engineer"))
++                return ok, msg or f"{machine['name']} is in maintenance mode."
++            if action == "end_maintenance":
++                s.faults.end_maintenance(machine_id, self._person("engineer"))
++                return True, f"{machine['name']} is out of maintenance mode."
++            if parameter not in PARAMETERS[machine["type"]]:
++                return False, "Choose a parameter."
++            key = (machine_id, parameter)
++            if action in ("warning", "critical"):
++                self.source.silent.discard(key)
++                self.source.overrides[key] = fault_value(machine["type"], parameter, action)
++                return True, f"{machine['name']} {parameter} now reads a {action} value."
++            if action == "spike":                                 # one wrong-high second: must never become a fault (FR-6)
++                t0 = int(clock.now()) + 1
++                value = fault_value(machine["type"], parameter, "critical")
++                self.source.overrides[key] = lambda t, t0=t0, v=value: v if int(t) == t0 else None
++                return True, f"{machine['name']} {parameter} has one spike."
++            if action == "clear":
++                self.source.overrides.pop(key, None)
++                self.source.silent.discard(key)
++                self.bad.pop(key, None)
++                return True, f"{machine['name']} {parameter} is back to normal."
++            if action == "bad":
++                self.bad[key] = clock.now() + BAD_SECONDS
++                return True, f"{machine['name']} {parameter} sends a wrong reading for {BAD_SECONDS} seconds."
++            if action == "silent":
++                self.source.silent.add(key)
++                return True, f"{machine['name']} {parameter} sends nothing."
++            return False, "Unknown action."
+diff --git a/system/backend/proof.py b/system/backend/proof.py
+new file mode 100644
+index 0000000..259efec
+--- /dev/null
++++ b/system/backend/proof.py
+@@ -0,0 +1,128 @@
++"""Proof for the demonstration. Segment 5.
++The requirements tracker (every requirement: built, simulated, left-out or not-set), the check script runner, and the measured
++numbers: NFR-1, NFR-2 accuracy, NFR-5 uptime, PR-001/PR-001a alert time, PR-002 reading time, PR-003 machines, PR-004 viewers,
++PR-005 readings per second, PR-006 storage, PR-007 start-up time."""
++import json
++import pathlib
++import re
++import subprocess
++import sys
++import threading
++import time
++
++import clock
++import config
++import model
++
++HERE = pathlib.Path(__file__).parent
++REQ_DIR = HERE.parents[1] / "docs" / "design" / "requirements"
++OVERRIDES = HERE / "tracker_status.json"
++REPORT = HERE / "check_report.md"
++_ROW = re.compile(r"^\| (\S+) \| (PASS|FAIL|SEGMENT \d+) \| (.*?) \| (.*) \|$")
++
++
++def _results():
++    out = {}
++    if REPORT.exists():
++        for line in REPORT.read_text(encoding="utf-8").splitlines():
++            m = _ROW.match(line)
++            if m:
++                out[m.group(1)] = {"result": m.group(2), "title": m.group(3), "detail": m.group(4)}
++    return out
++
++
++def _sort_key(item):
++    m = re.match(r"([A-Z]+)-(\d+)(.*)", item["id"])
++    return ({"FR": 0, "NFR": 1, "PR": 2}.get(m.group(1), 3), int(m.group(2)), m.group(3)) if m else (9, 0, item["id"])
++
++
++def requirements():
++    results = _results()
++    overrides = json.loads(OVERRIDES.read_text(encoding="utf-8")) if OVERRIDES.exists() else {}
++    out = []
++    for path in REQ_DIR.glob("*.md"):
++        if path.stem.startswith("UC-"):
++            continue
++        text = path.read_text(encoding="utf-8")
++        meta, body = {}, text
++        m = re.match(r"---\n(.*?)\n---\n(.*)", text, re.S)
++        if m:
++            for line in m.group(1).splitlines():
++                if ":" in line:
++                    k, v = line.split(":", 1)
++                    meta[k.strip()] = v.strip()
++            body = m.group(2)
++        paras = [p.strip() for p in body.split("\n\n") if p.strip() and not p.strip().startswith("#")]
++        res = results.get(path.stem, {})
++        ov = overrides.get(path.stem, {})
++        set_status = meta.get("status") if meta.get("status") not in (None, "not-set") else None
++        status = ov.get("status") or set_status or ("built" if res.get("result") == "PASS" else "not-set")
++        out.append({"id": path.stem, "statement": paras[0] if paras else "", "status": status, "result": res.get("result", ""),
++                    "checked": res.get("title", ""), "note": ov.get("note") or res.get("detail", "")})
++    return sorted(out, key=_sort_key)
++
++
++# ---- the check script, run in its own process so it cannot touch the live clock ----
++_check = {"running": False, "started": None, "finished": None, "returncode": None, "output": ""}
++
++
++def start_checks():
++    if _check["running"]:
++        return False
++
++    def work():
++        _check.update(running=True, started=clock.real(), finished=None, returncode=None, output="")
++        try:
++            r = subprocess.run([sys.executable, "check_all.py"], cwd=HERE, capture_output=True, text=True, timeout=900)
++            _check.update(returncode=r.returncode, output=(r.stdout + r.stderr)[-4000:])
++        except Exception as e:
++            _check.update(returncode=-1, output=str(e))
++        _check.update(running=False, finished=clock.real())
++
++    _check["running"] = True
++    threading.Thread(target=work, daemon=True).start()
++    return True
++
++
++def checks_status():
++    return dict(_check)
++
++
++# ---- measured numbers ----
++_accuracy = {"state": "idle", "value": None}
++
++
++def _compute_accuracy():
++    _accuracy["state"] = "running"
++    try:
++        _accuracy["value"] = {k: {"right": r, "of": n, "percent": round(100 * r / n, 1) if n else None}
++                              for k, (r, n) in model.evaluate().items()}
++        _accuracy["state"] = "done"
++    except Exception as e:
++        _accuracy.update(state="failed", value=str(e))
++
++
++def metrics(feed, viewers, peak):
++    """Call with feed.lock held."""
++    if _accuracy["state"] == "idle":
++        threading.Thread(target=_compute_accuracy, daemon=True).start()
++    s = feed.system
++    now = clock.real()
++    up = now - feed.started
++    counts = s.engine.counts
++    lat = [f["alert_latency_s"] for f in s.faults.faults.values()]
++    n = feed.latency["n"]
++    return {
++        "uptime_s": round(up, 1),
++        "startup_s": round(feed.ready_at - feed.started, 2) if feed.ready_at else None,
++        "viewers": viewers, "peak_viewers": peak,
++        "machines": len(s.machines),
++        "readings_received": counts["received"], "readings_invalid": counts["invalid"],
++        "readings_per_s": round(counts["received"] / up, 1) if up else 0,
++        "reading_ms_avg": round(feed.latency["sum"] / n, 2) if n else None, "reading_ms_max": round(feed.latency["max"], 2),
++        "status_window_s": config.WINDOW_S, "windows": counts["windows"],
++        "alerts": len(lat), "alert_s_avg": round(sum(lat) / len(lat), 3) if lat else None, "alert_s_max": max(lat) if lat else None,
++        "alerts_delayed": sum(1 for f in s.faults.faults.values() if f["delayed"]),
++        "storage_used": round(s.store.local.used_fraction(), 5), "storage_cap_mb": config.LOCAL_STORAGE_CAP_MB,
++        "accuracy": _accuracy,
++    }
+diff --git a/system/backend/reports.py b/system/backend/reports.py
+index c24d251..fdf65c2 100644
+--- a/system/backend/reports.py
++++ b/system/backend/reports.py
+@@ -1,7 +1,76 @@
+-"""History and reports. Step 8.
++"""History and reports. Segment 3.
+ FR-9 call up faults and readings, FR-10 everyone views fault history; Operators and Engineers make reports
+-for a day, week, month or year (full readings only where kept, FR-9b)."""
++for a day, week, month or year (full readings only where kept, FR-9b: normal readings go after 24 hours,
++so a long graph is built from the windows that remain)."""
++import csv
++import json
++import io
++from datetime import datetime, timezone
+ 
++import clock
++from config import RANK
+ 
+-def report(machine_id, period):
+-    raise NotImplementedError("step 8")
++RANGES = {"day": 86400, "week": 7 * 86400, "month": 30 * 86400, "year": 365 * 86400}
++
++
++def _iso(t):
++    return datetime.fromtimestamp(t, tz=timezone.utc).isoformat(timespec="seconds") if t else ""
++
++
++def history(system, machine_id, parameter, span_s, points=200):
++    """Graph data: one point per time bucket, with the mean, the highest value and the worst status. Windows whose
++    readings were cleaned up (FR-9b) still count for the status but have no number."""
++    since = clock.now() - span_s
++    size = span_s / points
++    rows = system.store.local.con.execute(
++        "SELECT start_time, status, readings FROM windows WHERE machine_id=? AND parameter=? AND start_time>=? ORDER BY start_time",
++        (machine_id, parameter, since)).fetchall()
++    buckets = {}
++    for start, status, readings in rows:
++        b = buckets.setdefault(int((start - since) / size), {"t": start, "means": [], "max": None, "status": "normal"})
++        values = json.loads(readings)
++        if values:
++            b["means"].append(sum(values) / len(values))
++            b["max"] = max(values) if b["max"] is None else max(b["max"], max(values))
++        if RANK.get(status, 0) > RANK.get(b["status"], 0):
++            b["status"] = status
++    return [{"t": b["t"], "mean": round(sum(b["means"]) / len(b["means"]), 2) if b["means"] else None,
++             "max": b["max"], "status": b["status"]} for _, b in sorted(buckets.items())]
++
++
++def report(system, machine_id=None, span_s=86400):
++    """A CSV with three parts: performance (windows per parameter), the faults, and the recurring faults. FR-10."""
++    now = clock.now()
++    since = now - span_s
++    out = io.StringIO()
++    w = csv.writer(out)
++    names = {i: m["name"] for i, m in system.machines.items()}
++    w.writerow(["Fault-Detect report", names.get(machine_id, "All machines"), "from", _iso(since), "to", _iso(now)])
++    w.writerow([])
++    w.writerow(["PERFORMANCE"])
++    w.writerow(["machine", "parameter", "windows", "abnormal windows", "share normal %"])
++    q = "SELECT machine_id, parameter, COUNT(*), SUM(status!='normal') FROM windows WHERE start_time>=?"
++    args = [since]
++    if machine_id:
++        q += " AND machine_id=?"
++        args.append(machine_id)
++    for mid, p, n, bad in system.store.local.con.execute(q + " GROUP BY machine_id, parameter ORDER BY machine_id, parameter", args):
++        w.writerow([names.get(mid, mid), p, n, bad or 0, round(100 * (n - (bad or 0)) / n, 1) if n else ""])
++    faults = [f for f in system.faults.history(machine_id) if f["raised_at"] >= since]
++    w.writerow([])
++    w.writerow(["FAULTS"])
++    w.writerow(["id", "machine", "parameter", "level", "limit", "raised", "acknowledged by", "resolved by", "resolved", "alert late"])
++    for f in sorted(faults, key=lambda f: f["raised_at"]):
++        w.writerow([f["id"], names.get(f["machine_id"], f["machine_id"]), f["parameter"], f["level"], f["limit"], _iso(f["raised_at"]),
++                    "; ".join(a["user"] for a in f["acknowledged_by"]), f["resolved_by"] or "", _iso(f["resolved_at"]),
++                    "yes" if f["delayed"] else "no"])
++    counts = {}
++    for f in faults:
++        counts[(f["machine_id"], f["parameter"])] = counts.get((f["machine_id"], f["parameter"]), 0) + 1
++    w.writerow([])
++    w.writerow(["RECURRING FAULTS (two or more in the period)"])
++    w.writerow(["machine", "parameter", "times"])
++    for (mid, p), n in sorted(counts.items(), key=lambda kv: -kv[1]):
++        if n >= 2:
++            w.writerow([names.get(mid, mid), p, n])
++    return out.getvalue()
+diff --git a/system/backend/requirements.txt b/system/backend/requirements.txt
+index fad1cf4..3578a99 100644
+--- a/system/backend/requirements.txt
++++ b/system/backend/requirements.txt
+@@ -7,3 +7,4 @@ bcrypt
+ numpy
+ scikit-learn
+ psycopg2-binary
++cryptography
+diff --git a/system/backend/tracker_status.json b/system/backend/tracker_status.json
+new file mode 100644
+index 0000000..530ccf9
+--- /dev/null
++++ b/system/backend/tracker_status.json
+@@ -0,0 +1,11 @@
++{
++  "FR-10": {"status": "built", "note": "History and report on the machine page (Segment 3)."},
++  "FR-11": {"status": "simulated", "note": "Near range (Bluetooth) and remote range (Wi-Fi) are selectable on the demo panel; both are simulated."},
++  "FR-12": {"status": "simulated", "note": "Cut and restore on the demo panel. The online database is a second local file unless DATABASE_URL is set."},
++  "FR-28e": {"status": "built", "note": "HTTPS when HTTPS=adhoc, or SSL_CERT and SSL_KEY, are set (see SETUP.md). Plain HTTP otherwise."},
++  "NFR-5": {"status": "simulated", "note": "Uptime is measured over the demo session, not a long run. See measured numbers."},
++  "NFR-8": {"status": "built", "note": "Every machine is on the Overview."},
++  "PR-002": {"status": "built", "note": "Server time per reading is measured below."},
++  "PR-004": {"status": "built", "note": "Viewer count and peak are measured below. Open 5 tabs."},
++  "PR-007": {"status": "built", "note": "Start-up time is measured below."}
++}
+diff --git a/system/frontend/src/Admin.jsx b/system/frontend/src/Admin.jsx
+index b481af1..f58dd65 100644
+--- a/system/frontend/src/Admin.jsx
++++ b/system/frontend/src/Admin.jsx
+@@ -1,10 +1,110 @@
+-// Admin
+-// Built in step 7. Requirements: FR-21a, FR-22, FR-27
++// Admin. Requirements: FR-21a, FR-22, FR-27
++import { useCallback, useEffect, useState } from 'react'
++import { get, post, del, live } from './api.js'
++import { useUser } from './user.jsx'
++
++const when = (t) => new Date(t * 1000).toLocaleString()
++
+ export default function Admin() {
++  const { user } = useUser()
++  const [data, setData] = useState(null)
++  const [message, setMessage] = useState('')
++  const [nu, setNu] = useState({ username: '', full_name: '', role: 'operator', password: '' })
++  const [nm, setNm] = useState({ id: '', name: '', type: 'motor' })
++  const load = useCallback(() => { get('/api/admin').then((d) => d.users && setData(d)) }, [])
++  useEffect(() => {
++    load()
++    const timer = setInterval(load, 5000)
++    live.on('faults_changed', load)
++    return () => { clearInterval(timer); live.off('faults_changed', load) }
++  }, [load])
++
++  const run = async (promise, after) => {
++    const r = await promise
++    setMessage(r.ok ? '' : r.message)
++    if (r.ok) { load(); after?.() }
++  }
++  if (!data) return <div className="page"><p className="muted">Loading…</p></div>
++  const s = data.storage
++  const pct = Math.round(s.used * 1000) / 10
++
+   return (
+     <div className="page">
+       <h1>Admin</h1>
+-      <p className="muted">Starter file. Step 7. Requirements: FR-21a, FR-22, FR-27</p>
++      {message && <p className="notice notice-lost" role="alert">{message}</p>}
++
++      <h2>Storage</h2>
++      <div className="card">
++        <div className="bar" role="img" aria-label={`Local storage ${pct}% used`}>
++          <div className={`bar-fill ${s.used >= s.alert_at ? 'bar-hot' : ''}`} style={{ width: `${Math.max(pct, 0.5)}%` }} />
++          <div className="bar-mark" style={{ left: `${s.alert_at * 100}%` }} title="Alert level" />
++        </div>
++        <p className="muted">{pct}% of {s.cap_mb} MB used. The alert comes at {s.alert_at * 100}%.
++          {s.used >= s.alert_at && <strong> Storage is nearly full.</strong>}</p>
++        <p className="muted">Online database: {s.online_available ? 'connected' : 'cut'}{s.online_simulated && ' (simulated by a second local file)'}.
++          {s.pending > 0 && ` ${s.pending} windows waiting to be sent.`} {s.temp_buffer > 0 && ` ${s.temp_buffer} windows in temporary storage.`}</p>
++        {s.events.length > 0 && <ul className="muted">{s.events.map((e, i) => <li key={i}>{when(e.time)} · {e.kind} {e.detail}</li>)}</ul>}
++      </div>
++
++      <h2>Users</h2>
++      <div className="card table-wrap">
++        <table className="fault-table">
++          <thead><tr><th>Username</th><th>Full name</th><th>Role</th><th /></tr></thead>
++          <tbody>
++            {data.users.map((u) => (
++              <tr key={u.username}>
++                <td>{u.username}</td><td>{u.full_name}</td><td style={{ textTransform: 'capitalize' }}>{u.role}</td>
++                <td>{u.username !== user.username && <button className="demo-btn demo-btn-off" onClick={() => run(del(`/api/admin/users/${u.username}`))}>Remove</button>}</td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++        <div className="demo-row top-gap">
++          <label>Username<input value={nu.username} onChange={(e) => setNu({ ...nu, username: e.target.value })} /></label>
++          <label>Full name<input value={nu.full_name} onChange={(e) => setNu({ ...nu, full_name: e.target.value })} /></label>
++          <label>Role
++            <select value={nu.role} onChange={(e) => setNu({ ...nu, role: e.target.value })}>
++              <option value="operator">Operator</option><option value="engineer">Engineer</option><option value="administrator">Administrator</option>
++            </select>
++          </label>
++          <label>Password (15 or more characters)<input type="password" value={nu.password} onChange={(e) => setNu({ ...nu, password: e.target.value })} autoComplete="new-password" /></label>
++          <button className="demo-btn" onClick={() => run(post('/api/admin/users', nu), () => setNu({ username: '', full_name: '', role: 'operator', password: '' }))}>Add user</button>
++        </div>
++        <p className="muted">The Administrator cannot reset a password. A person changes their own on the Settings page.</p>
++      </div>
++
++      <h2>Machines</h2>
++      <div className="card table-wrap">
++        <table className="fault-table">
++          <thead><tr><th>Id</th><th>Name</th><th>Type</th><th /></tr></thead>
++          <tbody>
++            {data.machines.map((m) => (
++              <tr key={m.id}><td>{m.id}</td><td>{m.name}</td><td>{m.type}</td>
++                <td><button className="demo-btn demo-btn-off" onClick={() => run(del(`/api/admin/machines/${m.id}`))}>Remove</button></td></tr>
++            ))}
++          </tbody>
++        </table>
++        <div className="demo-row top-gap">
++          <label>Id<input value={nm.id} onChange={(e) => setNm({ ...nm, id: e.target.value })} placeholder="motor-4" /></label>
++          <label>Name<input value={nm.name} onChange={(e) => setNm({ ...nm, name: e.target.value })} placeholder="Motor 4" /></label>
++          <label>Type
++            <select value={nm.type} onChange={(e) => setNm({ ...nm, type: e.target.value })}>
++              <option value="motor">Motor</option><option value="pump">Water pump</option><option value="ups">Backup power</option>
++            </select>
++          </label>
++          <button className="demo-btn" onClick={() => run(post('/api/admin/machines', nm), () => setNm({ id: '', name: '', type: 'motor' }))}>Add machine</button>
++        </div>
++      </div>
++
++      <h2>Change log</h2>
++      {data.change_log.length === 0 ? <p className="muted">No changes yet.</p> : (
++        <div className="card table-wrap">
++          <table className="fault-table">
++            <thead><tr><th>When</th><th>Who</th><th>What</th><th>Old</th><th>New</th></tr></thead>
++            <tbody>{data.change_log.map((c, i) => <tr key={i}><td>{when(c.when)}</td><td>{c.who}</td><td>{c.what}</td><td>{JSON.stringify(c.old)}</td><td>{JSON.stringify(c.new)}</td></tr>)}</tbody>
++          </table>
++        </div>
++      )}
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/App.jsx b/system/frontend/src/App.jsx
+index 06a755c..dfdbb25 100644
+--- a/system/frontend/src/App.jsx
++++ b/system/frontend/src/App.jsx
+@@ -1,4 +1,4 @@
+-import { Routes, Route, useLocation } from 'react-router-dom'
++import { Navigate, Routes, Route } from 'react-router-dom'
+ import TopBar from './TopBar.jsx'
+ import SignIn from './SignIn.jsx'
+ import Overview from './Overview.jsx'
+@@ -8,22 +8,52 @@ import Settings from './Settings.jsx'
+ import Admin from './Admin.jsx'
+ import DemoPanel from './DemoPanel.jsx'
+ import Tracker from './Tracker.jsx'
++import FaultPopup from './FaultPopup.jsx'
++import { UserProvider, useUser } from './user.jsx'
++import { useFaults } from './useFaults.js'
++import { useOverview } from './useLive.js'
+ 
+-export default function App() {
+-  const onSignIn = useLocation().pathname === '/signin'
++// FR-27: a role that may not use a page is turned away here. The server checks the role as well.
++function Require({ roles, children }) {
++  const { user } = useUser()
++  if (roles.includes(user.role)) return children
++  return <div className="page"><h1>Not allowed</h1><p className="muted">Your role ({user.role}) cannot open this page.</p></div>
++}
++
++function Signed() {
++  const { user } = useUser()
++  const { popups, bell, storage_alerts } = useFaults(user.username)
++  const { data } = useOverview()
++  const machineType = (id) => data?.machines.find((m) => m.id === id)?.type
+   return (
+     <>
+-      {!onSignIn && <TopBar />}
++      <TopBar bell={bell} storageAlerts={storage_alerts} machines={data?.machines ?? []} mode={data?.mode} link={data?.link} />
++      <FaultPopup popups={popups} machineType={machineType} />
+       <Routes>
+-        <Route path="/signin" element={<SignIn />} />
++        <Route path="/signin" element={<Navigate to="/" replace />} />
+         <Route path="/" element={<Overview />} />
+-        <Route path="/machines" element={<MachinesList />} />
++        <Route path="/machines" element={<Require roles={['operator', 'engineer']}><MachinesList /></Require>} />
+         <Route path="/machine/:id" element={<MachineDetail />} />
+         <Route path="/settings" element={<Settings />} />
+-        <Route path="/admin" element={<Admin />} />
++        <Route path="/admin" element={<Require roles={['administrator']}><Admin /></Require>} />
+         <Route path="/demo" element={<DemoPanel />} />
+         <Route path="/tracker" element={<Tracker />} />
+       </Routes>
+     </>
+   )
+ }
++
++function Shell() {
++  const { user, ready } = useUser()
++  if (!ready) return null
++  return (
++    <Routes>
++      <Route path="/signin" element={user ? <Navigate to="/" replace /> : <SignIn />} />
++      <Route path="*" element={user ? <Signed /> : <Navigate to="/signin" replace />} />
++    </Routes>
++  )
++}
++
++export default function App() {
++  return <UserProvider><Shell /></UserProvider>
++}
+diff --git a/system/frontend/src/BellList.jsx b/system/frontend/src/BellList.jsx
+index 39e6ac1..7efc359 100644
+--- a/system/frontend/src/BellList.jsx
++++ b/system/frontend/src/BellList.jsx
+@@ -1,10 +1,19 @@
+-// Bell list
+-// Built in step 5. Requirements: FR-8b, FR-17
+-export default function BellList() {
++// Bell list. Requirements: FR-8b, FR-17
++// The faults this person acknowledged that are not resolved yet. Choosing one opens that machine's page.
++import { Link } from 'react-router-dom'
++import { STATUS_LABEL } from './status.js'
++
++export default function BellList({ bell, storageAlerts, onClose }) {
+   return (
+-    <div className="page">
+-      <h1>Bell list</h1>
+-      <p className="muted">Starter file. Step 5. Requirements: FR-8b, FR-17</p>
++    <div className="card bell-list">
++      {bell.length === 0 && !storageAlerts && <p className="muted">No open faults.</p>}
++      {storageAlerts > 0 && <p className="muted">Storage is nearly full. See the Admin page.</p>}
++      {bell.map((f) => (
++        <Link key={f.id} to={`/machine/${f.machine_id}`} className="bell-item" onClick={onClose}>
++          <span>{f.machine_name} · {f.parameter}</span>
++          <span className={`badge ${f.level}`}>{STATUS_LABEL[f.level] ?? f.level}</span>
++        </Link>
++      ))}
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/DemoPanel.jsx b/system/frontend/src/DemoPanel.jsx
+index c4423ad..a5a3067 100644
+--- a/system/frontend/src/DemoPanel.jsx
++++ b/system/frontend/src/DemoPanel.jsx
+@@ -1,10 +1,135 @@
+-// Demo control panel
+-// Built in step 9. Requirements: FR-11, FR-12, DC-006
++// Demo control panel. Requirements: FR-11, FR-12, DC-006
++// Live scenarios change what the simulated sensors send. The scenarios that need a clock jump, a full disk or a restart are
++// shown as results: "Run all checks" plays all of them in a separate process and the Tracker shows the table.
++import { useEffect, useRef, useState } from 'react'
++import { Link } from 'react-router-dom'
++import { get, post } from './api.js'
++import { useOverview } from './useLive.js'
++import { PARAM_LABEL } from './status.js'
++
++// Which scenarios play live in the 5 minutes (each is a list of steps for the simulated sensors).
++const LIVE = [
++  ['Normal running', [{ action: 'clear_all' }]],
++  ['Lone spike', [{ action: 'spike', machine_id: 'motor-1', parameter: 'temperature' }]],
++  ['Sustained warning', [{ action: 'warning', machine_id: 'motor-1', parameter: 'temperature' }]],
++  ['Sustained critical', [{ action: 'critical', machine_id: 'motor-1', parameter: 'temperature' }]],
++  ['Two faults at once', [{ action: 'warning', machine_id: 'motor-2', parameter: 'temperature' }, { action: 'warning', machine_id: 'motor-2', parameter: 'current' }]],
++  ['Sensor goes silent', [{ action: 'silent', machine_id: 'pump-1', parameter: 'rpm' }]],
++  ['Bad reading', [{ action: 'bad', machine_id: 'pump-1', parameter: 'current' }]],
++  ['Maintenance', [{ action: 'maintenance', machine_id: 'motor-3', minutes: 1 }]],
++  ['Slow alert', [{ action: 'slow_alert_on' }, { action: 'warning', machine_id: 'motor-1', parameter: 'vibration' }]],
++  ['Connection cut', [{ action: 'cut_link' }]],
++  ['Heavy load (11 machines)', [{ action: 'heavy_load' }]],
++]
++
+ export default function DemoPanel() {
++  const { data } = useOverview()
++  const [machineId, setMachineId] = useState('')
++  const [parameter, setParameter] = useState('')
++  const [minutes, setMinutes] = useState(30)
++  const [message, setMessage] = useState('')
++  const [checks, setChecks] = useState(null)
++  const poll = useRef(null)
++
++  const machines = data?.machines ?? []
++  const machine = machines.find((m) => m.id === machineId)
++  useEffect(() => {
++    if (!machineId && machines.length) { setMachineId(machines[0].id); setParameter(Object.keys(machines[0].parameters)[0]) }
++  }, [machines, machineId])
++  useEffect(() => () => clearInterval(poll.current), [])
++
++  const send = async (step) => {
++    const r = await post('/api/demo', { machine_id: machineId, parameter, minutes: Number(minutes), ...step })
++    setMessage(r.message)
++    return r
++  }
++  const play = async (steps) => { for (const step of steps) { const r = await send(step); if (!r.ok) break } }
++  const Btn = ({ action, children }) => <button className="demo-btn" onClick={() => send({ action })}>{children}</button>
++
++  const runChecks = async () => {
++    const r = await post('/api/checks/run')
++    setMessage(r.message)
++    clearInterval(poll.current)
++    poll.current = setInterval(async () => {
++      const s = await get('/api/checks/status')
++      setChecks(s)
++      if (!s.running) clearInterval(poll.current)
++    }, 2000)
++  }
++
+   return (
+     <div className="page">
+       <h1>Demo control panel</h1>
+-      <p className="muted">Starter file. Step 9. Requirements: FR-11, FR-12, DC-006</p>
++      <p className="muted">Changes what the simulated sensors send. Watch the <Link to="/">Overview</Link> react. Open a second tab and sign in as someone else to show two people at once.</p>
++      {message && <p className="notice notice-delayed" role="status">{message}</p>}
++
++      <h2>Connection</h2>
++      <div className="card demo-card">
++        <div className="demo-row">
++          <span className="chip chip-dark">{data?.mode === 'remote' ? 'Remote range · Wi-Fi' : 'Near range · Bluetooth'}</span>
++          <Btn action="mode_near">Near range (Bluetooth)</Btn>
++          <Btn action="mode_remote">Remote range (Wi-Fi)</Btn>
++          <span className="muted">Same equipment data in both modes.</span>
++        </div>
++        <div className="demo-row">
++          <span className="chip chip-dark">Link {data?.link === 'cut' ? `cut · ${data.pending} windows waiting` : 'up'}</span>
++          <Btn action="cut_link">Cut connection</Btn>
++          <Btn action="restore_link">Restore connection</Btn>
++        </div>
++      </div>
++
++      <h2>Play a scenario live</h2>
++      <div className="card demo-card">
++        <div className="demo-row">
++          {LIVE.map(([name, steps]) => <button key={name} className="demo-btn" onClick={() => play(steps)}>{name}</button>)}
++        </div>
++        <div className="demo-row">
++          <Btn action="restore_link">Restore connection</Btn>
++          <button className="demo-btn demo-btn-off" onClick={() => send({ action: 'remove_load' })}>Remove the extra machines</button>
++          <Btn action="clear_all">Reset everything</Btn>
++        </div>
++      </div>
++
++      <h2>Pick your own</h2>
++      <div className="card demo-card">
++        <div className="demo-row">
++          <label>Machine
++            <select value={machineId} onChange={(e) => { setMachineId(e.target.value); setParameter(Object.keys(machines.find((m) => m.id === e.target.value).parameters)[0]) }}>
++              {machines.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
++            </select>
++          </label>
++          <label>Parameter
++            <select value={parameter} onChange={(e) => setParameter(e.target.value)}>
++              {Object.keys(machine?.parameters ?? {}).map((p) => <option key={p} value={p}>{PARAM_LABEL[machine.type][p]}</option>)}
++            </select>
++          </label>
++        </div>
++        <div className="demo-row">
++          <Btn action="warning">Warning value</Btn>
++          <Btn action="critical">Critical value</Btn>
++          <Btn action="spike">One spike</Btn>
++          <Btn action="clear">Back to normal</Btn>
++          <Btn action="bad">Bad reading (5 s)</Btn>
++          <Btn action="silent">Sensor goes silent</Btn>
++        </div>
++        <div className="demo-row">
++          <label>Maintenance minutes <input type="number" min="0.1" step="0.1" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
++          <Btn action="maintenance">Start maintenance</Btn>
++          <Btn action="end_maintenance">End maintenance</Btn>
++          <Btn action="slow_alert_on">Slow alerts on</Btn>
++          <Btn action="slow_alert_off">Slow alerts off</Btn>
++        </div>
++      </div>
++
++      <h2>Shown as results</h2>
++      <div className="card demo-card">
++        <p className="muted">Storage fills up, storage fails, restart, fault returns, limit change, nobody connected, noisy readings, labelled test set, login checks and old data run in the check script, not live.</p>
++        <div className="demo-row">
++          <button className="demo-btn" onClick={runChecks} disabled={checks?.running}>{checks?.running ? 'Running…' : 'Run all checks'}</button>
++          <Link to="/tracker">Open the tracker</Link>
++        </div>
++        {checks?.output && <pre className="check-output">{checks.output}</pre>}
++      </div>
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/FaultPopup.jsx b/system/frontend/src/FaultPopup.jsx
+index 32d2ea6..38e47e5 100644
+--- a/system/frontend/src/FaultPopup.jsx
++++ b/system/frontend/src/FaultPopup.jsx
+@@ -1,10 +1,31 @@
+-// Fault pop-up
+-// Built in step 5. Requirements: FR-7, FR-7a, FR-7b, FR-7c, FR-8, FR-8a, FR-16
+-export default function FaultPopup() {
++// Fault pop-up. Requirements: FR-7, FR-7a, FR-7b, FR-7c, FR-8, FR-8a, FR-16
++// Stays on screen until this person acknowledges it. Acknowledging does not close the fault (FR-8b).
++import { useState } from 'react'
++import { post } from './api.js'
++import { STATUS_LABEL, PARAM_LABEL } from './status.js'
++
++export default function FaultPopup({ popups, machineType }) {
++  const [error, setError] = useState('')
++  if (!popups.length) return null
++  const f = popups[0]
++  const label = PARAM_LABEL[machineType(f.machine_id)]?.[f.parameter] ?? f.parameter
++  const acknowledge = async () => {
++    const r = await post(`/api/faults/${f.id}/acknowledge`)
++    setError(r.ok ? '' : r.message)
++  }
+   return (
+-    <div className="page">
+-      <h1>Fault pop-up</h1>
+-      <p className="muted">Starter file. Step 5. Requirements: FR-7, FR-7a, FR-7b, FR-7c, FR-8, FR-8a, FR-16</p>
++    <div className="popup-backdrop" role="alertdialog" aria-labelledby="popup-title">
++      <div className="card popup">
++        <div className="card-head">
++          <h2 id="popup-title">Fault: {f.machine_name}</h2>
++          <span className={`badge ${f.level}`}>{STATUS_LABEL[f.level] ?? f.level}</span>
++        </div>
++        <p><strong>{label}</strong> is outside its limit{f.limit != null && <> (limit {f.limit})</>}.</p>
++        <p className="muted">Raised {new Date(f.raised_at * 1000).toLocaleTimeString()}{f.delayed && ' · this alert came late'}</p>
++        {popups.length > 1 && <p className="muted">{popups.length - 1} more waiting.</p>}
++        {error && <p className="muted" role="status">{error}</p>}
++        <button className="demo-btn" onClick={acknowledge}>Acknowledge</button>
++      </div>
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/MachineCard.jsx b/system/frontend/src/MachineCard.jsx
+index 77d14e0..6650307 100644
+--- a/system/frontend/src/MachineCard.jsx
++++ b/system/frontend/src/MachineCard.jsx
+@@ -1,10 +1,47 @@
+-// Machine card
+-// Built in step 2. Requirements: FR-1, FR-2, FR-3, FR-5, FR-13, FR-14, FR-18, FR-19
+-export default function MachineCard() {
++// Machine card. Requirements: FR-1, FR-2, FR-3, FR-5, FR-13, FR-14, FR-18, FR-19, FR-24
++// One card per machine. Status is a word and a colour, never colour alone. Click opens the machine page.
++import { Link } from 'react-router-dom'
++import { STATUS_LABEL, UNITS, PARAM_LABEL, formatValue } from './status.js'
++
++function Badge({ status }) {
++  return <span className={`badge ${status}`}>{STATUS_LABEL[status] ?? status}</span>
++}
++
++function Row({ type, name, p }) {
+   return (
+-    <div className="page">
+-      <h1>Machine card</h1>
+-      <p className="muted">Starter file. Step 2. Requirements: FR-1, FR-2, FR-3, FR-5, FR-13, FR-14, FR-18, FR-19</p>
++    <div className="param-row">
++      <span className="param-name">{PARAM_LABEL[type][name]}</span>
++      <span className="param-value">
++        {p.sensor_fault ? (
++          <span className="mark mark-fault">Sensor fault</span>
++        ) : (
++          <>
++            <strong>{formatValue(name, p.value)}</strong> <span className="unit">{p.value === null ? '' : UNITS[name]}</span>
++            {p.invalid && <span className="mark mark-invalid">Invalid</span>}
++          </>
++        )}
++      </span>
++      {p.status !== 'normal' && p.status !== 'unknown' && <Badge status={p.status} />}
+     </div>
+   )
+ }
++
++export default function MachineCard({ machine }) {
++  return (
++    <Link to={`/machine/${machine.id}`} className={`card machine-card status-${machine.status}`}>
++      <div className="card-head">
++        <h3>{machine.name}</h3>
++        <Badge status={machine.status} />
++      </div>
++      {(machine.maintenance || machine.overdue) && (
++        <div className="marks">
++          {machine.maintenance && <span className="mark mark-maint">Maintenance</span>}
++          {machine.overdue && <span className="mark mark-overdue">Overdue</span>}
++        </div>
++      )}
++      {Object.entries(machine.parameters).map(([name, p]) => (
++        <Row key={name} type={machine.type} name={name} p={p} />
++      ))}
++    </Link>
++  )
++}
+diff --git a/system/frontend/src/MachineDetail.jsx b/system/frontend/src/MachineDetail.jsx
+index 839bf2e..e9670cc 100644
+--- a/system/frontend/src/MachineDetail.jsx
++++ b/system/frontend/src/MachineDetail.jsx
+@@ -1,10 +1,167 @@
+-// Machine detail
+-// Built in step 8. Requirements: FR-9, FR-10, FR-15, FR-17, FR-18, FR-19
++// Machine detail. Requirements: FR-9, FR-10, FR-15, FR-17, FR-18, FR-19
++// Live readings, graph (Day, Week, Month, Year), fault history, acknowledge, resolve, maintenance, report.
++import { useCallback, useEffect, useState } from 'react'
++import { Link, useParams } from 'react-router-dom'
++import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
++import { get, post, live, download } from './api.js'
++import { useOverview } from './useLive.js'
++import { useUser } from './user.jsx'
++import { STATUS_LABEL, UNITS, PARAM_LABEL, formatValue } from './status.js'
++
++const RANGES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month'], ['year', 'Year']]
++const when = (t) => (t ? new Date(t * 1000).toLocaleString() : '')
++
++function Graph({ machineId, parameter, label, unit }) {
++  const [range, setRange] = useState('day')
++  const [points, setPoints] = useState([])
++  useEffect(() => {
++    let alive = true
++    const load = () => get(`/api/machines/${machineId}/history?parameter=${parameter}&range=${range}`).then((d) => alive && setPoints(d)).catch(() => {})
++    load()
++    const timer = setInterval(load, 10000)
++    return () => { alive = false; clearInterval(timer) }
++  }, [machineId, parameter, range])
++  const tick = (t) => new Date(t * 1000).toLocaleString([], range === 'day' ? { hour: '2-digit', minute: '2-digit' } : { month: 'short', day: 'numeric' })
++  return (
++    <div className="card">
++      <div className="card-head">
++        <h3>{label} {unit && <span className="unit">({unit})</span>}</h3>
++        <div className="range-buttons">
++          {RANGES.map(([key, text]) => (
++            <button key={key} className={range === key ? 'demo-btn' : 'demo-btn demo-btn-off'} onClick={() => setRange(key)}>{text}</button>
++          ))}
++        </div>
++      </div>
++      {points.length === 0 ? <p className="muted">No readings saved for this period yet.</p> : (
++        <div style={{ height: 220 }}>
++          <ResponsiveContainer>
++            <LineChart data={points}>
++              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-faint)" />
++              <XAxis dataKey="t" tickFormatter={tick} type="number" domain={['dataMin', 'dataMax']} fontSize={12} />
++              <YAxis domain={['auto', 'auto']} fontSize={12} width={50} />
++              <Tooltip labelFormatter={when} />
++              <Line type="monotone" dataKey="mean" stroke="var(--secondary)" dot={false} connectNulls isAnimationActive={false} />
++            </LineChart>
++          </ResponsiveContainer>
++        </div>
++      )}
++      {range !== 'day' && <p className="muted">Normal readings are kept for 24 hours (FR-9b), so longer graphs show the windows that remain.</p>}
++    </div>
++  )
++}
++
+ export default function MachineDetail() {
++  const { id } = useParams()
++  const { data } = useOverview()
++  const { user } = useUser()
++  const [faults, setFaults] = useState([])
++  const [parameter, setParameter] = useState('')
++  const [minutes, setMinutes] = useState(30)
++  const [message, setMessage] = useState('')
++  const [range, setRange] = useState('day')
++
++  const loadFaults = useCallback(() => {
++    get(`/api/faults/history?machine_id=${id}`).then(setFaults).catch(() => {})
++  }, [id])
++  useEffect(() => {
++    loadFaults()
++    live.on('faults_changed', loadFaults)
++    return () => live.off('faults_changed', loadFaults)
++  }, [loadFaults])
++
++  const machine = data?.machines.find((m) => m.id === id)
++  useEffect(() => { if (machine && !parameter) setParameter(Object.keys(machine.parameters)[0]) }, [machine, parameter])
++  if (!data) return <div className="page"><p className="muted">Connecting to the server…</p></div>
++  if (!machine) return <div className="page"><Link to="/">‹ Overview</Link><h1>No such machine</h1></div>
++
++  const role = user?.role
++  const me = user?.username
++  const act = async (path, body) => {
++    const r = await post(path, body)
++    setMessage(r.ok ? '' : r.message)
++  }
++  const mine = (f) => f.acknowledged_by.some((a) => a.user === me)
++  const labels = PARAM_LABEL[machine.type]
++
+   return (
+     <div className="page">
+-      <h1>Machine detail</h1>
+-      <p className="muted">Starter file. Step 8. Requirements: FR-9, FR-10, FR-15, FR-17, FR-18, FR-19</p>
++      <Link to="/">‹ Overview</Link>
++      <div className="card-head detail-head">
++        <h1>{machine.name}</h1>
++        <span className={`badge ${machine.status}`}>{STATUS_LABEL[machine.status]}</span>
++        {machine.maintenance && <span className="mark mark-maint">Maintenance</span>}
++        {machine.overdue && <span className="mark mark-overdue">Overdue</span>}
++      </div>
++
++      {role === 'engineer' && (
++        <div className="demo-row maint-row">
++          <label>Maintenance minutes <input type="number" min="1" value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
++          {machine.maintenance
++            ? <button className="demo-btn" onClick={() => act(`/api/machines/${id}/maintenance`, { on: false })}>End maintenance</button>
++            : <button className="demo-btn" onClick={() => act(`/api/machines/${id}/maintenance`, { on: true, minutes: Number(minutes) })}>Start maintenance</button>}
++        </div>
++      )}
++      {message && <p className="muted" role="status">{message}</p>}
++
++      <h2>Live readings</h2>
++      <div className="card-grid tiles">
++        {Object.entries(machine.parameters).map(([name, p]) => (
++          <div key={name} className="card tile">
++            <div className="param-name">{labels[name]}</div>
++            {p.sensor_fault ? <span className="mark mark-fault">Sensor fault</span> : (
++              <div className="tile-value"><strong>{formatValue(name, p.value)}</strong> <span className="unit">{p.value === null ? '' : UNITS[name]}</span>
++                {p.invalid && <span className="mark mark-invalid">Invalid</span>}</div>
++            )}
++            <span className={`badge ${p.status}`}>{STATUS_LABEL[p.status]}</span>
++          </div>
++        ))}
++      </div>
++
++      <h2>Graph</h2>
++      <div className="demo-row">
++        <label>Parameter
++          <select value={parameter} onChange={(e) => setParameter(e.target.value)}>
++            {Object.keys(machine.parameters).map((p) => <option key={p} value={p}>{labels[p]}</option>)}
++          </select>
++        </label>
++        {(role === 'operator' || role === 'engineer') && (
++          <>
++            <label>Report period
++              <select value={range} onChange={(e) => setRange(e.target.value)}>
++                {RANGES.map(([k, t]) => <option key={k} value={k}>{t}</option>)}
++              </select>
++            </label>
++            <button className="demo-btn" onClick={async () => { const r = await download(`/api/report?machine_id=${id}&range=${range}`, `${id}-${range}-report.csv`); if (!r.ok) setMessage(r.message) }}>Generate report</button>
++          </>
++        )}
++      </div>
++      {parameter && <Graph machineId={id} parameter={parameter} label={labels[parameter]} unit={UNITS[parameter]} />}
++
++      <h2>History and faults</h2>
++      {faults.length === 0 ? <p className="muted">No faults recorded for this machine.</p> : (
++        <div className="card table-wrap">
++          <table className="fault-table">
++            <thead><tr><th>Parameter</th><th>Level</th><th>Raised</th><th>Acknowledged by</th><th>State</th><th /></tr></thead>
++            <tbody>
++              {faults.map((f) => (
++                <tr key={f.id}>
++                  <td>{labels[f.parameter] ?? f.parameter}</td>
++                  <td><span className={`badge ${f.level}`}>{STATUS_LABEL[f.level] ?? f.level}</span></td>
++                  <td>{when(f.raised_at)}{f.delayed && ' (late)'}</td>
++                  <td>{f.acknowledged_by.map((a) => a.user).join(', ') || '—'}</td>
++                  <td>{f.status === 'resolved' ? `Resolved by ${f.resolved_by}, ${when(f.resolved_at)}` : 'Open'}</td>
++                  <td>
++                    {f.status === 'open' && (role === 'operator' || role === 'engineer') && !mine(f) &&
++                      <button className="demo-btn" onClick={() => act(`/api/faults/${f.id}/acknowledge`)}>Acknowledge</button>}
++                    {f.status === 'open' && role === 'engineer' && mine(f) &&
++                      <button className="demo-btn" onClick={() => act(`/api/faults/${f.id}/resolve`)}>Resolve</button>}
++                  </td>
++                </tr>
++              ))}
++            </tbody>
++          </table>
++        </div>
++      )}
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/MachinesList.jsx b/system/frontend/src/MachinesList.jsx
+index 2acafd5..c845423 100644
+--- a/system/frontend/src/MachinesList.jsx
++++ b/system/frontend/src/MachinesList.jsx
+@@ -1,10 +1,61 @@
+-// Machines
+-// Built in step 2. Requirements: FR-24, FR-5, FR-18
++// Machines. Requirements: FR-24, FR-5, FR-18 (filter is a design choice, not in the SRS)
++import { useCallback, useEffect, useState } from 'react'
++import { Link } from 'react-router-dom'
++import { get, live } from './api.js'
++import { useOverview } from './useLive.js'
++import { STATUS_LABEL } from './status.js'
++
++const TYPES = { motor: 'Motor', pump: 'Water pump', ups: 'Backup power' }
++
+ export default function MachinesList() {
++  const { data } = useOverview()
++  const [faults, setFaults] = useState([])
++  const [type, setType] = useState('all')
++  const [status, setStatus] = useState('all')
++  const load = useCallback(() => { get('/api/faults/history').then((d) => Array.isArray(d) && setFaults(d)) }, [])
++  useEffect(() => {
++    load()
++    live.on('faults_changed', load)
++    return () => live.off('faults_changed', load)
++  }, [load])
++  if (!data) return <div className="page"><p className="muted">Connecting to the server…</p></div>
++  const open = (id) => faults.filter((f) => f.machine_id === id && f.status === 'open').length
++  const rows = data.machines.filter((m) => (type === 'all' || m.type === type) && (status === 'all' || m.status === status || (status === 'warning' && m.status === 'abnormal')))
+   return (
+     <div className="page">
+       <h1>Machines</h1>
+-      <p className="muted">Starter file. Step 2. Requirements: FR-24, FR-5, FR-18</p>
++      <div className="demo-row">
++        <label>Type
++          <select value={type} onChange={(e) => setType(e.target.value)}>
++            <option value="all">All</option>
++            {Object.entries(TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
++          </select>
++        </label>
++        <label>Status
++          <select value={status} onChange={(e) => setStatus(e.target.value)}>
++            <option value="all">All</option>
++            {['normal', 'warning', 'critical'].map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
++          </select>
++        </label>
++      </div>
++      {rows.length === 0 ? <p className="muted">No machine matches.</p> : (
++        <div className="card table-wrap">
++          <table className="fault-table">
++            <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Open faults</th><th>Mark</th></tr></thead>
++            <tbody>
++              {rows.map((m) => (
++                <tr key={m.id}>
++                  <td><Link to={`/machine/${m.id}`}>{m.name}</Link></td>
++                  <td>{TYPES[m.type]}</td>
++                  <td><span className={`badge ${m.status}`}>{STATUS_LABEL[m.status]}</span></td>
++                  <td>{open(m.id)}</td>
++                  <td>{m.maintenance && <span className="mark mark-maint">Maintenance</span>}{m.overdue && <span className="mark mark-overdue">Overdue</span>}</td>
++                </tr>
++              ))}
++            </tbody>
++          </table>
++        </div>
++      )}
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/Overview.jsx b/system/frontend/src/Overview.jsx
+index 715226d..94a02ea 100644
+--- a/system/frontend/src/Overview.jsx
++++ b/system/frontend/src/Overview.jsx
+@@ -1,10 +1,33 @@
+-// Overview
+-// Built in step 2. Requirements: FR-1, FR-2, FR-3, FR-13, FR-14, FR-24, NFR-8, PR-001, PR-002
++// Overview. Requirements: FR-1, FR-2, FR-3, FR-13, FR-14, FR-24, NFR-8, PR-001, PR-002, PR-001b
++import MachineCard from './MachineCard.jsx'
++import { useOverview } from './useLive.js'
++
++const GROUPS = [['motor', 'Motors'], ['pump', 'Water pumps'], ['ups', 'Backup power']]
++
+ export default function Overview() {
++  const { data, connected } = useOverview()
++  if (!data) return <div className="page"><h1>Overview</h1><p className="muted">Connecting to the server…</p></div>
+   return (
+     <div className="page">
++      {!connected && <div className="notice notice-lost">Live connection lost. The numbers below may be old. Trying again…</div>}
++      {data.link === 'cut' && (
++        <div className="notice notice-delayed">Connection to the online database is cut. Readings are still collected and shown here; {data.pending} saved windows will be sent when it returns.</div>
++      )}
++      {data.alerts_delayed && <div className="notice notice-delayed">Alerts delayed: a fault alert came more than 2 seconds late.</div>}
+       <h1>Overview</h1>
+-      <p className="muted">Starter file. Step 2. Requirements: FR-1, FR-2, FR-3, FR-13, FR-14, FR-24, NFR-8, PR-001, PR-002</p>
++      {data.machines.length === 0 && (
++        <p className="muted">No machines are registered yet. The Administrator can add them on the Admin page.</p>
++      )}
++      {GROUPS.map(([type, title]) => {
++        const list = data.machines.filter((m) => m.type === type)
++        if (list.length === 0) return null
++        return (
++          <section key={type}>
++            <h2 className="group-title">{title}</h2>
++            <div className="card-grid">{list.map((m) => <MachineCard key={m.id} machine={m} />)}</div>
++          </section>
++        )
++      })}
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/Settings.jsx b/system/frontend/src/Settings.jsx
+index baea027..bf0eae0 100644
+--- a/system/frontend/src/Settings.jsx
++++ b/system/frontend/src/Settings.jsx
+@@ -1,10 +1,104 @@
+-// Settings
+-// Built in step 7. Requirements: FR-23, FR-23a, FR-23b, FR-26 (and the theme, see srs-changes)
++// Settings. Requirements: FR-23, FR-23a, FR-23b, FR-26 (the dark theme comes later)
++import { useCallback, useEffect, useState } from 'react'
++import { get, post } from './api.js'
++import { useUser } from './user.jsx'
++import { UNITS } from './status.js'
++
++const KEYS = { warning: 'Warning above', critical: 'Critical above', abnormal: 'Abnormal above', abnormal_below: 'Abnormal below' }
++const when = (t) => new Date(t * 1000).toLocaleString()
++
++function LimitRow({ machineType, parameter, rule, canEdit, onSaved }) {
++  const [values, setValues] = useState(() => Object.fromEntries(Object.entries(rule).map(([k, v]) => [k, String(v)])))
++  const [message, setMessage] = useState('')
++  const save = async () => {
++    const limits = Object.fromEntries(Object.entries(values).map(([k, v]) => [k, Number(v)]))
++    const r = await post('/api/limits', { machine_type: machineType, parameter, limits })
++    setMessage(r.ok ? 'Saved. Applies from the next reading.' : r.message)
++    if (r.ok) onSaved()
++  }
++  return (
++    <tr>
++      <td>{machineType}</td>
++      <td>{parameter} <span className="unit">({UNITS[parameter]})</span></td>
++      {Object.keys(KEYS).map((k) => (
++        <td key={k}>{k in rule && <input type="number" step="any" value={values[k]} disabled={!canEdit} onChange={(e) => setValues({ ...values, [k]: e.target.value })} style={{ width: 80 }} aria-label={`${machineType} ${parameter} ${KEYS[k]}`} />}</td>
++      ))}
++      <td>{canEdit && <button className="demo-btn" onClick={save}>Save</button>} <span className="muted">{message}</span></td>
++    </tr>
++  )
++}
++
+ export default function Settings() {
++  const { user, setUser } = useUser()
++  const [limits, setLimits] = useState(null)
++  const [minutes, setMinutes] = useState(user.session_min)
++  const [msg, setMsg] = useState({})
++  const [pw, setPw] = useState({ old: '', new: '', again: '' })
++  const loadLimits = useCallback(() => { get('/api/limits').then(setLimits) }, [])
++  useEffect(() => { loadLimits() }, [loadLimits])
++
++  const saveMinutes = async () => {
++    const r = await post('/api/me/session', { minutes: Number(minutes) })
++    if (r.ok) setUser({ ...user, session_min: Number(minutes) })
++    setMsg({ ...msg, session: r.ok ? 'Saved.' : r.message })
++  }
++  const savePassword = async () => {
++    if (pw.new !== pw.again) return setMsg({ ...msg, pw: 'The two new passwords are not the same.' })
++    const r = await post('/api/me/password', { old: pw.old, new: pw.new })
++    setMsg({ ...msg, pw: r.ok ? 'Password changed.' : r.message })
++    if (r.ok) setPw({ old: '', new: '', again: '' })
++  }
++  const isEngineer = user.role === 'engineer'
++
+   return (
+     <div className="page">
+       <h1>Settings</h1>
+-      <p className="muted">Starter file. Step 7. Requirements: FR-23, FR-23a, FR-23b, FR-26 (and the theme, see srs-changes)</p>
++      <div className="card demo-card">
++        <h3>Sign-out time</h3>
++        <div className="demo-row">
++          <label>Minutes without activity
++            <select value={minutes} onChange={(e) => setMinutes(e.target.value)}>{[1, 2, 3, 4, 5].map((m) => <option key={m} value={m}>{m}</option>)}</select>
++          </label>
++          <button className="demo-btn" onClick={saveMinutes}>Save</button>
++          <span className="muted">{msg.session}</span>
++        </div>
++        <h3>Theme</h3>
++        <p className="muted">Light. A dark theme will be added later.</p>
++        <h3>Change password</h3>
++        <div className="demo-row">
++          <label>Current<input type="password" value={pw.old} onChange={(e) => setPw({ ...pw, old: e.target.value })} autoComplete="current-password" /></label>
++          <label>New (15 or more characters)<input type="password" value={pw.new} onChange={(e) => setPw({ ...pw, new: e.target.value })} autoComplete="new-password" /></label>
++          <label>New again<input type="password" value={pw.again} onChange={(e) => setPw({ ...pw, again: e.target.value })} autoComplete="new-password" /></label>
++          <button className="demo-btn" onClick={savePassword}>Change</button>
++        </div>
++        <span className="muted">{msg.pw}</span>
++      </div>
++
++      {isEngineer && limits && (
++        <>
++          <h2>Limits</h2>
++          <p className="muted">A limit belongs to a machine type. A change applies from the next reading, with no restart. The warning limit must stay below the critical limit.</p>
++          <div className="card table-wrap">
++            <table className="fault-table">
++              <thead><tr><th>Type</th><th>Parameter</th>{Object.values(KEYS).map((k) => <th key={k}>{k}</th>)}<th /></tr></thead>
++              <tbody>
++                {Object.entries(limits.limits).flatMap(([mt, params]) => Object.entries(params).map(([p, rule]) => (
++                  <LimitRow key={`${mt}-${p}-${JSON.stringify(rule)}`} machineType={mt} parameter={p} rule={rule} canEdit onSaved={loadLimits} />
++                )))}
++              </tbody>
++            </table>
++          </div>
++          <h3>Recent limit changes</h3>
++          {limits.history.length === 0 ? <p className="muted">None yet.</p> : (
++            <div className="card table-wrap">
++              <table className="fault-table">
++                <thead><tr><th>When</th><th>Who</th><th>What</th><th>Old</th><th>New</th></tr></thead>
++                <tbody>{limits.history.map((h, i) => <tr key={i}><td>{when(h.when)}</td><td>{h.who}</td><td>{h.what}</td><td>{JSON.stringify(h.old)}</td><td>{JSON.stringify(h.new)}</td></tr>)}</tbody>
++              </table>
++            </div>
++          )}
++        </>
++      )}
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/SignIn.jsx b/system/frontend/src/SignIn.jsx
+index 9468056..b800746 100644
+--- a/system/frontend/src/SignIn.jsx
++++ b/system/frontend/src/SignIn.jsx
+@@ -1,10 +1,50 @@
+-// Fault-Detect
+-// Built in step 7. Requirements: FR-26, FR-28, FR-28a, FR-28b, FR-28c, FR-28d
++// Fault-Detect sign-in. Requirements: FR-26, FR-28, FR-28a, FR-28b, FR-28c, FR-28d
++import { useState } from 'react'
++import { useNavigate } from 'react-router-dom'
++import { useUser } from './user.jsx'
++
++const DEMO = [['admin1', 'Administrator'], ['engineer1', 'Engineer'], ['engineer2', 'Engineer'], ['operator1', 'Operator'], ['operator2', 'Operator']]
++
+ export default function SignIn() {
++  const { signIn } = useUser()
++  const navigate = useNavigate()
++  const [username, setUsername] = useState('')
++  const [password, setPassword] = useState('')
++  const [message, setMessage] = useState(sessionStorage.getItem('fd-note') || '')
++  const [busy, setBusy] = useState(false)
++
++  const submit = async (e) => {
++    e.preventDefault()
++    setBusy(true)
++    const r = await signIn(username.trim(), password)
++    setBusy(false)
++    if (r.ok) { sessionStorage.removeItem('fd-note'); navigate('/') } else setMessage(r.message)
++  }
++
+   return (
+-    <div className="page">
+-      <h1>Fault-Detect</h1>
+-      <p className="muted">Starter file. Step 7. Requirements: FR-26, FR-28, FR-28a, FR-28b, FR-28c, FR-28d</p>
++    <div className="page signin">
++      <div className="card signin-card">
++        <h1>Fault-Detect</h1>
++        <form onSubmit={submit} className="demo-card">
++          <label>Username
++            <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus />
++          </label>
++          <label>Password
++            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
++          </label>
++          {message && <p className="notice notice-lost" role="alert">{message}</p>}
++          <button className="demo-btn" disabled={busy || !username || !password}>Sign in</button>
++        </form>
++        <details className="muted">
++          <summary>Demo accounts</summary>
++          <p>Choose one to fill the form. Demo only: the password is <code>demo-password-for-</code> followed by the username.</p>
++          <div className="demo-row">
++            {DEMO.map(([u, role]) => (
++              <button key={u} type="button" className="demo-btn demo-btn-off" onClick={() => { setUsername(u); setPassword(`demo-password-for-${u}`) }}>{u} · {role}</button>
++            ))}
++          </div>
++        </details>
++      </div>
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/TopBar.jsx b/system/frontend/src/TopBar.jsx
+index 8c8dac5..c829ef8 100644
+--- a/system/frontend/src/TopBar.jsx
++++ b/system/frontend/src/TopBar.jsx
+@@ -1,13 +1,52 @@
+-import { Link } from 'react-router-dom'
++import { useState } from 'react'
++import { Link, useNavigate } from 'react-router-dom'
++import BellList from './BellList.jsx'
++import { useUser } from './user.jsx'
++
++// Shared top bar: name, search, bell, person. See docs/design/top-bar.md
++export default function TopBar({ bell, storageAlerts, machines, mode, link }) {
++  const [bellOpen, setBellOpen] = useState(false)
++  const [sideOpen, setSideOpen] = useState(false)
++  const [search, setSearch] = useState('')
++  const [found, setFound] = useState(true)
++  const { user, signOut } = useUser()
++  const navigate = useNavigate()
++  const count = bell.length + (storageAlerts ? 1 : 0)
++  const role = user.role
++
++  const find = (e) => {
++    if (e.key !== 'Enter' || !search.trim()) return
++    const hit = machines.find((m) => m.name.toLowerCase().includes(search.trim().toLowerCase()))
++    setFound(!!hit)
++    if (hit) { navigate(`/machine/${hit.id}`); setSearch('') }
++  }
+ 
+-// Shared top bar: name, search, bell, person. Step 5. See docs/design/top-bar.md
+-export default function TopBar() {
+   return (
+     <div className="topbar">
+       <Link to="/" className="brand">Fault-Detect</Link>
+-      <input placeholder="Search machines" />
+-      <button>Bell</button>
+-      <button>Name</button>
++      <input placeholder="Search machines" value={search} aria-invalid={!found} title={found ? '' : 'No machine with that name'}
++             onChange={(e) => { setSearch(e.target.value); setFound(true) }} onKeyDown={find} />
++      {role !== 'administrator' && <Link to="/machines" className="navlink first">Machines</Link>}
++      {role === 'administrator' && <Link to="/admin" className="navlink first">Admin</Link>}
++      <Link to="/demo" className="navlink">Demo</Link>
++      <Link to="/tracker" className="navlink">Tracker</Link>
++      {mode && <span className="chip" title="Connection mode">{mode === 'near' ? 'Near range · Bluetooth' : 'Remote range · Wi-Fi'}{link === 'cut' && ' · cut'}</span>}
++      <div className="bell-wrap">
++        <button onClick={() => setBellOpen(!bellOpen)} aria-label={`Bell, ${count} open`}>Bell {count > 0 && <span className="bell-count">{count}</span>}</button>
++        {bellOpen && <BellList bell={bell} storageAlerts={storageAlerts} onClose={() => setBellOpen(false)} />}
++      </div>
++      <button onClick={() => setSideOpen(true)}>{user.full_name}</button>
++      {sideOpen && (
++        <>
++          <div className="side-backdrop" onClick={() => setSideOpen(false)} />
++          <aside className="sidebar">
++            <h3>{user.full_name}</h3>
++            <p className="muted" style={{ textTransform: 'capitalize' }}>{role}</p>
++            <Link to="/settings" onClick={() => setSideOpen(false)}>Settings</Link>
++            <button className="demo-btn" onClick={signOut}>Sign out</button>
++          </aside>
++        </>
++      )}
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/Tracker.jsx b/system/frontend/src/Tracker.jsx
+index 94287e5..c9e51d7 100644
+--- a/system/frontend/src/Tracker.jsx
++++ b/system/frontend/src/Tracker.jsx
+@@ -1,10 +1,91 @@
+-// Requirements tracker
+-// Built in step 9. Requirements: every requirement
++// Requirements tracker and measured numbers. Requirements: every requirement
++// Each requirement is built, simulated, left-out or not-set. Numbers on this page are measured from the running system.
++import { useEffect, useState } from 'react'
++import { get } from './api.js'
++
++const SHOW = { built: 'Built', simulated: 'Simulated', 'left-out': 'Left out', 'not-set': 'Not set' }
++const pct = (a) => (a ? `${a.percent}% (${a.right} of ${a.of})` : '…')
++const ms = (v) => (v == null ? '—' : `${v} ms`)
++
++function Measured({ m }) {
++  if (!m) return null
++  const acc = m.accuracy?.value
++  const rows = [
++    ['NFR-1 critical temperature and current found', acc && typeof acc === 'object' ? pct(acc.critical_temp_current) : m.accuracy?.state],
++    ['NFR-2 vibration faults found', acc && typeof acc === 'object' ? pct(acc.vibration) : m.accuracy?.state],
++    ['All labelled windows right (NFR-1, NFR-2)', acc && typeof acc === 'object' ? pct(acc.all_windows) : m.accuracy?.state],
++    ['PR-001 status refresh', `every ${m.status_window_s} s (${m.windows} windows set)`],
++    ['PR-001a alert time after status confirmed', m.alerts ? `average ${m.alert_s_avg} s, longest ${m.alert_s_max} s, ${m.alerts_delayed} late of ${m.alerts}` : 'no faults yet'],
++    ['PR-002 time a reading spends in the server', `average ${ms(m.reading_ms_avg)}, longest ${ms(m.reading_ms_max)}`],
++    ['PR-003 machines at once', m.machines],
++    ['PR-004 viewers now / peak', `${m.viewers} / ${m.peak_viewers}`],
++    ['PR-005 readings per second', `${m.readings_per_s} (${m.readings_received} received, ${m.readings_invalid} invalid)`],
++    ['PR-006 local storage used', `${(m.storage_used * 100).toFixed(3)}% of ${m.storage_cap_mb} MB`],
++    ['PR-007 start-up to first data', m.startup_s == null ? '—' : `${m.startup_s} s`],
++    ['NFR-5 uptime this run', `${Math.floor(m.uptime_s / 60)} min ${Math.round(m.uptime_s % 60)} s`],
++  ]
++  return (
++    <div className="card table-wrap">
++      <table className="fault-table"><tbody>{rows.map(([k, v]) => <tr key={k}><td>{k}</td><td><strong>{v}</strong></td></tr>)}</tbody></table>
++    </div>
++  )
++}
++
+ export default function Tracker() {
++  const [reqs, setReqs] = useState([])
++  const [metrics, setMetrics] = useState(null)
++  const [filter, setFilter] = useState('all')
++  const [checks, setChecks] = useState(null)
++
++  useEffect(() => {
++    const loadMetrics = () => get('/api/metrics').then((d) => d.uptime_s != null && setMetrics(d))
++    const loadReqs = () => get('/api/requirements').then((d) => Array.isArray(d) && setReqs(d))
++    loadReqs(); loadMetrics()
++    const timer = setInterval(loadMetrics, 3000)
++    return () => clearInterval(timer)
++  }, [])
++  useEffect(() => {
++    get('/api/checks/status').then(setChecks)
++  }, [])
++  useEffect(() => {
++    if (checks?.finished) get('/api/requirements').then((d) => Array.isArray(d) && setReqs(d))
++  }, [checks?.finished])
++
++  const counts = reqs.reduce((c, r) => ({ ...c, [r.status]: (c[r.status] || 0) + 1 }), {})
++  const rows = reqs.filter((r) => filter === 'all' || r.status === filter)
+   return (
+     <div className="page">
+       <h1>Requirements tracker</h1>
+-      <p className="muted">Starter file. Step 9. Requirements: every requirement</p>
++      <h2>Measured numbers</h2>
++      <Measured m={metrics} />
++
++      <h2>Requirements</h2>
++      <div className="demo-row">
++        {Object.entries(SHOW).map(([k, v]) => <span key={k} className={`chip chip-dark`}>{v}: {counts[k] || 0}</span>)}
++        <label>Show
++          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
++            <option value="all">All ({reqs.length})</option>
++            {Object.entries(SHOW).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
++          </select>
++        </label>
++      </div>
++      <div className="card table-wrap">
++        <table className="fault-table">
++          <thead><tr><th>Requirement</th><th>Statement</th><th>Status</th><th>Check</th><th>Note</th></tr></thead>
++          <tbody>
++            {rows.map((r) => (
++              <tr key={r.id}>
++                <td><strong>{r.id}</strong></td>
++                <td>{r.statement}</td>
++                <td><span className={`badge tracker-${r.status}`}>{SHOW[r.status] ?? r.status}</span></td>
++                <td>{r.result}</td>
++                <td className="muted">{r.note}</td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++      <p className="muted">The Check column comes from the last run of the check script (Demo page, "Run all checks").</p>
+     </div>
+   )
+ }
+diff --git a/system/frontend/src/api.js b/system/frontend/src/api.js
+index 5f743d3..0a2dc86 100644
+--- a/system/frontend/src/api.js
++++ b/system/frontend/src/api.js
+@@ -1,14 +1,35 @@
+-// Talks to the Flask server. The live connection carries the readings (stream 1) and the statuses.
++// Talks to the Flask server. Every call carries the sign-in token (FR-28). The live connection carries the readings (stream 1) and the statuses.
+ import { io } from 'socket.io-client'
+ 
+-export async function get(path) {
+-  const r = await fetch(path)
+-  return r.json()
++const KEY = 'fd-token'            // sessionStorage: each browser tab is its own sign-in, so two people can be shown on one laptop
++export const getToken = () => sessionStorage.getItem(KEY) || ''
++export const setToken = (t) => (t ? sessionStorage.setItem(KEY, t) : sessionStorage.removeItem(KEY))
++
++async function call(method, path, body) {
++  const r = await fetch(path, {
++    method,
++    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
++    body: body === undefined ? undefined : JSON.stringify(body),
++  })
++  if (r.status === 401 && getToken()) window.dispatchEvent(new Event('fd-unauth'))
++  return r.json().catch(() => ({ ok: false, message: 'The server sent a reply that could not be read.' }))
+ }
+ 
+-export async function post(path, body) {
+-  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+-  return r.json()
++export const get = (path) => call('GET', path)
++export const post = (path, body = {}) => call('POST', path, body)
++export const del = (path) => call('DELETE', path)
++
++// A file download that carries the token in the header, never in the address.
++export async function download(path, filename) {
++  const r = await fetch(path, { headers: { Authorization: `Bearer ${getToken()}` } })
++  if (!r.ok) return r.json().catch(() => ({ ok: false, message: 'Could not make the file.' }))
++  const url = URL.createObjectURL(await r.blob())
++  const a = document.createElement('a')
++  a.href = url
++  a.download = filename
++  a.click()
++  URL.revokeObjectURL(url)
++  return { ok: true }
+ }
+ 
+-export const live = io({ autoConnect: false })
++export const live = io({ autoConnect: false, auth: (cb) => cb({ token: getToken() }) })
+diff --git a/system/frontend/src/status.js b/system/frontend/src/status.js
+new file mode 100644
+index 0000000..749cc31
+--- /dev/null
++++ b/system/frontend/src/status.js
+@@ -0,0 +1,22 @@
++// Words and units shown on the dashboard. One place, so a wording change (for example warning -> abnormal) is one edit.
++// Open item: "warning" and "abnormal" mean the same first level. Both are kept until the SRS wording is settled.
++export const STATUS_LABEL = { normal: 'Normal', warning: 'Warning', abnormal: 'Abnormal', critical: 'Critical', unknown: 'Waiting' }
++
++export const RANK = { unknown: -1, normal: 0, abnormal: 1, warning: 1, critical: 2 }
++
++export const UNITS = { temperature: '°C', current: 'A', vibration: 'mm/s', rpm: 'rpm', fan_rpm: 'rpm' }
++const DECIMALS = { temperature: 1, current: 1, vibration: 2, rpm: 0, fan_rpm: 0 }
++
++export const PARAM_LABEL = {
++  motor: { temperature: 'Temperature', current: 'Current', vibration: 'Vibration', rpm: 'Speed' },
++  pump: { temperature: 'Bearing temp.', current: 'Current', vibration: 'Vibration', rpm: 'Speed' },
++  ups: { temperature: 'Internal temp.', current: 'Current', fan_rpm: 'Fan speed' },
++}
++
++export function formatValue(parameter, value) {
++  return typeof value === 'number' ? value.toFixed(DECIMALS[parameter] ?? 1) : '—'
++}
++
++export function worst(parameters) {
++  return Object.values(parameters).reduce((w, p) => (RANK[p.status] > RANK[w] ? p.status : w), 'unknown')
++}
+diff --git a/system/frontend/src/theme.css b/system/frontend/src/theme.css
+index 0973e9c..061bc81 100644
+--- a/system/frontend/src/theme.css
++++ b/system/frontend/src/theme.css
+@@ -46,3 +46,86 @@ h1, h2, h3 { color: var(--text-head); }
+ .topbar input { flex: 1; max-width: 360px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-light); }
+ .topbar button { background: transparent; color: #F8F9FB; border: 1px solid var(--bg-sidebar-hover); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+ .brand { font-weight: 700; color: var(--gold); text-decoration: none; }
++
++/* ---- Segment 2: live dashboard ---- */
++.topbar .navlink { color: #F8F9FB; text-decoration: none; margin-left: auto; }
++.group-title { margin: 28px 0 12px; }
++.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
++.machine-card { display: block; text-decoration: none; color: inherit; border-left: 6px solid var(--border-light); }
++.machine-card:hover, .machine-card:focus-visible { box-shadow: 0 2px 10px rgba(44, 58, 76, 0.18); }
++.machine-card.status-normal { border-left-color: var(--teal); }
++.machine-card.status-warning, .machine-card.status-abnormal { border-left-color: var(--warning); }
++.machine-card.status-critical { border-left-color: var(--red); }
++.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
++.card-head h3 { margin: 0; }
++.param-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border-faint); font-size: 14px; }
++.param-name { flex: 1; color: var(--text-muted); }
++.param-value strong { color: var(--text-head); font-variant-numeric: tabular-nums; }
++.unit { color: var(--text-muted); font-size: 12px; }
++.badge { padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; border: 1px solid; }
++.badge.normal { background: var(--teal-dim); color: #3f5f4e; border-color: var(--teal); }
++.badge.warning, .badge.abnormal { background: var(--warning-dim); color: #6b5a2a; border-color: var(--warning); }
++.badge.critical { background: var(--red-dim); color: #7a3f3f; border-color: var(--red); }
++.badge.unknown { background: var(--secondary-dim); color: var(--text-body); border-color: var(--border-light); }
++.marks { display: flex; gap: 6px; margin-bottom: 4px; }
++.mark { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1px solid; }
++.marks .mark { margin-left: 0; }
++.mark-fault { background: var(--red-dim); color: #7a3f3f; border-color: var(--red); }
++.mark-invalid { background: var(--gold-dim); color: #6b5a2a; border-color: var(--gold); }
++.mark-maint { background: var(--purple-dim); color: #4f4360; border-color: var(--purple); }
++.mark-overdue { background: var(--red-dim); color: #7a3f3f; border-color: var(--red); }
++.notice { padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; font-weight: 600; border: 1px solid; }
++.notice-delayed { background: var(--gold-dim); color: #6b5a2a; border-color: var(--gold); }
++.notice-lost { background: var(--red-dim); color: #7a3f3f; border-color: var(--red); }
++.demo-card { display: grid; gap: 14px; }
++.demo-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
++.demo-row label { display: grid; gap: 4px; font-size: 13px; }
++.demo-row select, .demo-row input { padding: 6px 8px; border: 1px solid var(--border-light); border-radius: 8px; }
++.demo-btn { background: var(--primary); color: #F8F9FB; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
++.demo-btn:hover { background: var(--secondary); }
++
++/* ---- Segment 3: faults you can act on ---- */
++.popup-backdrop { position: fixed; inset: 0; background: rgba(44, 58, 76, 0.55); display: flex; align-items: center; justify-content: center; z-index: 50; }
++.popup { width: min(440px, 92vw); border-left: 6px solid var(--gold); }
++.bell-wrap { position: relative; }
++.bell-count { background: var(--red); color: #fff; border-radius: 999px; padding: 0 7px; margin-left: 4px; font-size: 12px; }
++.bell-list { position: absolute; right: 0; top: 42px; width: 300px; z-index: 40; color: var(--text-body); }
++.bell-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border-faint); color: var(--text-head); text-decoration: none; font-size: 14px; }
++.actas { display: flex; align-items: center; gap: 6px; font-size: 13px; }
++.actas select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border-light); }
++.detail-head { justify-content: flex-start; gap: 12px; }
++.detail-head h1 { margin: 8px 0; }
++.maint-row { margin-bottom: 8px; }
++.tiles { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
++.tile { display: grid; gap: 6px; }
++.tile-value strong { font-size: 24px; color: var(--text-head); }
++.range-buttons { display: flex; gap: 6px; }
++.demo-btn-off { background: transparent; color: var(--text-body); border: 1px solid var(--border-light); }
++.linkbtn { text-decoration: none; display: inline-block; }
++.table-wrap { overflow-x: auto; }
++.fault-table { width: 100%; border-collapse: collapse; font-size: 14px; }
++.fault-table th, .fault-table td { text-align: left; padding: 8px; border-top: 1px solid var(--border-faint); }
++
++/* ---- Segment 4 and 5: people, settings, demo, proof ---- */
++.topbar .navlink.first { margin-left: auto; }
++.topbar .navlink + .navlink, .topbar .navlink + .chip { margin-left: 0; }
++.chip { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--bg-sidebar-hover); font-size: 12px; white-space: nowrap; }
++.chip-dark { border-color: var(--border-light); color: var(--text-head); background: var(--bg-card); }
++.signin { max-width: 460px; padding-top: 64px; }
++.signin-card { display: grid; gap: 16px; }
++.signin-card label, .demo-card label { display: grid; gap: 4px; font-size: 13px; }
++.signin-card input, .demo-card input, .demo-card select { padding: 8px; border: 1px solid var(--border-light); border-radius: 8px; }
++.side-backdrop { position: fixed; inset: 0; z-index: 59; }
++.sidebar { position: fixed; top: 0; right: 0; bottom: 0; width: 260px; background: var(--bg-card); color: var(--text-body); padding: 24px; display: grid; align-content: start; gap: 12px; z-index: 60; box-shadow: -4px 0 16px rgba(44, 58, 76, 0.25); }
++.sidebar a { color: var(--text-head); }
++.bar { position: relative; height: 18px; border-radius: 9px; background: var(--bg-chart); border: 1px solid var(--border-light); overflow: hidden; }
++.bar-fill { height: 100%; background: var(--teal); }
++.bar-hot { background: var(--red); }
++.bar-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text-head); }
++.top-gap { margin-top: 14px; }
++.check-output { background: var(--bg-chart); padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; max-height: 320px; }
++.tracker-built { background: var(--teal-dim); color: #3f5f4e; border-color: var(--teal); }
++.tracker-simulated { background: var(--gold-dim); color: #6b5a2a; border-color: var(--gold); }
++.tracker-left-out { background: var(--red-dim); color: #7a3f3f; border-color: var(--red); }
++.tracker-not-set { background: var(--secondary-dim); color: var(--text-body); border-color: var(--border-light); }
++.topbar input[aria-invalid="true"] { border-color: var(--red); }
+diff --git a/system/frontend/src/useFaults.js b/system/frontend/src/useFaults.js
+new file mode 100644
+index 0000000..5e1f92a
+--- /dev/null
++++ b/system/frontend/src/useFaults.js
+@@ -0,0 +1,18 @@
++// The faults that matter to the person acting: pop-ups (not acknowledged yet) and the bell list (acknowledged, not resolved).
++import { useCallback, useEffect, useState } from 'react'
++import { get, live } from './api.js'
++
++export function useFaults(username) {
++  const [state, setState] = useState({ popups: [], bell: [], storage_alerts: 0 })
++  const reload = useCallback(() => {
++    if (!username) return
++    get(`/api/faults?user=${username}`).then((d) => d.popups && setState(d)).catch(() => {})
++  }, [username])
++  useEffect(() => {
++    reload()
++    live.on('faults_changed', reload)
++    live.on('connect', reload)
++    return () => { live.off('faults_changed', reload); live.off('connect', reload) }
++  }, [reload])
++  return { ...state, reload }
++}
+diff --git a/system/frontend/src/useLive.js b/system/frontend/src/useLive.js
+new file mode 100644
+index 0000000..3cdcc89
+--- /dev/null
++++ b/system/frontend/src/useLive.js
+@@ -0,0 +1,59 @@
++// Keeps the Overview in step with the server. Readings arrive straight from the live connection (stream 1),
++// statuses the moment a window closes (stream 2), and a full snapshot each second carries the marks.
++import { useEffect, useState } from 'react'
++import { get, live } from './api.js'
++import { worst } from './status.js'
++
++function patchReading(data, r) {
++  return {
++    ...data,
++    machines: data.machines.map((m) => {
++      const p = m.parameters[r.parameter]
++      if (m.id !== r.machine_id || !p) return m
++      const value = typeof r.value === 'number' ? r.value : null
++      return { ...m, parameters: { ...m.parameters, [r.parameter]: { ...p, value, invalid: !r.valid, sensor_fault: false } } }
++    }),
++  }
++}
++
++function patchStatus(data, w) {
++  return {
++    ...data,
++    machines: data.machines.map((m) => {
++      const p = m.parameters[w.parameter]
++      if (m.id !== w.machine_id || !p) return m
++      const parameters = { ...m.parameters, [w.parameter]: { ...p, status: w.status } }
++      return { ...m, parameters, status: worst(parameters) }
++    }),
++  }
++}
++
++export function useOverview() {
++  const [data, setData] = useState(null)
++  const [connected, setConnected] = useState(live.connected)
++
++  useEffect(() => {
++    let alive = true
++    get('/api/overview').then((d) => alive && setData(d)).catch(() => {})
++    const onOverview = (d) => setData(d)
++    const onReading = (r) => setData((d) => (d ? patchReading(d, r) : d))
++    const onStatus = (w) => setData((d) => (d ? patchStatus(d, w) : d))
++    const onConnect = () => setConnected(true)
++    const onDisconnect = () => setConnected(false)
++    live.on('overview', onOverview)
++    live.on('reading', onReading)
++    live.on('status', onStatus)
++    live.on('connect', onConnect)
++    live.on('disconnect', onDisconnect)
++    return () => {
++      alive = false
++      live.off('overview', onOverview)
++      live.off('reading', onReading)
++      live.off('status', onStatus)
++      live.off('connect', onConnect)
++      live.off('disconnect', onDisconnect)
++    }
++  }, [])
++
++  return { data, connected }
++}
+diff --git a/system/frontend/src/user.jsx b/system/frontend/src/user.jsx
+new file mode 100644
+index 0000000..f22c67e
+--- /dev/null
++++ b/system/frontend/src/user.jsx
+@@ -0,0 +1,61 @@
++// Who is signed in. FR-26 (sign out after the person's own idle time), FR-28 (sign in first).
++import { createContext, useCallback, useContext, useEffect, useState } from 'react'
++import { get, post, live, getToken, setToken } from './api.js'
++
++const UserContext = createContext({ user: null, ready: false })
++
++export function UserProvider({ children }) {
++  const [user, setUser] = useState(null)
++  const [ready, setReady] = useState(false)
++
++  const clear = useCallback((note) => {
++    setToken('')
++    live.disconnect()
++    if (note) sessionStorage.setItem('fd-note', note)
++    setUser(null)
++  }, [])
++
++  useEffect(() => {
++    if (!getToken()) { setReady(true); return }
++    get('/api/me').then((d) => { if (d.username) setUser(d) }).finally(() => setReady(true))
++  }, [])
++
++  useEffect(() => {
++    const onUnauth = () => clear('Your sign-in ended. Please sign in again.')
++    window.addEventListener('fd-unauth', onUnauth)
++    return () => window.removeEventListener('fd-unauth', onUnauth)
++  }, [clear])
++
++  useEffect(() => { if (user) live.connect(); else live.disconnect() }, [user])
++
++  // FR-26: signed out after this person's idle time. Only the person's own activity keeps the session alive.
++  useEffect(() => {
++    if (!user) return undefined
++    let last = Date.now()
++    let pinged = Date.now()
++    const mark = () => { last = Date.now() }
++    const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll']
++    events.forEach((e) => window.addEventListener(e, mark))
++    const timer = setInterval(() => {
++      if (Date.now() - last > user.session_min * 60000) {
++        post('/api/signout')
++        clear(`You were signed out after ${user.session_min} minute${user.session_min > 1 ? 's' : ''} without activity.`)
++      } else if (last > pinged && Date.now() - pinged > 20000) {
++        pinged = Date.now()
++        post('/api/me/ping')
++      }
++    }, 5000)
++    return () => { events.forEach((e) => window.removeEventListener(e, mark)); clearInterval(timer) }
++  }, [user, clear])
++
++  const signIn = async (username, password) => {
++    const r = await post('/api/signin', { username, password })
++    if (r.ok) { setToken(r.token); setUser(r.user) }
++    return r
++  }
++  const signOut = async () => { await post('/api/signout'); clear() }
++
++  return <UserContext.Provider value={{ user, ready, signIn, signOut, setUser }}>{children}</UserContext.Provider>
++}
++
++export const useUser = () => useContext(UserContext)
+diff --git a/system/frontend/vite.config.js b/system/frontend/vite.config.js
+index 5f31a2d..e9d49f0 100644
+--- a/system/frontend/vite.config.js
++++ b/system/frontend/vite.config.js
+@@ -2,12 +2,16 @@ import { defineConfig } from 'vite'
+ import react from '@vitejs/plugin-react'
+ 
+ // Sends /api and the live connection to the Flask server on port 5000.
++// If the server runs with HTTPS (see SETUP.md), start Vite with BACKEND=https://127.0.0.1:5000
++const backend = process.env.BACKEND || 'http://127.0.0.1:5000'
++const secure = false          // the demo certificate is made by the server itself
++
+ export default defineConfig({
+   plugins: [react()],
+   server: {
+     proxy: {
+-      '/api': 'http://127.0.0.1:5000',
+-      '/socket.io': { target: 'http://127.0.0.1:5000', ws: true },
++      '/api': { target: backend, secure },
++      '/socket.io': { target: backend, ws: true, secure },
+     },
+   },
+ })
