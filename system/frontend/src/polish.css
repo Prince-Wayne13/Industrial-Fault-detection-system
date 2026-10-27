@@ -1,0 +1,149 @@
+/* Modern, compact look. Loaded after theme.css, so it only overrides: smaller type, rounder corners, softer shadows, tighter cards.
+   To go back to the old look, remove the polish.css import in main.jsx. */
+:root {
+  --bg-canvas: #eef1f5;
+  --bg-card: #ffffff;
+  --bg-chart: #f4f6f9;
+  --bg-sidebar: #1f2d3d;
+  --bg-sidebar-hover: rgba(255, 255, 255, 0.08);
+  --border-faint: #eef1f5;
+  --border-light: #e3e8ee;
+  --text-head: #1b2634;
+  --text-body: #526071;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow-card: 0 1px 2px rgba(20, 35, 55, 0.04), 0 6px 18px rgba(20, 35, 55, 0.06);
+  --shadow-pop: 0 18px 44px rgba(20, 35, 55, 0.22);
+  --sidenav-w: 232px;
+  --topbar-h: 60px;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+body { font-family: var(--font); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input, select { font-family: var(--font); }
+.muted { font-size: 13px; }
+.content { padding: 22px 26px; max-width: 1240px; }
+
+/* buttons and fields: smaller, pill shaped */
+.btn, .demo-btn, .linkbtn { min-height: 38px; padding: 0 18px; border-radius: 999px; font-size: 13.5px; font-weight: 600; }
+.btn-quiet { padding: 0 14px; }
+.demo-btn-off { border-color: var(--border-light); background: #fff; }
+select, input:not([type]), input[type="text"], input[type="password"], input[type="number"] { min-height: 38px; border-radius: 12px; font-size: 14px; }
+.icon-btn { width: 40px; height: 40px; border-radius: 12px; border-color: transparent; background: var(--bg-canvas); }
+.icon-btn:hover { background: #e3e8ee; }
+.bell-badge { min-width: 18px; height: 18px; font-size: 11px; top: -5px; right: -5px; }
+
+/* pills and badges */
+.pill, .badge { padding: 4px 10px; font-size: 11px; letter-spacing: 0.06em; }
+.pill::before, .badge::before { width: 7px; height: 7px; }
+.pill.role { background: var(--primary-dim); }
+
+/* side nav */
+.sidenav { padding: 18px 12px; gap: 3px; }
+.sidenav .brand { padding: 4px 8px 18px; font-size: 18px; font-weight: 700; }
+.brand-mark { width: 34px; height: 34px; border-radius: 11px; }
+.nav-group { margin: 16px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; }
+.nav-link { min-height: 40px; gap: 12px; padding: 0 12px; border-radius: 12px; font-size: 14px; font-weight: 500; }
+.nav-link.active { background: rgba(255, 255, 255, 0.12); box-shadow: none; }
+.nav-link.active svg { color: #f0c46a; }
+
+/* top bar */
+.topbar { padding: 0 26px; gap: 12px; box-shadow: none; border-bottom: 1px solid var(--border-light); }
+.search { max-width: 380px; }
+.search input { min-height: 38px; background: var(--bg-canvas); border-color: transparent; font-size: 13.5px; }
+.search input:focus { background: #fff; border-color: var(--border-light); outline: none; box-shadow: 0 0 0 3px rgba(91, 124, 153, 0.18); }
+.person { min-height: 40px; border-color: transparent; background: var(--bg-canvas); }
+.avatar { width: 30px; height: 30px; font-size: 12px; }
+.person-name { font-size: 13px; }
+.person-role { font-size: 11.5px; }
+
+/* every card: rounder, flatter, softer */
+.card, .tile, .mcard, .fault-popup, .popover, .demo-card, .signin-card { border-color: rgba(227, 232, 238, 0.9); border-radius: var(--radius); box-shadow: var(--shadow-card); }
+.card { padding: 14px 16px; }
+.popover { border-radius: 18px; padding: 14px; }
+.pop-item { border-radius: 14px; padding: 10px 12px; }
+
+/* page headings */
+.page-head { margin-bottom: 14px; gap: 2px; }
+.page > .muted:first-of-type, .page-head .muted { margin: 0 0 14px; }
+.page-head h1, .page > h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+.page h2, .page > h2 { font-size: 16px; font-weight: 650; margin: 20px 0 10px; }
+.group { margin-bottom: 22px; }
+.group-head { margin-bottom: 10px; }
+.group-head h2 { font-size: 16px; }
+.group-title { margin: 20px 0 10px; }
+
+/* summary tiles */
+.tiles { gap: 12px; margin-bottom: 22px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.tile { padding: 12px 16px; gap: 4px; }
+.tile .label { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-body); }
+.tile .num { font-size: 26px; letter-spacing: -0.02em; }
+
+/* machine cards on Overview */
+.cards { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.mcard { gap: 10px; padding: 14px 16px; }
+.mcard:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(20, 35, 55, 0.05), 0 12px 26px rgba(20, 35, 55, 0.1); }
+.mcard .icon { width: 34px; height: 34px; border-radius: 11px; }
+.mcard .name { font-size: 16px; font-weight: 650; }
+.reads { gap: 8px 14px; }
+.read dt { font-size: 12px; }
+.read dd { font-size: 17px; font-weight: 650; }
+.read dd .unit { font-size: 12px; }
+.card-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.param-row { padding: 5px 0; font-size: 13px; }
+
+/* machine detail */
+.machine-page { gap: 14px; }
+.machine-hero { padding: 14px 18px; }
+.machine-icon { width: 44px; height: 44px; border-radius: 14px; }
+.machine-identity { gap: 12px; }
+.machine-identity h1 { font-size: 22px; }
+.machine-section { gap: 10px; }
+.machine-section-head h2 { font-size: 17px; margin: 0; }
+.machine-readings { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.reading-card { min-height: 0; gap: 8px; border-left-width: 0; border-top: 3px solid var(--border-light); }
+.reading-card.reading-normal { border-top-color: var(--teal); }
+.reading-card.reading-warning, .reading-card.reading-abnormal { border-top-color: var(--warning); }
+.reading-card.reading-critical { border-top-color: var(--red); }
+.reading-card.reading-unknown { border-top-color: var(--secondary); }
+.reading-card .tile-value strong { font-size: 24px; letter-spacing: -0.02em; }
+.machine-controls { padding: 12px 14px; gap: 12px; }
+.machine-maintenance { border-left-width: 0; border-top: 3px solid var(--purple); }
+.machine-controls label { font-size: 12.5px; min-width: 150px; }
+
+/* live window boxes */
+.slots { gap: 6px; grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); }
+.slot { min-height: 52px; padding: 5px 3px; border-radius: 12px; font-size: 13px; }
+
+/* machine cards in the old grid: keep the status colour but as a top edge */
+.machine-card { border-left-width: 0; border-top: 3px solid var(--border-light); }
+.machine-card.status-normal { border-top-color: var(--teal); }
+.machine-card.status-warning, .machine-card.status-abnormal { border-top-color: var(--warning); }
+.machine-card.status-critical { border-top-color: var(--red); }
+
+/* tables */
+.fault-table { font-size: 13px; }
+.fault-table th { font-size: 11px; padding: 10px 12px; }
+.fault-table td { padding: 10px 12px; }
+.table-wrap { padding: 4px 6px; border-radius: var(--radius); }
+
+/* fault pop-up: smaller and tidier */
+.popup-stack { right: 20px; bottom: 20px; gap: 10px; }
+.fault-popup { width: 360px; padding: 16px 18px; gap: 8px; border-radius: 20px; }
+.fault-popup .machine { font-size: 18px; }
+.fault-popup .what { font-size: 14px; }
+.fault-popup .actions { gap: 8px; }
+.fault-popup .numbers, .fault-popup .time { font-size: 12.5px; }
+.fault-popup .reminder { font-size: 12px; }
+
+/* side panel, notices, timers, sign in */
+.panel { width: 320px; padding: 22px 20px; border-radius: 24px 0 0 24px; }
+.panel h2 { font-size: 20px; }
+.notice { border-radius: 14px; font-size: 13.5px; }
+.timer-item { border-left-width: 0; border-top: 3px solid var(--gold); }
+.timer-count { font-size: 26px; }
+.signin-card { padding: 22px; }
+.signin h1 { font-size: 24px; }
+.seg button { border-radius: 999px; min-height: 36px; }
+.range-buttons { gap: 6px; }
+
+@media (max-width: 900px) { :root { --sidenav-w: 72px; } .content { padding: 16px; } }
