@@ -10,3 +10,8 @@ backend/.env
 frontend/node_modules/
 frontend/dist/
 .obsidian/
+
+# Python caches and the dev node_modules link
+__pycache__/
+*.pyc
+node_modules
