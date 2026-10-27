@@ -48,7 +48,7 @@ The folders and the starter files come from `setup.sh` (see [[page-map]] and `SE
 | --- | --- | --- |
 | 1 | The limits that Appendix A leaves out: motor vibration (warning and critical), motor RPM, pump current, pump RPM, backup power current. [[FR-4]] needs them | 1.3 |
 | 2 | What counts as a "physically possible" reading for each parameter ([[FR-14]]) | 1.3 |
-| 3 | How much of the 10-second window must be abnormal for a fault ([[FR-6]]). Starting rule: all of it | 1.3 |
+| 3 | How much of the 10-second window must be abnormal for a fault ([[FR-6]]). Was "all of it"; now the trained model scores each window and 50% or more flags it. See [[engine]] | 1.3 |
 | 4 | The size of the local storage file. [[PR-006]] needs room for 3,456,000 readings plus statuses and faults | 1.5 |
 
 **Steps.**

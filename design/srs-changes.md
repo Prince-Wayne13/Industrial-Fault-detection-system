@@ -9,7 +9,7 @@ tags: [design, srs-changes]
 
 Back to [[page-map]].
 
-Every decision made while designing that is not in SRS v2.0, gathered in one place. When the design is finished, the SRS is edited from this list. The wording below is a suggestion for each edit. Nothing has been changed in the SRS yet.
+Every decision made while designing that is not in SRS v2.0, gathered in one place. When the design is finished, the SRS is edited from this list. The wording below is a suggestion for each edit. The only change already made in the SRS is the password length ([[FR-28a]]: at least 8 characters, was 15, change 16). Everything else is still to do.
 
 ## Summary
 
@@ -26,6 +26,11 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 | 9 | The Administrator cannot reset passwords, and can see the Overview | [[UC-5]], role table | adds detail |
 | 10 | Alerts, graphs and maintenance folded into other pages instead of pages of their own | [[UC-2]], [[UC-3]], [[UC-6]] | design only, no wording change |
 | 11 | Automatic switching between Bluetooth and Wi-Fi, shown by two icons in the top bar | [[FR-11]], [[UC-4]] | adds detail |
+| 12 | The log also records acknowledgements and resolved faults, is saved in the database and is for the Administrator only | [[FR-22]], [[FR-23]], [[FR-8a]] | changes a rule |
+| 13 | Every parameter can have all four limits, and any limit can be left out | [[FR-4]], [[FR-5]], [[FR-23a]], [[FR-23b]] | changes a rule |
+| 14 | Fault pop-ups show one at a time | [[FR-7]], [[FR-7a]] | adds detail |
+| 15 | A window is flagged by the model's fault score, not by all 10 readings | [[FR-6]], Appendix B | adds detail |
+| 16 | Passwords are at least 8 characters | [[FR-28a]] | already applied in the SRS |
 
 ## The detail
 
@@ -96,16 +101,50 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 - **Updated behavior:** when neither sensor link is available, live readings stop and the dashboard marks them as paused. They resume after a connection returns. The online-database link is separate; its interruption can still queue locally collected data under [[FR-12]].
 - **Extra on the tracker:** the manual menu (Automatic, Bluetooth only, Wi-Fi only) and the icons themselves are not in the SRS today.
 
+### 12. The activity log
+
+- **Now:** [[FR-22]] logs administrative actions: user account changes, equipment registration, threshold or configuration changes. [[FR-23]] keeps the previous value of a limit and the date of change.
+- **Built and suggested for [[FR-22]]:** the log also records each acknowledgement (who, which fault, when) and each resolved fault. The log is saved in the local and the online database, so it survives a restart. Only the Administrator can read it.
+- **The clash:** [[FR-23]] keeps the old limit and its date, and the log is where they live, but an Engineer who changes a limit cannot read the log. **Suggested:** say in [[FR-23]] that the previous value and date are kept in the log, which the Administrator reads. If the Engineer must see earlier values, the Settings page has to show them. Your decision.
+- See [[09-logs]] and [[05-settings]].
+
+### 13. Limits: all four, and any can be left out
+
+- **Now:** [[FR-23a]] lets an Engineer change "the warning limit and the critical limit". Appendix A gives some parameters one limit only (for example motor speed has "below" only, pump temperature "above" only).
+- **Built:** every parameter shows four limits: warning above, critical above, abnormal above and abnormal below. An Engineer can fill in any of them, change them or empty them. An empty limit is "not necessary" and is not used; only limits with a value count in the status. At least one limit must stay. Limits belong to each machine, not to a machine type.
+- **Suggested wording for [[FR-23a]]:** "An Engineer shall be able to set, change or remove any limit of any parameter of a machine (warning, critical, abnormal above, abnormal below) from the Settings page, without restarting or rebuilding the system. A parameter shall keep at least one limit."
+- **Suggested addition to [[FR-23b]]:** the system also rejects a change where "abnormal below" is not lower than the limits for too high.
+- **Suggested addition to [[FR-5]]:** a parameter with no warning or critical limit uses normal or abnormal only (this already follows the sentence added to [[FR-5]] in version 2).
+- See [[05-settings]].
+
+### 14. Pop-ups one at a time
+
+- **Suggested addition to [[FR-7]]:** when several faults are waiting, the screen shows one pop-up at a time, the most serious first (critical before warning, then the oldest). A small note says how many are waiting. When the person acknowledges one, the next appears.
+- Every fault still reaches every connected Operator and Engineer, and each stays until that person acknowledges it ([[FR-7a]], change 2).
+- See [[fault-popup]].
+
+### 15. How a window is flagged
+
+- **Now:** [[FR-6]] says an abnormal condition must "hold across the readings of the latest 10-second window". It does not say how much of the window. The design first used "all 10 readings". One dipped reading then hid a real fault, so a window of 9 critical readings and one normal one was called normal.
+- **Built:** the trained model turns each window into a fault score (0 to 100%). At 50% or more the window is flagged, and critical needs its own score of 50% or more. In practice a window with 6 or more of 10 readings over a limit is flagged, and 5 or fewer is not. One spike alone never is. The training windows are labelled with a 60% share, kept in `TREND_FRACTION`.
+- **Suggested addition to Appendix B** (the line about the model): "The model gives each 10-second window a fault score. A window is flagged when the score is at least 50%."
+- **Gap, not built yet:** a window with fewer than 10 readings (after maintenance, a reconnect, or lost readings) is scored on what arrived, so 1 to 3 readings over a limit can flag it. [[FR-6]] says a single abnormal reading never makes a fault. Suggested guard: only flag a window that has at least 8 clean readings. See [[engine]].
+
+### 16. Password length
+
+- [[FR-28a]] now says "at least 8 characters" (was 15) in the SRS, the design notes, the back end and the screens. The lockout of 15 minutes ([[FR-28d]]) is a different number and did not change.
+
 ## Not decided yet
 
 - Can a resolved fault be switched back to open? The SRS has no way to do it.
 - Can the Administrator open a machine's page from an Overview card?
-- Colours for the dark theme (see the end of this note).
+- Does the Engineer need to see earlier limit values, or is the Administrator's log enough? (change 12)
+- Colours for the dark theme (see the end of this note and [[visual-style]]).
 - How the real near-range link is built, since a browser cannot scan for Bluetooth on its own. See the Open list in [[top-bar]].
 
 ## Colour palette
 
-The colours for Fault-Detect. The same code is in `palette.css`, ready to use when the screens are built.
+The colours for Fault-Detect. The same code is in `palette.css`. The sizes and a few background and text colours were later changed in `polish.css`. The changed values are in [[visual-style]].
 
 ```css
 /* Canvas & surfaces - diary/paper feel */

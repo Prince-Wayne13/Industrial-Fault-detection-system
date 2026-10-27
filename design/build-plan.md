@@ -69,7 +69,7 @@ These came up while checking. Each one blocks a step, so they need an answer bef
 | --- | --- | --- |
 | 1 | [[FR-4]] needs defined limits, but Appendix A has no number for: motor vibration warning and critical (only "per ISO 10816-3"), motor RPM, pump current, pump RPM and backup power current | Step 4 |
 | 2 | [[FR-14]] needs a "physically possible" range for each parameter. The SRS gives none. `config.py` has placeholders | Step 3 |
-| 3 | [[FR-6]] says an abnormal condition must "hold across" the 10 seconds. How much of the window must be abnormal is not stated. The starting rule is all of it | Step 4 |
+| 3 | [[FR-6]] says an abnormal condition must "hold across" the 10 seconds. How much of the window must be abnormal is not stated. Was "all of it"; now the trained model scores each window and 50% or more flags it. See [[engine]] | Step 4 |
 | 4 | Appendix B says one SQLite database. The new plan has an online database and a local one. See [[srs-changes]], changes 11 and 12 | Step 6 |
 | 5 | The size of the local storage file. [[PR-006]] needs room for 3,456,000 readings plus statuses and faults, so the real size has to be measured | Step 6 |
 | 6 | The logistic regression needs a labelled set to learn from. It will be made from seed data (Appendix D) | Step 10 |

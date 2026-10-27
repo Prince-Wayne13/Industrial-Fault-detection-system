@@ -67,6 +67,8 @@ Draft count over the 70 requirement notes: 34 inject, 30 look, 6 inspect. Each r
 - The demo clock exists so that the 24-hour, 15-minute lockout and maintenance-overdue cases do not need real waiting.
 - Look requirements (passwords, roles, limits, history) need no button. The tracker tells the presenter where to look.
 
+Scope for now: only Motor 1 and Motor 2 exist. The scenarios aim at Motor 2 (silent sensor, bad reading, maintenance), and a button for a machine type that is not registered is hidden.
+
 ## The injections (draft names)
 
 The detail of each injection, its seed file and its timing is to be agreed later. The table shows only what each one proves.

@@ -54,12 +54,14 @@ The same layout is used for a motor, a water pump and a backup power unit. Only 
 
 | Part | What it does | Requirement |
 | --- | --- | --- |
+| Limits line | Under the live window: the warning and critical limits in force for this machine, taken from [[05-settings]]. A limit that is not used is not shown. | [[FR-23a]] |
 | Header | Machine name, status, and a "Maintenance" mark while it is in maintenance mode. | [[FR-5]], [[FR-18]] |
 | Live readings, motor | Temperature, current, vibration, speed (RPM). | [[FR-1]] |
 | Live readings, water pump | Bearing temperature, current, vibration, speed (RPM). | [[FR-2]] |
 | Live readings, backup power | Internal temperature, charging or output current, cooling fan speed. | [[FR-3]] |
 | Status on each reading | Each parameter has its own status word. | [[FR-5]] |
 | "Sensor fault" and "Invalid" marks | Same marks as the overview. | [[FR-13]], [[FR-14]] |
+| Live window | For the chosen reading: the 10 readings of the window now, each with its own level, and the last closed window with its status and its fault score. It says how a window is flagged. See [[engine]]. | [[FR-4]], [[FR-6]] |
 | Graph with Day, Week, Month, Year | One line graph for each parameter over the chosen period. | [[FR-9]] |
 | Generate report | Makes a report of this machine's performance and recurring faults for the chosen period. Operator and Engineer. | [[FR-10]], [[UC-3]] |
 | History and faults | Every fault of this machine. A fault on two parameters at once is two lines. Shows who acknowledged each one. | [[FR-9]], [[FR-15]], [[FR-8a]] |

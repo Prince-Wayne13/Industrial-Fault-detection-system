@@ -28,7 +28,7 @@ The Administrator's page. It controls who can use the system and which machines 
 +------------------------------------------------------------+
 ```
 
-Four tabs on one page. No other page is needed for the Administrator. The top bar is the shared one in [[top-bar]], but its bell only ever carries the storage alert.
+Three tabs on one page, and a link to the [[09-logs]] page. No other page is needed for the Administrator. The top bar is the shared one in [[top-bar]], but its bell only ever carries the storage alert.
 
 ## Tab 1: Users
 
@@ -65,6 +65,8 @@ Alert level 75%
 What the personnel decide after the alert (delete, update or something else) is not part of the requirements. The page only raises the alert.
 
 ## The Logs page (Administrator only)
+
+The log has its own page, [[09-logs]]. This tab only points to it.
 
 | Part | What it does | Requirement |
 | --- | --- | --- |

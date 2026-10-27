@@ -26,6 +26,11 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 | 9 | The Administrator cannot reset passwords, and can see the Overview | [[UC-5]], role table | adds detail |
 | 10 | Alerts, History and reports, and Maintenance merged into other pages | [[UC-2]], [[UC-3]], [[UC-6]] | design only, no wording change |
 | 11 | There are two stores: an online database and a local store, written at the same time. Appendix B (DD-04, DD-10) says one SQLite database. | Appendix B, [[FR-12]], [[NFR-6]] | no |
+| 12 | The log also records acknowledgements and resolved faults, is saved in the database and is for the Administrator only | [[FR-22]], [[FR-23]], [[FR-8a]] | changes a rule |
+| 13 | Every parameter can have all four limits, and any limit can be left out | [[FR-4]], [[FR-5]], [[FR-23a]], [[FR-23b]] | changes a rule |
+| 14 | Fault pop-ups show one at a time | [[FR-7]], [[FR-7a]] | adds detail |
+| 15 | A window is flagged by the model's fault score, not by all 10 readings | [[FR-6]], Appendix B | adds detail |
+| 16 | Passwords are at least 8 characters | [[FR-28a]] | already applied in the SRS |
 | 12 | "Set storage" means the set size of the local storage file. The 75% alert and the full-store case use it. | [[FR-21a]], [[NFR-10]], [[PR-006]] | no |
 
 ## The detail
@@ -94,6 +99,39 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 - **Now:** Appendix B says the system uses one SQLite database, with a local backup in DD-10.
 - **Suggested:** the system writes to an online database and to a local store at the same time. The local store has a set size, and "set storage" in [[FR-21a]] means that size. When the local store is full, saving fails and the system keeps the new readings in temporary storage ([[FR-20]]).
 - See [[engine]] and [[build-plan]].
+
+### 12. The activity log
+
+- **Now:** [[FR-22]] logs administrative actions: user account changes, equipment registration, threshold or configuration changes. [[FR-23]] keeps the previous value of a limit and the date of change.
+- **Built and suggested for [[FR-22]]:** the log also records each acknowledgement (who, which fault, when) and each resolved fault. The log is saved in the local and the online database, so it survives a restart. Only the Administrator can read it.
+- **The clash:** [[FR-23]] keeps the old limit and its date, and the log is where they live, but an Engineer who changes a limit cannot read the log. **Suggested:** say in [[FR-23]] that the previous value and date are kept in the log, which the Administrator reads. If the Engineer must see earlier values, the Settings page has to show them. Your decision.
+- See [[logs]] and [[settings]].
+
+### 13. Limits: all four, and any can be left out
+
+- **Now:** [[FR-23a]] lets an Engineer change "the warning limit and the critical limit". Appendix A gives some parameters one limit only (for example motor speed has "below" only, pump temperature "above" only).
+- **Built:** every parameter shows four limits: warning above, critical above, abnormal above and abnormal below. An Engineer can fill in any of them, change them or empty them. An empty limit is "not necessary" and is not used; only limits with a value count in the status. At least one limit must stay. Limits belong to each machine, not to a machine type.
+- **Suggested wording for [[FR-23a]]:** "An Engineer shall be able to set, change or remove any limit of any parameter of a machine (warning, critical, abnormal above, abnormal below) from the Settings page, without restarting or rebuilding the system. A parameter shall keep at least one limit."
+- **Suggested addition to [[FR-23b]]:** the system also rejects a change where "abnormal below" is not lower than the limits for too high.
+- **Suggested addition to [[FR-5]]:** a parameter with no warning or critical limit uses normal or abnormal only (this already follows the sentence added to [[FR-5]] in version 2).
+- See [[settings]].
+
+### 14. Pop-ups one at a time
+
+- **Suggested addition to [[FR-7]]:** when several faults are waiting, the screen shows one pop-up at a time, the most serious first (critical before warning, then the oldest). A small note says how many are waiting. When the person acknowledges one, the next appears.
+- Every fault still reaches every connected Operator and Engineer, and each stays until that person acknowledges it ([[FR-7a]], change 2).
+- See [[fault-popup]].
+
+### 15. How a window is flagged
+
+- **Now:** [[FR-6]] says an abnormal condition must "hold across the readings of the latest 10-second window". It does not say how much of the window. The design first used "all 10 readings". One dipped reading then hid a real fault, so a window of 9 critical readings and one normal one was called normal.
+- **Built:** the trained model turns each window into a fault score (0 to 100%). At 50% or more the window is flagged, and critical needs its own score of 50% or more. In practice a window with 6 or more of 10 readings over a limit is flagged, and 5 or fewer is not. One spike alone never is. The training windows are labelled with a 60% share, kept in `TREND_FRACTION`.
+- **Suggested addition to Appendix B** (the line about the model): "The model gives each 10-second window a fault score. A window is flagged when the score is at least 50%."
+- **Gap, not built yet:** a window with fewer than 10 readings (after maintenance, a reconnect, or lost readings) is scored on what arrived, so 1 to 3 readings over a limit can flag it. [[FR-6]] says a single abnormal reading never makes a fault. Suggested guard: only flag a window that has at least 8 clean readings. See [[engine]].
+
+### 16. Password length
+
+- [[FR-28a]] now says "at least 8 characters" (was 15) in the SRS, the design notes, the back end and the screens. The lockout of 15 minutes ([[FR-28d]]) is a different number and did not change.
 
 ## Not decided yet
 

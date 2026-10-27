@@ -19,6 +19,7 @@ The box that appears on screen when a fault is confirmed. It is shared by every 
 |  10:42:07                        |
 |                    [Acknowledge] |
 +----------------------------------+
+   ( 1 more waiting )
 ```
 
 | Rule | Requirement |
@@ -30,3 +31,5 @@ The box that appears on screen when a fault is confirmed. It is shared by every 
 | Acknowledging records who did it and when, and moves the fault into that person's bell list. | [[FR-8a]] |
 | If nobody is connected, the fault stays open and is shown to the next Operator or Engineer who connects. | [[FR-7c]] |
 | A fault already open does not make a second pop-up. | [[FR-16]] |
+| Only one pop-up shows at a time. The most serious comes first (critical, then warning, then the oldest). A small note under it says how many more are waiting, for example "1 more waiting". Acknowledging the one on screen brings the next. Nothing is skipped: each stays until that person acknowledges it. | [[srs-changes]], change 14 |
+| The box is 360 px wide, in the bottom right corner, so it covers little of the page. | [[visual-style]] |
