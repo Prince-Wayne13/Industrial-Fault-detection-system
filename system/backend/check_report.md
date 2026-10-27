@@ -43,7 +43,7 @@
 | FR-26 | PASS | Sign-out time 1 to 5 minutes, own setting | 1 and 5 accepted, 6 refused, idle session expired |
 | FR-27 | PASS | Administrator-only functions | Operator/Engineer refused; Administrator allowed; no password reset exists |
 | FR-28 | PASS | Sign in first | no session -> sign-in page |
-| FR-28a | PASS | Passwords: 14 refused, 15 and 64 accepted | ok |
+| FR-28a | PASS | Passwords: 7 refused, 8 and 64 accepted | ok |
 | FR-28b | PASS | No forced mix of characters | all-lowercase accepted |
 | FR-28c | PASS | Common passwords refused | That password is too common. |
 | FR-28d | PASS | 5 wrong passwords block the account for 15 minutes | Too many wrong passwords. The account is blocked for 15 minutes. |
@@ -63,7 +63,7 @@
 | PR-002 | SEGMENT 2 | reading to screen within 2 seconds |  |
 | PR-003 | PASS | 10 machines at the same time | 10 machines, status every 10 s (screen timing in Segment 5) |
 | PR-004 | SEGMENT 5 | 5 viewers at once |  |
-| PR-005 | PASS | At least 40 readings per second | 54,343 readings per second processed |
+| PR-005 | PASS | At least 40 readings per second | 184,573 readings per second processed |
 | PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 45.3 MB needed for one day; the local file is set to 512 MB |
 | PR-007 | SEGMENT 5 | start-up within 60 seconds |  |
 
