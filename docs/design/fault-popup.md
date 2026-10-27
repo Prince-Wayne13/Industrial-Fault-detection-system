@@ -49,7 +49,7 @@ It has three drawings: a warning, a critical fault, and two pop-ups on screen at
 | Open machine button | A quiet outlined button that opens that machine's [[machine-detail]]. |
 | Reminder line | "Stays on your screen until you acknowledge it." |
 
-When two faults arrive, the pop-ups stack in the corner, newest on top. Each one is acknowledged on its own.
+When several faults arrive, only one pop-up shows at a time, in the corner. The most serious comes first (critical, then the oldest). A small note says how many more are waiting. When the person acknowledges it, the next one appears. Each one is acknowledged on its own.
 
 The example machines and numbers in the drawings are only samples.
 

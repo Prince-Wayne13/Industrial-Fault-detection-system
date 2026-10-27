@@ -147,3 +147,6 @@ select, input:not([type]), input[type="text"], input[type="password"], input[typ
 .range-buttons { gap: 6px; }
 
 @media (max-width: 900px) { :root { --sidenav-w: 72px; } .content { padding: 16px; } }
+
+/* one pop-up at a time, with a small note about the others */
+.popup-waiting { align-self: flex-end; padding: 6px 12px; border-radius: 999px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 600; box-shadow: var(--shadow-card); }
