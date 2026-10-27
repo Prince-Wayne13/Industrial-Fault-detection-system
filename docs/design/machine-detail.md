@@ -63,7 +63,7 @@ The same layout is used for a motor, a water pump and a backup power unit. Only 
 | Generate report | Makes a report of this machine's performance and recurring faults for the chosen period. Operator and Engineer. | [[FR-10]], [[UC-3]] |
 | History and faults | Every fault of this machine. A fault on two parameters at once is two lines. Shows who acknowledged each one. | [[FR-9]], [[FR-15]], [[FR-8a]] |
 | No repeat alerts | A fault that is already open does not appear again as a new line. | [[FR-16]] |
-| Maintenance switch | Engineer only. Asks for how long, then turns maintenance mode on. Readings keep coming, new fault alerts pause. | [[FR-18]], [[FR-19]] |
+| Maintenance switch | Engineer only. Asks for how long, then turns maintenance mode on. Readings and new fault alerts pause. | [[FR-18]], [[FR-19]] |
 | Resolved switch | Engineer only, on each fault. Marks the fault resolved and records when. | [[FR-17]] |
 
 ## The life of a fault (new decision)

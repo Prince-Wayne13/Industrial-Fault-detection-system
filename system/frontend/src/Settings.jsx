@@ -7,21 +7,25 @@ import { UNITS } from './status.js'
 const KEYS = { warning: 'Warning above', critical: 'Critical above', abnormal: 'Abnormal above', abnormal_below: 'Abnormal below' }
 const when = (t) => new Date(t * 1000).toLocaleString()
 
-function LimitRow({ machineType, parameter, rule, canEdit, onSaved }) {
+function LimitRow({ machineId, machineName, parameter, rule, canEdit, onSaved }) {
   const [values, setValues] = useState(() => Object.fromEntries(Object.entries(rule).map(([k, v]) => [k, String(v)])))
   const [message, setMessage] = useState('')
   const save = async () => {
     const limits = Object.fromEntries(Object.entries(values).map(([k, v]) => [k, Number(v)]))
-    const r = await post('/api/limits', { machine_type: machineType, parameter, limits })
-    setMessage(r.ok ? 'Saved. Applies from the next reading.' : r.message)
-    if (r.ok) onSaved()
+    try {
+      const r = await post('/api/limits', { machine_id: machineId, parameter, limits })
+      setMessage(r.ok ? 'Saved. Applies from the next reading.' : r.message)
+      if (r.ok) onSaved()
+    } catch (e) {
+      setMessage(e.message || 'Could not save this machine limit.')
+    }
   }
   return (
     <tr>
-      <td>{machineType}</td>
+      <td>{machineName}</td>
       <td>{parameter} <span className="unit">({UNITS[parameter]})</span></td>
       {Object.keys(KEYS).map((k) => (
-        <td key={k}>{k in rule && <input type="number" step="any" value={values[k]} disabled={!canEdit} onChange={(e) => setValues({ ...values, [k]: e.target.value })} style={{ width: 80 }} aria-label={`${machineType} ${parameter} ${KEYS[k]}`} />}</td>
+        <td key={k}>{k in rule && <input type="number" step="any" value={values[k]} disabled={!canEdit} onChange={(e) => setValues({ ...values, [k]: e.target.value })} style={{ width: 80 }} aria-label={`${machineName} ${parameter} ${KEYS[k]}`} />}</td>
       ))}
       <td>{canEdit && <button className="demo-btn" onClick={save}>Save</button>} <span className="muted">{message}</span></td>
     </tr>
@@ -33,8 +37,15 @@ export default function Settings() {
   const [limits, setLimits] = useState(null)
   const [minutes, setMinutes] = useState(user.session_min)
   const [msg, setMsg] = useState({})
+  const [limitsError, setLimitsError] = useState('')
   const [pw, setPw] = useState({ old: '', new: '', again: '' })
-  const loadLimits = useCallback(() => { get('/api/limits').then(setLimits) }, [])
+  const loadLimits = useCallback(() => {
+    get('/api/limits').then((data) => {
+      if (!Array.isArray(data.machines)) throw new Error(data.message || 'The server returned invalid limits.')
+      setLimits(data)
+      setLimitsError('')
+    }).catch((e) => setLimitsError(e.message || 'Could not load machine limits.'))
+  }, [])
   useEffect(() => { loadLimits() }, [loadLimits])
 
   const saveMinutes = async () => {
@@ -77,17 +88,23 @@ export default function Settings() {
       {isEngineer && limits && (
         <>
           <h2>Limits</h2>
-          <p className="muted">A limit belongs to a machine type. A change applies from the next reading, with no restart. The warning limit must stay below the critical limit.</p>
-          <div className="card table-wrap">
-            <table className="fault-table">
-              <thead><tr><th>Type</th><th>Parameter</th>{Object.values(KEYS).map((k) => <th key={k}>{k}</th>)}<th /></tr></thead>
-              <tbody>
-                {Object.entries(limits.limits).flatMap(([mt, params]) => Object.entries(params).map(([p, rule]) => (
-                  <LimitRow key={`${mt}-${p}-${JSON.stringify(rule)}`} machineType={mt} parameter={p} rule={rule} canEdit onSaved={loadLimits} />
-                )))}
-              </tbody>
-            </table>
-          </div>
+          <p className="muted">Each machine has its own limits. New machines start with their machine-type defaults; changes apply only to that machine from the next reading.</p>
+          {limits.machines.length === 0 ? <p className="muted">No machines are registered.</p> : limits.machines.map((machine) => (
+            <section className="group" key={machine.id}>
+              <div className="group-head"><h3>{machine.name}</h3><span className="muted">{machine.type}</span></div>
+              <div className="card table-wrap">
+                <table className="fault-table">
+                  <thead><tr><th>Parameter</th>{Object.values(KEYS).map((k) => <th key={k}>{k}</th>)}<th /></tr></thead>
+                  <tbody>
+                    {Object.entries(machine.limits).map(([parameter, rule]) => (
+                      <LimitRow key={`${machine.id}-${parameter}-${JSON.stringify(rule)}`} machineId={machine.id} machineName={machine.name}
+                                parameter={parameter} rule={rule} canEdit onSaved={loadLimits} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ))}
           <h3>Recent limit changes</h3>
           {limits.history.length === 0 ? <p className="muted">None yet.</p> : (
             <div className="card table-wrap">
@@ -99,6 +116,7 @@ export default function Settings() {
           )}
         </>
       )}
+      {isEngineer && limitsError && <p className="notice notice-lost" role="alert">{limitsError}</p>}
     </div>
   )
 }

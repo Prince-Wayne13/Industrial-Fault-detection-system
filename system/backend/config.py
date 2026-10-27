@@ -68,6 +68,7 @@ LIMITS = {
         "fan_rpm":     {"abnormal_below": 1000},                 # [SRS A.3]
     },
 }
+MACHINE_LIMITS = {}              # machine_id -> parameter -> per-machine rule overrides
 DEFAULT_LIMITS = copy.deepcopy(LIMITS)
 
 
@@ -75,6 +76,7 @@ def reset_limits():
     """Put the limits back to the values above. The dict is changed in place, so every module sees it."""
     LIMITS.clear()
     LIMITS.update(copy.deepcopy(DEFAULT_LIMITS))
+    MACHINE_LIMITS.clear()
 
 
 # What counts as a physically possible reading (FR-14). Decision 2. Anything outside is rejected as invalid.

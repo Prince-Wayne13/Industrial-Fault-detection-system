@@ -9,7 +9,7 @@ tags: [requirement, FR]
 
 # FR-23a
 
-An Engineer shall be able to change the warning limit and the critical limit for any parameter of any equipment type, from the dashboard, without restarting or rebuilding the system.
+An Engineer shall be able to change the limits for a parameter on an individual registered machine, from the dashboard, without restarting or rebuilding the system. New machines shall start with the defaults for their machine type. A change to one machine shall not change the limits of other machines.
 
 ## How it is tested
 

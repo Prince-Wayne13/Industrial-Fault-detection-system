@@ -98,7 +98,7 @@ The full list, with suggested wording, is in [[srs-changes]].
 
 - Can the Administrator open a machine's page from an Overview card?
 - Can a resolved fault be switched back to open?
-- Does a limit belong to a machine type or to each machine?
+- **Decided 27 Oct 2026:** limits are maintained per machine. New machines use their type defaults; changing one machine's limits does not change others.
 - What colours does the dark theme use?
 - Which scenarios play live in the 5 minutes?
 - Does the local storage need two sizes, a full one and a small one for the storage demo?

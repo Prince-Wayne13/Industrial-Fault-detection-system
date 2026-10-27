@@ -83,7 +83,7 @@ Status on 17 October 2026. Requirement numbers are those in document version 1.6
 | FR-17, FR-18, FR-23 | Only the Engineer can resolve a fault, use maintenance mode, and change limits. | Team, 26 Oct 2026 |
 | Section 2.3 | The reason for three roles is written in one sentence: three different sets of rights (watch and acknowledge, fix and tune, manage the system). There is no "exactly one role" rule. The Operator is the first responder on shift. The Engineer diagnoses and fixes, often remotely. | Team, 26 Oct 2026 |
 | Section 3.1.1, storage alert | Only the Administrator receives the storage alert and manages storage. | Team, 24 Oct 2026 |
-| NEW (limits) | The Engineer can change the warning and critical limit per equipment type and parameter from the dashboard, with no restart or rebuild. A new limit is rejected if the warning limit is not below the critical limit. A change applies to readings received after it. Answers examiner question 2. | Accepted, 24 Oct 2026 |
+| NEW (limits) | The Engineer can change each machine's limits by parameter from the dashboard, with no restart or rebuild. New machines inherit type defaults; changes apply only to that machine and are logged. A warning limit must stay below its critical limit. | Updated, 27 Oct 2026 |
 | NEW (fault record) | Each fault record stores the limit in force when it was raised. | Accepted, 24 Oct 2026 |
 | FR-23, FR-22 | The engineer may change limits, as long as every change is logged. | Team |
 

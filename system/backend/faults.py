@@ -5,7 +5,7 @@ FR-8, FR-8a, FR-8b          each person acknowledges for themselves; record who 
 FR-15                       one fault record per abnormal parameter
 FR-16                       no duplicate alert while a fault is open
 FR-17                       only an Engineer resolves, after acknowledging; record when
-FR-18, FR-19                maintenance mode for a stated time; alerts pause; overdue flag
+FR-18, FR-19                maintenance mode pauses readings and alerts for a stated time; overdue flag
 FR-23d                      each fault stores the limit in force when it was raised
 PR-001a, PR-001b            alert within 2 seconds of the status confirming it; a late alert is shown, logged and flagged
 

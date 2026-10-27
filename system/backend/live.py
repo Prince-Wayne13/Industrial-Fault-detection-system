@@ -19,18 +19,19 @@ from seed import NORMAL, PARAMETERS, Source
 BAD_VALUE = 99999      # outside every physical range, so the checker rejects it (FR-14)
 BAD_SECONDS = 5        # how long a demo bad reading lasts
 PARAM_ACTIONS = {"warning", "critical", "spike", "clear", "bad", "silent", "fluctuate"}
-NO_MACHINE = {"slow_alert_on", "slow_alert_off", "cut_link", "restore_link", "heavy_load", "remove_load"}
+NO_MACHINE = {"slow_alert_on", "slow_alert_off", "cut_link", "restore_link", "cut_database_link", "restore_database_link", "heavy_load", "remove_load"}
 IMMEDIATE = {"clear_all", "cancel", "mode_near", "mode_remote"}      # never delayed
 LABELS = {"warning": "Warning value", "critical": "Critical value", "spike": "One spike", "fluctuate": "Fluctuating value", "bad": "Bad reading", "silent": "Sensor goes silent",
           "clear": "Back to normal", "maintenance": "Start maintenance", "end_maintenance": "End maintenance", "slow_alert_on": "Slow alerts on",
-          "slow_alert_off": "Slow alerts off", "cut_link": "Connection cut", "restore_link": "Connection restored",
+          "slow_alert_off": "Slow alerts off", "cut_link": "Sensor connection cut", "restore_link": "Sensor connection restored",
+          "cut_database_link": "Database connection cut", "restore_database_link": "Database connection restored",
           "heavy_load": "Heavy load", "remove_load": "Remove the extra machines"}
 UNKNOWN = {"value": None, "invalid": False, "sensor_fault": False, "status": "unknown"}
 
 
-def fault_value(machine_type, parameter, level):
+def fault_value(machine_type, parameter, level, machine_id=None):
     """A value that sits in the given level for this parameter, taken from the limits in force."""
-    r = config.LIMITS[machine_type][parameter]
+    r = config.MACHINE_LIMITS.get(machine_id, {}).get(parameter, config.LIMITS[machine_type][parameter])
     if r.get("critical") is not None:
         return round(r["critical"] * 1.07, 2) if level == "critical" else round((r["warning"] + r["critical"]) / 2, 2)
     if r.get("abnormal") is not None:
@@ -51,6 +52,7 @@ class LiveFeed:
         self.last_window = {}            # (machine_id, parameter) -> the last closed window: values, level of each reading, status
         self._next_id = 1
         self.mode = "near"               # FR-11: simulated near-range (Bluetooth) or remote-range (Wi-Fi) mode
+        self.link_available = True
         self.started = clock.real()
         self.ready_at = None             # PR-007: set when the first second of data has gone out
         self.latency = {"n": 0, "sum": 0.0, "max": 0.0}   # PR-002: a reading's time inside the server, in milliseconds
@@ -67,7 +69,7 @@ class LiveFeed:
             level = None
             mtype = engine.machines.get(reading.get("machine_id"))
             if reading.get("valid") and mtype and isinstance(reading.get("value"), (int, float)):
-                level = threshold_level(mtype, reading["parameter"], reading["value"])
+                level = threshold_level(mtype, reading["parameter"], reading["value"], reading["machine_id"])
             self._safe(self.emit_reading, {**reading, "level": level})   # stream 1, straight to the dashboard, with the level of this one reading
             ms = (clock.real() - self._arrived) * 1000
             self.latency["n"] += 1
@@ -75,7 +77,7 @@ class LiveFeed:
             self.latency["max"] = max(self.latency["max"], ms)
 
         def status(window):
-            levels = [threshold_level(window["machine_type"], window["parameter"], v) for v in window["readings"]]
+            levels = [threshold_level(window["machine_type"], window["parameter"], v, window["machine_id"]) for v in window["readings"]]
             summary = {"values": window["readings"], "levels": levels, "status": window["status"], "start": window["start_time"]}
             self.last_window[(window["machine_id"], window["parameter"])] = summary
             self._safe(self.emit_status, {**{k: window[k] for k in ("machine_id", "parameter", "status", "end_time")}, **summary})
@@ -98,13 +100,14 @@ class LiveFeed:
         for i in due:
             self._apply(i["action"], i["machine_id"], i["parameter"], i["minutes"], in_step=True)
         self.source.machines = self.system.machine_list()
-        for r in self.source.readings_at(t):
-            if self.bad.get((r["machine_id"], r["parameter"]), 0) > t:
-                r["value"] = BAD_VALUE
-            self._arrived = clock.real()
-            self.system.ingest(r)
+        if self.link_available:
+            for r in self.source.readings_at(t):
+                if self.bad.get((r["machine_id"], r["parameter"]), 0) > t:
+                    r["value"] = BAD_VALUE
+                self._arrived = clock.real()
+                self.system.ingest(r)
+            self.system.engine.check_silence(t)
         self.bad = {k: until for k, until in self.bad.items() if until > t}
-        self.system.engine.check_silence(t)
         self._safe(self.emit_overview, self.snapshot())
         if self.ready_at is None:
             self.ready_at = clock.real()
@@ -133,18 +136,23 @@ class LiveFeed:
             machines = []
             for m in s.machine_list():
                 dash = s.dashboard(m["id"])
+                in_maintenance = s.faults.in_maintenance(m["id"])
                 params = {}
                 for p in PARAMETERS[m["type"]]:
                     buf = s.engine.buffer.get((m["id"], p), [])
+                    paused = in_maintenance or not self.link_available
                     params[p] = {**(dash.get(p) or UNKNOWN),
+                                 **({"value": None, "invalid": False, "sensor_fault": False, "status": "unknown"} if paused else {}),
                                  "window": {"start": s.engine.window_started, "length": config.WINDOW_S,
-                                            "readings": [[round(t, 3), v, threshold_level(m["type"], p, v)] for t, v in buf]},
-                                 "last": self.last_window.get((m["id"], p))}
-                worst = max((v["status"] for v in params.values()), key=lambda x: RANK.get(x, -1))
-                machines.append({**m, "status": worst, "maintenance": s.faults.in_maintenance(m["id"]),
+                                            "readings": [] if paused else [[round(t, 3), v, threshold_level(m["type"], p, v, m["id"])] for t, v in buf]},
+                                 "last": None if paused else self.last_window.get((m["id"], p))}
+                worst = "unknown" if in_maintenance or not self.link_available else max((v["status"] for v in params.values()), key=lambda x: RANK.get(x, -1))
+                machines.append({**m, "status": worst, "maintenance": in_maintenance,
+                                 "connection_offline": not self.link_available,
                                  "overdue": s.faults.overdue(m["id"]), "parameters": params})
             return {"machines": machines, "alerts_delayed": s.faults.alerts_delayed, "time": clock.now(), "mode": self.mode,
-                    "link": "up" if s.store.online.available else "cut", "pending": len(s.store.pending_online),
+                    "link": "up" if self.link_available else "cut",
+                    "database_link": "up" if s.store.online.available else "cut", "pending": len(s.store.pending_online),
                     "scheduled": [{"id": i["id"], "label": i["label"], "at": i["at"]} for i in self.scheduled]}
 
     def _person(self, role):
@@ -184,7 +192,11 @@ class LiveFeed:
                 s.alert_hold = 0.0
                 engineer = self._person("engineer")
                 for mid in list(s.faults.maintenance):
-                    s.faults.end_maintenance(mid, engineer)
+                    s.end_maintenance(mid, engineer)
+                self.link_available = True
+                s.engine.resume_connection()
+                s.latest_status.clear()
+                self.last_window.clear()
                 if not s.store.online.available:
                     s.store.restore_online()
                 return True, "Everything back to normal running."
@@ -192,11 +204,21 @@ class LiveFeed:
                 self.mode = "near" if action == "mode_near" else "remote"
                 return True, "Near range (Bluetooth) mode." if self.mode == "near" else "Remote range (Wi-Fi) mode."
             if action == "cut_link":
-                s.store.online.set_available(False)               # FR-12: collecting and showing carry on; saving to the online database waits
-                return True, "Connection to the online database cut. Data is kept here."
+                self.link_available = False
+                s.engine.pause_connection()
+                s.latest_status.clear()
+                self.last_window.clear()
+                return True, "Sensor connection cut. Live readings are paused."
             if action == "restore_link":
+                self.link_available = True
+                s.engine.resume_connection()
+                return True, "Sensor connection restored. Live readings resumed."
+            if action == "cut_database_link":
+                s.store.online.set_available(False)
+                return True, "Online database connection cut. Live sensor readings continue and windows queue locally."
+            if action == "restore_database_link":
                 sent = s.store.restore_online()
-                return True, f"Connection restored. {sent} saved windows sent."
+                return True, f"Online database connection restored. {sent} queued windows sent."
             if action == "heavy_load":                            # PR-003: 10 or more machines at once
                 admin = self._person("administrator")
                 if admin is None:
@@ -219,20 +241,23 @@ class LiveFeed:
             if machine is None:
                 return False, "Choose a machine."
             if action == "maintenance":
-                ok, msg = s.faults.set_maintenance(machine_id, minutes if minutes else 30, self._person("engineer"))
-                return ok, msg or f"{machine['name']} is in maintenance mode."
+                ok, msg = s.start_maintenance(machine_id, minutes if minutes else 30, self._person("engineer"))
+                if ok:
+                    self.last_window = {key: value for key, value in self.last_window.items() if key[0] != machine_id}
+                return ok, msg or f"{machine['name']} readings paused for maintenance."
             if action == "end_maintenance":
-                s.faults.end_maintenance(machine_id, self._person("engineer"))
-                return True, f"{machine['name']} is out of maintenance mode."
+                ok, msg = s.end_maintenance(machine_id, self._person("engineer"))
+                return ok, msg or f"{machine['name']} readings resumed."
             if parameter not in PARAMETERS[machine["type"]]:
                 return False, "Choose a parameter."
             key = (machine_id, parameter)
             if action in ("warning", "critical"):
                 self.source.silent.discard(key)
-                self.source.overrides[key] = fault_value(machine["type"], parameter, action)
+                self.source.overrides[key] = fault_value(machine["type"], parameter, action, machine_id)
                 return True, f"{machine['name']} {parameter} now reads a {action} value."
             if action == "fluctuate":                             # SRS A.4: speed that swings up and down but never crosses the low limit
-                if config.LIMITS[machine["type"]][parameter].get("fluctuation_step") is None:
+                rule = config.MACHINE_LIMITS.get(machine_id, {}).get(parameter, config.LIMITS[machine["type"]][parameter])
+                if rule.get("fluctuation_step") is None:
                     return False, "Only a parameter with a fluctuation limit (pump speed) can fluctuate."
                 self.source.silent.discard(key)
                 base = NORMAL[machine["type"]][parameter]
@@ -240,7 +265,7 @@ class LiveFeed:
                 return True, f"{machine['name']} {parameter} now swings up and down."
             if action == "spike":                                 # one wrong-high second: must never become a fault (FR-6)
                 t0 = int(clock.now()) + (0 if in_step else 1)
-                value = fault_value(machine["type"], parameter, "critical")
+                value = fault_value(machine["type"], parameter, "critical", machine_id)
                 self.source.overrides[key] = lambda t, t0=t0, v=value: v if int(t) == t0 else None
                 return True, f"{machine['name']} {parameter} has one spike."
             if action == "clear":

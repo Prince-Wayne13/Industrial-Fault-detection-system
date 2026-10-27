@@ -71,12 +71,12 @@ The top bar is shared by every page. It is described in [[top-bar]].
 | Live numbers | A new reading appears on the card within 2 seconds. | [[PR-002]] |
 | "Sensor fault" mark | If a parameter sends nothing for 3 seconds, its number is replaced by this mark. An old number is never shown as current. | [[FR-13]] |
 | "Invalid" mark | A wrong, missing or impossible reading is kept out of the status check and logged. | [[FR-14]] |
-| "Maintenance" mark | Shown while a machine is in maintenance mode. Readings keep coming, new fault alerts pause. | [[FR-18]] |
+| "Maintenance" mark | Shown while a machine is in maintenance mode. Readings and new fault alerts pause. | [[FR-18]] |
 | "Overdue" mark | Shown when a machine stays in maintenance past its stated time. | [[FR-19]] |
 | "Alerts delayed" notice | Appears at the top only when an alert came more than 2 seconds late. | [[PR-001b]] |
 | Empty message | If no machine is registered, a clear message is shown instead of a blank screen. | [[UC-1]] step 2a |
 
-Readings are taken once a second for every parameter on every machine ([[FR-3a]]). The card shows them as they arrive, so the numbers move faster than the status word.
+Readings are taken once a second for every parameter on every connected machine ([[FR-3a]]). If the sensor connection is offline or the machine is in maintenance, live numbers pause and are marked as paused; they resume when the connection or maintenance pause ends.
 
 ## Who sees this page
 

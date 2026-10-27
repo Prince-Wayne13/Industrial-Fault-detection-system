@@ -21,11 +21,20 @@ class Admin:
         return entry
 
     # ---- limits: Engineer (FR-23a, the one exception to FR-27) ----
-    def change_limit(self, by, machine_type, parameter, **new):
-        """e.g. change_limit(engineer, 'motor', 'temperature', warning=135). Takes effect on the next window, no restart."""
+    def change_limit(self, by, machine_type=None, parameter=None, machine_id=None, **new):
+        """Change one machine's rule; callers without machine_id retain the type-default maintenance API."""
         if by is None or not can(by.role, "change_limits"):
             return False, "Only an Engineer can change limits."
-        rule = config.LIMITS.get(machine_type, {}).get(parameter)
+        machine = self.machines.get(machine_id) if machine_id else None
+        if machine_id and machine is None:
+            return False, "Unknown machine."
+        if machine:
+            machine_type = machine["type"]
+        base_rule = config.LIMITS.get(machine_type, {}).get(parameter)
+        if machine_id:
+            rule = config.MACHINE_LIMITS.get(machine_id, {}).get(parameter, base_rule)
+        else:
+            rule = base_rule
         if rule is None:
             return False, "Unknown machine type or parameter."
         if not new or any(k not in rule for k in new):
@@ -37,14 +46,22 @@ class Admin:
         if proposed.get("warning") is not None and proposed.get("critical") is not None and proposed["warning"] >= proposed["critical"]:
             return False, "The warning limit must be below the critical limit."          # FR-23b
         old = dict(rule)
-        rule.update(new)                                                                  # FR-23a, FR-23c
-        self._log(by.username, f"limit {machine_type} {parameter}", old, dict(rule))      # FR-22, FR-23: old value and date kept
-        self.store.local.put_setting("limits", config.LIMITS)                              # survives a restart (FR-21)
+        updated = {**rule, **new}
+        if machine_id:
+            config.MACHINE_LIMITS.setdefault(machine_id, {})[parameter] = updated
+            self.store.local.put_setting("machine_limits", config.MACHINE_LIMITS)
+            what = f"limit {machine_id} {parameter}"
+        else:
+            rule.update(new)
+            self.store.local.put_setting("limits", config.LIMITS)
+            what = f"limit {machine_type} {parameter}"
+        self._log(by.username, what, old, updated)                                        # FR-22, FR-23: old value and date kept
         return True, ""
 
-    def limit_history(self, machine_type=None, parameter=None):
+    def limit_history(self, machine_type=None, parameter=None, machine_id=None):
         return [e for e in self.change_log
-                if e["what"].startswith("limit") and (machine_type is None or f" {machine_type} " in e["what"] + " ")
+                if e["what"].startswith("limit") and (machine_id is None or e["what"].startswith(f"limit {machine_id} "))
+                and (machine_type is None or f" {machine_type} " in e["what"] + " ")
                 and (parameter is None or e["what"].endswith(parameter))]
 
     # ---- users and machines: Administrator only (FR-27, UC-5) ----
@@ -68,6 +85,7 @@ class Admin:
         if machine_id in self.machines:
             return False, "That machine is already registered."
         self.machines[machine_id] = {"id": machine_id, "name": name, "type": machine_type}
+        self.store.local.put_setting("machine_limits", config.MACHINE_LIMITS)
         self.store.local.put_setting("machines", list(self.machines.values()))
         self._log(by.username, f"register machine {machine_id}", None, machine_type)
         return True, ""
@@ -77,6 +95,8 @@ class Admin:
             return False, "Only the Administrator removes machines."
         if self.machines.pop(machine_id, None) is None:
             return False, "No such machine."
+        config.MACHINE_LIMITS.pop(machine_id, None)
+        self.store.local.put_setting("machine_limits", config.MACHINE_LIMITS)
         self.store.local.put_setting("machines", list(self.machines.values()))
         self._log(by.username, f"remove machine {machine_id}", None, None)
         return True, ""

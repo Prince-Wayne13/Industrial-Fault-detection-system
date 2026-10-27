@@ -12,11 +12,11 @@ Plain meanings of the terms we use. Several of these are not yet defined in Sect
 | Status | The result for one window, with its time stamp. |
 | Trend check | The rule that one abnormal reading is not a fault. The condition must hold across the window first (FR-6). |
 | Fault bundle | The readings of a warning or critical window kept together with its status. |
-| Limit | A boundary value for a parameter. Normal, warning and critical limits are set per equipment type. Also called a threshold. |
+| Limit | A boundary value for a parameter on one machine. New machines use the defaults for their type; Engineers can tune each machine independently. Also called a threshold. |
 | Sensor fault | A parameter has stopped reporting for longer than three times its normal reporting interval (FR-13). |
 | Acknowledge | A user records that they have seen an alert. The log shows who and when (FR-8). |
 | Resolved | A fault has been dealt with. Recorded with the time (FR-17). |
-| Maintenance mode | Equipment is being worked on for a stated time. Readings are still recorded but new alerts are paused (FR-18, FR-19). |
+| Maintenance mode | Equipment is being worked on for a stated time. Readings and new alerts are paused (FR-18, FR-19). |
 | Connected user | Someone using the dashboard right now, near-range or remote. Alerts reach only connected users. |
 | Administrator | Manages the system (accounts, equipment, settings). Not an operational user. Gets no fault alerts. Does get the storage alert. |
 | Engineer | A technical user who may change limits. Every change is logged. |

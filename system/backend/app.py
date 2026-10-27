@@ -229,9 +229,11 @@ def maintenance(machine_id):
         if machine_id not in system.machines:
             return _result(False, "Unknown machine.")
         if body.get("on"):
-            ok, message = system.faults.set_maintenance(machine_id, body.get("minutes"), g.user)
+            ok, message = system.start_maintenance(machine_id, body.get("minutes"), g.user)
+            if ok:
+                feed.last_window = {key: value for key, value in feed.last_window.items() if key[0] != machine_id}
         else:
-            ok, message = system.faults.end_maintenance(machine_id, g.user)
+            ok, message = system.end_maintenance(machine_id, g.user)
     return _result(ok, message)
 
 
@@ -257,7 +259,14 @@ def report():
 @authed()
 def limits():
     with feed.lock:
-        return jsonify({"limits": config.LIMITS, "history": system.admin.limit_history()[::-1][:50],
+        machines = []
+        for machine in system.machine_list():
+            machines.append({**machine, "limits": {
+                parameter: config.MACHINE_LIMITS.get(machine["id"], {}).get(
+                    parameter, config.LIMITS[machine["type"]][parameter])
+                for parameter in PARAMETERS[machine["type"]]
+            }})
+        return jsonify({"machines": machines, "history": system.admin.limit_history()[::-1][:50],
                         "trend_fraction": config.TREND_FRACTION, "window_s": config.WINDOW_S})
 
 
@@ -266,7 +275,8 @@ def limits():
 def change_limit():
     body = request.get_json(silent=True) or {}
     with feed.lock:
-        ok, message = system.admin.change_limit(g.user, body.get("machine_type"), body.get("parameter"), **(body.get("limits") or {}))
+        ok, message = system.admin.change_limit(g.user, parameter=body.get("parameter"),
+                                                machine_id=body.get("machine_id"), **(body.get("limits") or {}))
     return _result(ok, message)
 
 

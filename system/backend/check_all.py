@@ -256,12 +256,13 @@ def _():
     need(s.faults.bell_for(eng) == [], "bell count did not drop")
     return "Operator refused, Engineer needs to acknowledge first, bell count drops"
 
-@check("FR-18", "Maintenance mode: readings recorded, alerts paused")
+@check("FR-18", "Maintenance mode: readings and alerts paused")
 def _():
     s, _f = fresh("Maintenance")
-    need(faults_of(s) == [] and s.faults.suppressed, "alert not suppressed")
-    need(s.store.local.windows("motor-1", status="warning"), "readings not recorded")
-    return f"{len(s.faults.suppressed)} alerts held back, warning windows still recorded"
+    need(faults_of(s) == [] and not s.faults.suppressed, "new alert was raised or suppressed")
+    need(not s.store.local.windows("motor-1") and ("motor-1", "temperature") not in s.latest_reading, "maintenance readings were recorded")
+    need("motor-1" in s.engine.paused_machines, "sensor feed was not paused")
+    return "no readings or alerts while the machine is in maintenance"
 
 @check("FR-19", "Overdue maintenance is flagged")
 def _():
@@ -279,7 +280,7 @@ def _():
 def _():
     s, f = fresh("Restart")
     new = f["system"]
-    need(config.LIMITS["motor"]["temperature"]["warning"] == 135, "limit lost")
+    need(config.MACHINE_LIMITS["motor-1"]["temperature"]["warning"] == 135, "machine limit lost")
     need(len([x for x in new.faults.faults.values() if x["status"] == "open"]) == 1, "open fault lost")
     need(new.latest_status and new.engine.counts["windows"] > 0, "no status after new readings")
     return "limit 135 kept, fault kept, status back after fresh readings"
@@ -309,7 +310,7 @@ def _():
 @check("FR-23", "Old value and date kept when a limit changes")
 def _():
     s, _f = fresh("Limit change")
-    e = s.admin.limit_history("motor", "temperature")[-1]
+    e = s.admin.limit_history(parameter="temperature", machine_id="motor-1")[-1]
     need(e["old"]["warning"] == 130 and e["new"]["warning"] == 135 and e["when"] > 0, e)
     return "130 kept next to 135"
 
@@ -317,6 +318,8 @@ def _():
 def _():
     s, f = fresh("Limit change")
     need(f["ok"][0] and not f["op_refused"][0], f)
+    need(config.MACHINE_LIMITS["motor-1"]["temperature"]["warning"] == 135, "machine limit not updated")
+    need(model.rule_for("motor", "temperature", "motor-2")["warning"] == 130, "another motor inherited the change")
     return "works; Operator refused (screen in Segment 4)"
 
 @check("FR-23b", "Warning limit must stay below critical")

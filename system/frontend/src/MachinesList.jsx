@@ -49,7 +49,7 @@ export default function MachinesList() {
                   <td>{TYPES[m.type]}</td>
                   <td><span className={`badge ${m.status}`}>{STATUS_LABEL[m.status]}</span></td>
                   <td>{open(m.id)}</td>
-                  <td>{m.maintenance && <span className="mark mark-maint">Maintenance</span>}{m.overdue && <span className="mark mark-overdue">Overdue</span>}</td>
+                  <td>{m.maintenance && <span className="mark mark-maint">Maintenance</span>}{m.connection_offline && <span className="mark mark-invalid">Offline</span>}{m.overdue && <span className="mark mark-overdue">Overdue</span>}</td>
                 </tr>
               ))}
             </tbody>

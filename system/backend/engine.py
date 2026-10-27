@@ -22,6 +22,8 @@ class Engine:
         self.buffer = {}          # (machine_id, parameter) -> [(time, value)] clean readings of this window
         self.last_seen = {}       # (machine_id, parameter) -> time of last reading (FR-13)
         self.silent = set()
+        self.paused_machines = set()
+        self.connection_paused = False
         self.invalid_log = []     # FR-14
         self.window_started = None
         self.counts = {"received": 0, "invalid": 0, "windows": 0}
@@ -30,6 +32,8 @@ class Engine:
         self.counts["received"] += 1
         t = reading.get("time", clock.now()) if isinstance(reading, dict) else clock.now()
         key = (reading.get("machine_id"), reading.get("parameter")) if isinstance(reading, dict) else (None, None)
+        if self.connection_paused or key[0] in self.paused_machines:
+            return
         self.last_seen[key] = t
         if key in self.silent:
             self.silent.discard(key)
@@ -56,11 +60,36 @@ class Engine:
         """Call every second. A parameter with no reading for SENSOR_TIMEOUT_S seconds is flagged once. FR-13."""
         fresh = []
         for key, seen in self.last_seen.items():
-            if key not in self.silent and now - seen >= SENSOR_TIMEOUT_S:
+            if not self.connection_paused and key[0] not in self.paused_machines and key not in self.silent and now - seen >= SENSOR_TIMEOUT_S:
                 self.silent.add(key)
                 fresh.append(key)
                 self.on_sensor_fault(key, now)
         return fresh
+
+    def pause_machine(self, machine_id):
+        self.paused_machines.add(machine_id)
+        self.buffer = {key: items for key, items in self.buffer.items() if key[0] != machine_id}
+        if not self.buffer:
+            self.window_started = None
+        for key in [key for key in self.last_seen if key[0] == machine_id]:
+            self.last_seen.pop(key, None)
+            self.silent.discard(key)
+            self.on_sensor_back(key, clock.now())
+
+    def resume_machine(self, machine_id):
+        self.paused_machines.discard(machine_id)
+
+    def pause_connection(self):
+        self.connection_paused = True
+        self.buffer.clear()
+        self.window_started = None
+        for key in list(self.last_seen):
+            self.last_seen.pop(key, None)
+            self.silent.discard(key)
+            self.on_sensor_back(key, clock.now())
+
+    def resume_connection(self):
+        self.connection_paused = False
 
     def close_window(self, t):
         """Set the status of every parameter for the window that just ended, then save it. FR-5, FR-6, FR-9a."""
@@ -71,7 +100,7 @@ class Engine:
             values = [v for _, v in items]
             window = {"machine_id": key[0], "parameter": key[1], "machine_type": self.machines[key[0]],
                       "start_time": self.window_started, "end_time": items[-1][0],
-                      "status": classify(self.machines[key[0]], key[1], values),
+                      "status": classify(self.machines[key[0]], key[1], values, key[0]),
                       "readings": values, "n": len(values), "confirmed_at": clock.now()}
             self.send_status(window)
             self.save_window(window)

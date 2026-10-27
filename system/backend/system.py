@@ -34,6 +34,8 @@ class System:
             if saved:
                 config.LIMITS.clear()
                 config.LIMITS.update(saved)
+            config.MACHINE_LIMITS.clear()
+            config.MACHINE_LIMITS.update(store.local.get_setting("machine_limits", {}))
             machines = store.local.get_setting("machines", machines)
         else:
             config.reset_limits()
@@ -71,7 +73,23 @@ class System:
     # ---- data in ----
     def ingest(self, reading):
         self.sync_types()
+        if self.engine.connection_paused or (isinstance(reading, dict) and reading.get("machine_id") in self.engine.paused_machines):
+            return
         self.engine.handle_reading(reading)
+
+    def start_maintenance(self, machine_id, minutes, engineer):
+        ok, message = self.faults.set_maintenance(machine_id, minutes, engineer)
+        if ok:
+            self.engine.pause_machine(machine_id)
+            for key in [key for key in self.latest_status if key[0] == machine_id]:
+                self.latest_status.pop(key, None)
+        return ok, message
+
+    def end_maintenance(self, machine_id, engineer):
+        ok, message = self.faults.end_maintenance(machine_id, engineer)
+        if ok:
+            self.engine.resume_machine(machine_id)
+        return ok, message
 
     def tick(self):
         """Call once a second."""
@@ -93,10 +111,10 @@ class System:
             clock.advance(self.alert_hold)               # injection: hold the alert back
         mt, par, vals = window["machine_type"], key[1], window["readings"]
         value = max(vals) if vals else None
-        limit = limit_in_force(mt, par, window["status"], value)
-        shown, reason = observed_value(mt, par, vals), None
-        if vals and is_fluctuating(mt, par, vals) and all(threshold_level(mt, par, v) == "normal" for v in vals):
-            limit, reason = rule_for(mt, par)["fluctuation_step"], "fluctuating"      # a spread fault: no reading crossed a limit
+        limit = limit_in_force(mt, par, window["status"], value, key[0])
+        shown, reason = observed_value(mt, par, vals, key[0]), None
+        if vals and is_fluctuating(mt, par, vals, key[0]) and all(threshold_level(mt, par, v, key[0]) == "normal" for v in vals):
+            limit, reason = rule_for(mt, par, key[0])["fluctuation_step"], "fluctuating"      # a spread fault: no reading crossed a limit
             shown = round(fluctuation(mt, par, vals), 4)
         self.faults.raise_fault(key[0], key[1], window["status"], limit, window["confirmed_at"], value=shown, reason=reason)
 

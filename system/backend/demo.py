@@ -131,7 +131,7 @@ def storage_fails(system):
 
 def restart(system):
     _sustained(system, {("motor-1", "temperature"): 140})
-    system.admin.change_limit(system.users["engineer"], "motor", "temperature", warning=135)
+    system.admin.change_limit(system.users["engineer"], parameter="temperature", machine_id="motor-1", warning=135)
     new = system.restart()
     src = Source(new.machine_list())
     run(new, 21, src)
@@ -140,7 +140,7 @@ def restart(system):
 
 def maintenance(system):
     eng = system.users["engineer"]
-    system.faults.set_maintenance("motor-1", 1, eng)
+    system.start_maintenance("motor-1", 1, eng)
     _sustained(system, {("motor-1", "temperature"): 140})
     clock.advance(120)                                 # fast-forward past the stated minute
     return {}
@@ -163,11 +163,11 @@ def fault_returns(system):
 def limit_change(system):
     eng, op = system.users["engineer"], system.users["operator"]
     facts = {}
-    facts["op_refused"] = system.admin.change_limit(op, "motor", "temperature", warning=135)
-    facts["bad_refused"] = system.admin.change_limit(eng, "motor", "temperature", warning=160)
+    facts["op_refused"] = system.admin.change_limit(op, parameter="temperature", machine_id="motor-1", warning=135)
+    facts["bad_refused"] = system.admin.change_limit(eng, parameter="temperature", machine_id="motor-1", warning=160)
     _sustained(system, {("motor-1", "temperature"): 132})         # still normal at 130, warning at 135? it is above 130 -> warning
     facts["before_change_faults"] = len(system.faults.faults)
-    facts["ok"] = system.admin.change_limit(eng, "motor", "temperature", warning=135)
+    facts["ok"] = system.admin.change_limit(eng, parameter="temperature", machine_id="motor-1", warning=135)
     before = len(system.store.local.windows("motor-1", status="warning"))
     _sustained(system, {("motor-1", "temperature"): 132})         # 132 is under the new limit of 135
     facts["last_status_after"] = system.latest_status[("motor-1", "temperature")]["status"]

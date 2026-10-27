@@ -11,13 +11,13 @@ _CLF = None
 _CLF_TRIED = False
 
 
-def rule_for(machine_type, parameter):
-    return config.LIMITS.get(machine_type, {}).get(parameter, {})
+def rule_for(machine_type, parameter, machine_id=None):
+    return config.MACHINE_LIMITS.get(machine_id, {}).get(parameter, config.LIMITS.get(machine_type, {}).get(parameter, {}))
 
 
-def levels_for(machine_type, parameter):
+def levels_for(machine_type, parameter, machine_id=None):
     """The statuses this parameter can have."""
-    r = rule_for(machine_type, parameter)
+    r = rule_for(machine_type, parameter, machine_id)
     if r.get("warning") is not None or r.get("critical") is not None:
         return ("normal", "warning", "critical")
     if r.get("abnormal") is not None or r.get("abnormal_below") is not None:
@@ -25,9 +25,9 @@ def levels_for(machine_type, parameter):
     return ("normal",)
 
 
-def threshold_level(machine_type, parameter, value):
+def threshold_level(machine_type, parameter, value, machine_id=None):
     """Screening of ONE reading: 'normal', 'warning', 'critical' or 'abnormal'. FR-4."""
-    r = rule_for(machine_type, parameter)
+    r = rule_for(machine_type, parameter, machine_id)
     if r.get("critical") is not None and value > r["critical"]:
         return "critical"
     if r.get("warning") is not None and value > r["warning"]:
@@ -39,9 +39,9 @@ def threshold_level(machine_type, parameter, value):
     return "normal"
 
 
-def limit_in_force(machine_type, parameter, level, value=None):
+def limit_in_force(machine_type, parameter, level, value=None, machine_id=None):
     """The number that was crossed. Stored on the fault record. FR-23d."""
-    r = rule_for(machine_type, parameter)
+    r = rule_for(machine_type, parameter, machine_id)
     if level in ("warning", "critical"):
         return r.get(level)
     if r.get("abnormal") is not None and (value is None or value > r["abnormal"]):
@@ -49,10 +49,10 @@ def limit_in_force(machine_type, parameter, level, value=None):
     return r.get("abnormal_below")
 
 
-def fluctuation(machine_type, parameter, values):
+def fluctuation(machine_type, parameter, values, machine_id=None):
     """FR-4 / SRS A.4 'fluctuating'. The typical step from one reading to the next, as a share of the mean (median of the 9 steps).
     A swing steps by a lot every second; one spike, one ramp or plain noise leave the median step small, so FR-6 still holds."""
-    if rule_for(machine_type, parameter).get("fluctuation_step") is None or len(values) < 4:
+    if rule_for(machine_type, parameter, machine_id).get("fluctuation_step") is None or len(values) < 4:
         return None
     mean = sum(values) / len(values)
     if mean == 0:
@@ -63,16 +63,16 @@ def fluctuation(machine_type, parameter, values):
     return med / abs(mean)
 
 
-def is_fluctuating(machine_type, parameter, values):
-    cv = fluctuation(machine_type, parameter, values)
-    return cv is not None and cv > rule_for(machine_type, parameter)["fluctuation_step"]
+def is_fluctuating(machine_type, parameter, values, machine_id=None):
+    cv = fluctuation(machine_type, parameter, values, machine_id)
+    return cv is not None and cv > rule_for(machine_type, parameter, machine_id)["fluctuation_step"]
 
 
-def observed_value(machine_type, parameter, values):
+def observed_value(machine_type, parameter, values, machine_id=None):
     """The reading furthest past the limit, for the pop-up ('138 C now')."""
     if not values:
         return None
-    r = rule_for(machine_type, parameter)
+    r = rule_for(machine_type, parameter, machine_id)
     if r.get("abnormal_below") is not None and min(values) < r["abnormal_below"] and not any(v > (r.get("abnormal") or r.get("warning") or float("inf")) for v in values):
         return min(values)
     return max(values)
@@ -94,8 +94,8 @@ def trend_check(levels, fraction=None):
     return "normal"
 
 
-def _features(machine_type, parameter, values):
-    ranks = [RANK[threshold_level(machine_type, parameter, v)] for v in values]
+def _features(machine_type, parameter, values, machine_id=None):
+    ranks = [RANK[threshold_level(machine_type, parameter, v, machine_id)] for v in values]
     n = len(ranks)
     return [sum(r >= 1 for r in ranks) / n, sum(r >= 2 for r in ranks) / n, min(ranks) / 2, max(ranks) / 2]
 
@@ -116,21 +116,21 @@ def _train():
     return _CLF
 
 
-def classify(machine_type, parameter, window_values):
+def classify(machine_type, parameter, window_values, machine_id=None):
     """The final status for one parameter for one window. FR-5.
     1. Screening and the trend check decide whether anything is flagged at all (FR-4, FR-6).
     2. Only a flagged window goes to the classifier, which assigns the level (DD-05)."""
-    allowed = levels_for(machine_type, parameter)
-    levels = [threshold_level(machine_type, parameter, v) for v in window_values]
+    allowed = levels_for(machine_type, parameter, machine_id)
+    levels = [threshold_level(machine_type, parameter, v, machine_id) for v in window_values]
     rule_level = trend_check(levels)
-    if rule_level == "normal" and is_fluctuating(machine_type, parameter, window_values) and "abnormal" in allowed:
+    if rule_level == "normal" and is_fluctuating(machine_type, parameter, window_values, machine_id) and "abnormal" in allowed:
         return "abnormal"                      # a steady spread over the whole window counts, one wild reading does not (std needs all 10)
     if rule_level == "normal":
         return "normal"
     clf = _CLF if _CLF_TRIED else _train()
     if clf is None:
         return rule_level
-    cls = int(clf.predict([_features(machine_type, parameter, window_values)])[0])
+    cls = int(clf.predict([_features(machine_type, parameter, window_values, machine_id)])[0])
     if cls == 0:
         return rule_level
     if cls == 2 and "critical" in allowed:

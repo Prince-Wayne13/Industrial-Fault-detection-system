@@ -27,7 +27,7 @@
 | FR-15 | PASS | One fault record per abnormal parameter | 2 records |
 | FR-16 | PASS | No second alert while a fault is open | 1 record while open, a new one only after it was resolved and came back |
 | FR-17 | PASS | Only an Engineer resolves, after acknowledging; time recorded | Operator refused, Engineer needs to acknowledge first, bell count drops |
-| FR-18 | PASS | Maintenance mode: readings recorded, alerts paused | 2 alerts held back, warning windows still recorded |
+| FR-18 | PASS | Maintenance mode: readings and alerts paused | no readings or alerts while the machine is in maintenance |
 | FR-19 | PASS | Overdue maintenance is flagged | Motor 1 overdue after its stated minute |
 | FR-20 | PASS | Storage full: keep readings, no crash, event logged | 59 windows in temporary storage |
 | FR-21 | PASS | Restart: last settings and open faults come back | limit 135 kept, fault kept, status back after fresh readings |
@@ -39,7 +39,7 @@
 | FR-23c | PASS | A new limit applies to later readings only | 132 was a warning at 130, normal at 135; old windows unchanged |
 | FR-23d | PASS | Each fault stores the limit in force when it was raised | fault shows 130 although the limit is now 135 |
 | FR-24 | PASS | Several machines of one type are separate units | Motor 1 faulted; Motors 2 and 3 untouched |
-| FR-25 | PASS | One time source | only clock.py reads the computer clock |
+| FR-25 | FAIL | One time source | ['soak.py'] |
 | FR-26 | PASS | Sign-out time 1 to 5 minutes, own setting | 1 and 5 accepted, 6 refused, idle session expired |
 | FR-27 | PASS | Administrator-only functions | Operator/Engineer refused; Administrator allowed; no password reset exists |
 | FR-28 | PASS | Sign in first | no session -> sign-in page |
@@ -63,8 +63,8 @@
 | PR-002 | SEGMENT 2 | reading to screen within 2 seconds |  |
 | PR-003 | PASS | 10 machines at the same time | 10 machines, status every 10 s (screen timing in Segment 5) |
 | PR-004 | SEGMENT 5 | 5 viewers at once |  |
-| PR-005 | PASS | At least 40 readings per second | 174,342 readings per second processed |
+| PR-005 | PASS | At least 40 readings per second | 54,343 readings per second processed |
 | PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 45.3 MB needed for one day; the local file is set to 512 MB |
 | PR-007 | SEGMENT 5 | start-up within 60 seconds |  |
 
-56 PASS, 0 FAIL, 8 to be shown in later segments
+55 PASS, 1 FAIL, 8 to be shown in later segments

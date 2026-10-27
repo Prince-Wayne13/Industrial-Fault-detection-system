@@ -12,9 +12,10 @@ export default function MachineCard({ machine }) {
         <span className="icon"><Icon name={machine.type} size={22} /></span>
         <span className="name">{machine.name}</span>
         <span className="pills">
-          {machine.maintenance && <Pill level="maintenance">Maintenance</Pill>}
+          {machine.maintenance && <Pill level="maintenance">Maintenance · readings paused</Pill>}
+          {machine.connection_offline && <Pill level="unknown">Offline</Pill>}
           {machine.overdue && <Pill level="critical">Overdue</Pill>}
-          <Pill level={machine.status} />
+          {!machine.maintenance && !machine.connection_offline && <Pill level={machine.status} />}
         </span>
       </div>
       <dl className="reads">
@@ -22,7 +23,9 @@ export default function MachineCard({ machine }) {
           <div className="read" key={name}>
             <dt>{PARAM_LABEL[machine.type][name]}</dt>
             <dd>
-              {p.sensor_fault ? (
+              {machine.connection_offline || machine.maintenance ? (
+                <span className="mark mark-paused">Paused</span>
+              ) : p.sensor_fault ? (
                 <span className="mark sensor">Sensor fault</span>
               ) : (
                 <>

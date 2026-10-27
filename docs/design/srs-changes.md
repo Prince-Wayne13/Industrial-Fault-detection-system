@@ -99,7 +99,6 @@ Every decision made while designing that is not in SRS v2.0, gathered in one pla
 
 - Can a resolved fault be switched back to open? The SRS has no way to do it.
 - Can the Administrator open a machine's page from an Overview card?
-- Does a limit belong to a machine type or to each machine on its own? [[FR-23a]] reads as per type.
 - Colours for the dark theme (see the end of this note).
 
 ## Colour palette

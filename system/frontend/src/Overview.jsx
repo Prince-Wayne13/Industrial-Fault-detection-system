@@ -20,6 +20,9 @@ export default function Overview() {
     <div className="page">
       {!connected && <div className="notice notice-lost">Live connection lost. The numbers below may be old. Trying again…</div>}
       {data.link === 'cut' && (
+        <div className="notice notice-lost">Sensor connection is offline. Live readings have stopped and the cards below show no current data.</div>
+      )}
+      {data.database_link === 'cut' && (
         <div className="notice notice-delayed">Connection to the online database is cut. Readings are still collected and shown here; {data.pending} saved windows will be sent when it returns.</div>
       )}
       {data.alerts_delayed && <div className="notice notice-delayed">Alerts delayed: a fault alert came more than 2 seconds late.</div>}

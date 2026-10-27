@@ -83,9 +83,15 @@ export default function DemoPanel() {
           <span className="muted">Same equipment data in both modes.</span>
         </div>
         <div className="demo-row">
-          <span className="chip chip-dark">Link {data?.link === 'cut' ? `cut · ${data.pending} windows waiting` : 'up'}</span>
-          {btn('cut_link', 'Cut connection')}
-          {btn('restore_link', 'Restore connection')}
+          <span className="chip chip-dark">Sensor connection {data?.link === 'cut' ? 'offline' : 'active'}</span>
+          {btn('cut_link', 'Disconnect sensors')}
+          {btn('restore_link', 'Reconnect sensors')}
+        </div>
+        <div className="demo-row">
+          <span className="chip chip-dark">Online database {data?.database_link === 'cut' ? 'offline' : 'connected'}</span>
+          {btn('cut_database_link', 'Disconnect online database')}
+          {btn('restore_database_link', 'Reconnect online database')}
+          {data?.database_link === 'cut' && <span className="muted">{data.pending} database windows waiting to sync.</span>}
         </div>
       </div>
 
