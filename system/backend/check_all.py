@@ -379,10 +379,10 @@ def _():
     need(f["no_session"] is None and f["session"] is not None, f)
     return "no session -> sign-in page"
 
-@check("FR-28a", "Passwords: 14 refused, 15 and 64 accepted")
+@check("FR-28a", "Passwords: 7 refused, 8 and 64 accepted")
 def _():
     s, f = fresh("Login checks")
-    need("at least 15" in f["len14"] and f["len15"] and f["len64"], f)
+    need("at least 8" in f["len7"] and f["len8"] and f["len64"], f)
     return "ok"
 
 @check("FR-28b", "No forced mix of characters")

@@ -29,7 +29,7 @@ SESSION_MIN_MIN = 1
 SESSION_MAX_MIN = 5
 LOGIN_MAX_FAILS = 5            # FR-28d
 LOGIN_BLOCK_MIN = 15
-PASSWORD_MIN_LEN = 15          # FR-28a
+PASSWORD_MIN_LEN = 8           # FR-28a (the team set the minimum at 8 on 27 Oct 2026)
 PASSWORD_MAX_LEN = 128         # must accept 64 or more
 
 # Higher number = more serious. "warning" and "abnormal" are the first level; "critical" is the second.
@@ -87,3 +87,7 @@ PHYSICAL_RANGE = {
     "rpm": (0, 3600),              # a 2-pole 60 Hz motor is the fastest case
     "fan_rpm": (0, 10000),
 }
+
+# For now the system shows Motor 1 and Motor 2 only (seed.LIVE_MACHINES). Set True to bring back the machine list saved in the database
+# (machines an Administrator registered, and the pumps and backup power units).
+USE_SAVED_MACHINES = False

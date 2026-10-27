@@ -339,7 +339,7 @@
   "FR-28a": {
    "method": "look",
    "scenarios": "T",
-   "steps": "Set a 14-character, a 15-character and a 64-character password.",
+   "steps": "Set a 7-character, an 8-character and a 64-character password.",
    "pass": "14 is refused. 15 and 64 are accepted."
   },
   "FR-28b": {

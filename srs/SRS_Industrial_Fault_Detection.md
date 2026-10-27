@@ -370,7 +370,7 @@ FR-27: The system shall restrict configuration, user-account management, and equ
 
 FR-28: The system shall require authentication before allowing access to any monitoring or administrative function.
 
-FR-28a: Passwords shall be at least 15 characters long, and the system shall accept passwords of 64 characters or more.
+FR-28a: Passwords shall be at least 8 characters long, and the system shall accept passwords of 64 characters or more.
 
 FR-28b: The system shall not require a mix of capitals, numbers or symbols in a password, and shall not force password changes on a schedule.
 

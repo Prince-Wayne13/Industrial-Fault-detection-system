@@ -111,7 +111,7 @@ These are proven by looking or by inspecting. The tracker lists them with the sa
 | [[FR-25]] | inspect | Show the single time source in the code and that panel timestamps agree across components. |
 | [[FR-27]] | look | Sign in as Operator and as Engineer and try the Admin page. It is refused. The Engineer can still change limits. |
 | [[FR-28]] | look | Open any page while signed out. It sends you to sign in. |
-| [[FR-28a]] | look | Try a 14-character password (refused) and a 64-character one (accepted). |
+| [[FR-28a]] | look | Try a 7-character password (refused) and a 64-character one (accepted). |
 | [[FR-28b]] | look | Set a password with no capitals, numbers or symbols. It is accepted. No change is forced. |
 | [[FR-28c]] | look | Try a password from the common list. It is refused. |
 | [[FR-28e]] | inspect | Show the HTTPS connection and the TLS version in the browser. |

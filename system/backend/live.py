@@ -224,7 +224,9 @@ class LiveFeed:
                 if admin is None:
                     return False, "No Administrator account to register machines."
                 kinds = ["motor", "pump", "ups"]
-                for i in range(1, 7):
+                i = 0
+                while len(s.machines) < 11:                       # PR-003: top up to 11, whatever the starting set is
+                    i += 1
                     mid = f"load-{i}"
                     if mid not in s.machines:
                         s.admin.register_machine(admin, mid, f"{kinds[i % 3].title()} L{i}", kinds[i % 3])

@@ -64,7 +64,7 @@ Every requirement, how it is tested, and which seeded scenario shows it. Made by
 | [[FR-26]] | look | Login checks | The person is signed out and must sign in again. 1 minute and 5 minutes are accepted, 6 is not. |
 | [[FR-27]] | look | Login checks | Access is denied. |
 | [[FR-28]] | look | Login checks | The sign-in page appears instead. |
-| [[FR-28a]] | look | Login checks | 14 is refused. 15 and 64 are accepted. |
+| [[FR-28a]] | look | Login checks | 7 is refused. 8 and 64 are accepted. |
 | [[FR-28b]] | look | Login checks | It is accepted, and nothing forces a change later. |
 | [[FR-28c]] | look | Login checks | It is refused. |
 | [[FR-28d]] | look | Login checks | The account is blocked for 15 minutes and the message says so. |

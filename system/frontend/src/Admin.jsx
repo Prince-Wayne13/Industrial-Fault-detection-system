@@ -67,7 +67,7 @@ export default function Admin() {
               <option value="operator">Operator</option><option value="engineer">Engineer</option><option value="administrator">Administrator</option>
             </select>
           </label>
-          <label>Password (15 or more characters)<input type="password" value={nu.password} onChange={(e) => setNu({ ...nu, password: e.target.value })} autoComplete="new-password" /></label>
+          <label>Password (8 or more characters)<input type="password" value={nu.password} onChange={(e) => setNu({ ...nu, password: e.target.value })} autoComplete="new-password" /></label>
           <button className="demo-btn" onClick={() => run(post('/api/admin/users', nu), () => setNu({ username: '', full_name: '', role: 'operator', password: '' }))}>Add user</button>
         </div>
         <p className="muted">The Administrator cannot reset a password. A person changes their own on the Settings page.</p>

@@ -214,8 +214,8 @@ def login_checks(system):
     facts["blocked_msg"] = acc.sign_in("operator2", "demo-password-for-operator2")[1]
     clock.advance(16 * 60)
     facts["after_block"] = acc.sign_in("operator2", "demo-password-for-operator2")[0] is not None
-    facts["len14"] = acc.create_user(admin, "u14", "U Fourteen", "operator", "a" * 14)[1]
-    facts["len15"] = acc.create_user(admin, "u15", "U Fifteen", "operator", "a" * 15)[0] is not None
+    facts["len7"] = acc.create_user(admin, "u7", "U Seven", "operator", "tq9-wlm")[1]
+    facts["len8"] = acc.create_user(admin, "u8", "U Eight", "operator", "tq9-wlmz")[0] is not None
     facts["len64"] = acc.create_user(admin, "u64", "U Sixtyfour", "operator", "x" * 64)[0] is not None
     facts["plain_ok"] = acc.create_user(admin, "u16", "U Plain", "operator", "alllowercaseletters")[0] is not None
     facts["common"] = acc.create_user(admin, "uc", "U Common", "operator", "password1234567")[1]

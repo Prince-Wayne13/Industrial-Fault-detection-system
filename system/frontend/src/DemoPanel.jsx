@@ -8,16 +8,17 @@ import { useOverview } from './useLive.js'
 import { PARAM_LABEL } from './status.js'
 
 // Which scenarios play live in the 5 minutes (each is a list of steps for the simulated sensors).
+// A scenario is shown only when the machines it uses exist. 'Pump speed swings' needs Pump 1, so it appears when a pump is added.
 const LIVE = [
   ['Normal running', [{ action: 'clear_all' }]],
   ['Lone spike', [{ action: 'spike', machine_id: 'motor-1', parameter: 'temperature' }]],
   ['Sustained warning', [{ action: 'warning', machine_id: 'motor-1', parameter: 'temperature' }]],
   ['Sustained critical', [{ action: 'critical', machine_id: 'motor-1', parameter: 'temperature' }]],
   ['Two faults at once', [{ action: 'warning', machine_id: 'motor-2', parameter: 'temperature' }, { action: 'warning', machine_id: 'motor-2', parameter: 'current' }]],
-  ['Sensor goes silent', [{ action: 'silent', machine_id: 'pump-1', parameter: 'rpm' }]],
+  ['Sensor goes silent', [{ action: 'silent', machine_id: 'motor-2', parameter: 'rpm' }]],
   ['Pump speed swings', [{ action: 'fluctuate', machine_id: 'pump-1', parameter: 'rpm' }]],
-  ['Bad reading', [{ action: 'bad', machine_id: 'pump-1', parameter: 'current' }]],
-  ['Maintenance', [{ action: 'maintenance', machine_id: 'motor-3', minutes: 1 }]],
+  ['Bad reading', [{ action: 'bad', machine_id: 'motor-2', parameter: 'current' }]],
+  ['Maintenance', [{ action: 'maintenance', machine_id: 'motor-2', minutes: 1 }]],
   ['Slow alert', [{ action: 'slow_alert_on' }, { action: 'warning', machine_id: 'motor-1', parameter: 'vibration' }]],
   ['Connection cut', [{ action: 'cut_link' }]],
   ['Heavy load (11 machines)', [{ action: 'heavy_load' }]],
@@ -98,7 +99,8 @@ export default function DemoPanel() {
       <h2>Play a scenario live</h2>
       <div className="card demo-card">
         <div className="demo-row">
-          {LIVE.map(([name, steps]) => <button key={name} className="demo-btn" onClick={() => play(steps)}>{name}</button>)}
+          {LIVE.filter(([, steps]) => steps.every((st) => !st.machine_id || machines.some((m) => m.id === st.machine_id)))
+            .map(([name, steps]) => <button key={name} className="demo-btn" onClick={() => play(steps)}>{name}</button>)}
         </div>
         <div className="demo-row">
           {btn('restore_link', 'Restore connection')}

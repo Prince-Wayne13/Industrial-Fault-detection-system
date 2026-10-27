@@ -36,7 +36,8 @@ class System:
                 config.LIMITS.update(saved)
             config.MACHINE_LIMITS.clear()
             config.MACHINE_LIMITS.update(store.local.get_setting("machine_limits", {}))
-            machines = store.local.get_setting("machines", machines)
+            if config.USE_SAVED_MACHINES:
+                machines = store.local.get_setting("machines", machines)
         else:
             config.reset_limits()
         self.machines = {m["id"]: dict(m) for m in (machines or copy.deepcopy(DEMO_MACHINES))}

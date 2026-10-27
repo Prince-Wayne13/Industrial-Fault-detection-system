@@ -80,7 +80,7 @@ The Management / Supervisor role is dropped. There is no "exactly one role" rule
 The rules are requirements. The methods (hashing tool, TLS setup) go in Appendix B as suggestions.
 
 - **FR-26 (reworded):** A user session shall expire after 5 minutes of inactivity. A user may set a shorter time, but not shorter than 1 minute and not longer than 5 minutes.
-- **Passwords 1:** Passwords shall be at least 15 characters long, and the system shall accept passwords of 64 characters or more.
+- **Passwords 1:** Passwords shall be at least 8 characters long, and the system shall accept passwords of 64 characters or more.
 - **Passwords 2:** The system shall not require a mix of capitals, numbers or symbols, and shall not force password changes on a schedule.
 - **Passwords 3:** The system shall refuse passwords that appear on a list of common or leaked passwords.
 - **Failed logins:** After 5 failed login attempts on an account, the system should block login to that account for 15 minutes. ("Should": optional.)

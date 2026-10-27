@@ -78,7 +78,7 @@ export default function Settings() {
         <h3>Change password</h3>
         <div className="demo-row">
           <label>Current<input type="password" value={pw.old} onChange={(e) => setPw({ ...pw, old: e.target.value })} autoComplete="current-password" /></label>
-          <label>New (15 or more characters)<input type="password" value={pw.new} onChange={(e) => setPw({ ...pw, new: e.target.value })} autoComplete="new-password" /></label>
+          <label>New (8 or more characters)<input type="password" value={pw.new} onChange={(e) => setPw({ ...pw, new: e.target.value })} autoComplete="new-password" /></label>
           <label>New again<input type="password" value={pw.again} onChange={(e) => setPw({ ...pw, again: e.target.value })} autoComplete="new-password" /></label>
           <button className="demo-btn" onClick={savePassword}>Change</button>
         </div>

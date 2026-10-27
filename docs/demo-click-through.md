@@ -18,7 +18,7 @@ Tick each line. Write the page and what looked wrong beside any line that fails.
 - [ ] Pop-up stays until Acknowledge. After it: pop-up gone, bell shows 1, bell list shows the fault, choosing it opens Motor 1.
 - [ ] Machines page: filter by Type and Status. Names open the machine page.
 - [ ] Machine page: graph with Day, Week, Month, Year. Live window shows 10 slots. Operator cannot Resolve (button absent or refused).
-- [ ] Settings: change sign-out time, change password (15 characters or more). Engineer limits not editable.
+- [ ] Settings: change sign-out time, change password (8 characters or more). Engineer limits not editable.
 - [ ] Name panel: full name, role, Settings, Sign out. Sign out returns to sign-in.
 
 ## 2. Engineer (`engineer1`)

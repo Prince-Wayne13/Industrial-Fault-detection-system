@@ -7,6 +7,7 @@ Segment 3: faults, acknowledge, resolve, maintenance, history, report.
 Segment 4: sign-in with a token, roles enforced here (not only on screen), settings, limits, admin.
 Segment 5: demo control, requirements tracker, measured numbers, HTTPS."""
 import base64
+import copy
 import os
 
 import clock
@@ -23,7 +24,7 @@ import proof
 import reports
 from auth import User, can
 from live import LiveFeed
-from seed import PARAMETERS
+from seed import LIVE_MACHINES, PARAMETERS
 from storage import DualStore, LocalStore, OnlineStore
 from system import DEMO_USERS, System
 
@@ -32,7 +33,7 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 clock.use_real()
-system = System(store=DualStore(LocalStore(), OnlineStore()), restarted=True)     # FR-21: carries on with the saved settings and faults
+system = System(machines=copy.deepcopy(LIVE_MACHINES), store=DualStore(LocalStore(), OnlineStore()), restarted=True)     # FR-21: carries on with the saved settings and faults
 feed = LiveFeed(system,
                 emit_reading=lambda r: socketio.emit("reading", r),
                 emit_status=lambda w: socketio.emit("status", w),
@@ -192,8 +193,9 @@ def faults():
     """For one person: the pop-ups (open, not acknowledged by them) and the bell list (open, acknowledged by them). FR-7, FR-8b."""
     with feed.lock:
         user = g.user
-        return jsonify({"popups": [_fault(f) for f in system.faults.popups_for(user)],
-                        "bell": [_fault(f) for f in system.faults.bell_for(user)],
+        shown = lambda fs: [_fault(f) for f in fs if f["machine_id"] in system.machines]   # a fault saved for a machine that is not registered now is left out
+        return jsonify({"popups": shown(system.faults.popups_for(user)),
+                        "bell": shown(system.faults.bell_for(user)),
                         "storage_alerts": len(system.store.admin_alerts) if user.role == "administrator" else 0})
 
 

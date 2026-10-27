@@ -28,6 +28,14 @@ DEMO_MACHINES = [
 ]
 
 
+# The machines the running app starts with. For now there are two motors. To bring pumps or backup power back, add them here
+# (for example {"id": "pump-1", "name": "Pump 1", "type": "pump"}). DEMO_MACHINES above is the larger set the self-checks use.
+LIVE_MACHINES = [
+    {"id": "motor-1", "name": "Motor 1", "type": "motor"},
+    {"id": "motor-2", "name": "Motor 2", "type": "motor"},
+]
+
+
 def make_machines(count):
     """For the heavy-load test (PR-003): 10 or more machines across the three types."""
     kinds = ["motor", "pump", "ups"]

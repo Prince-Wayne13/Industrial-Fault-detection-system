@@ -38,7 +38,7 @@ Four tabs on one page. No other page is needed for the Administrator. The top ba
 | Add user | A form with full name, username, role (Operator, Engineer or Administrator) and a password. | [[UC-5]] step 2 |
 | Edit user | Change the details or the role. | [[UC-5]] step 2 |
 | Remove user | Removes the account. If that person appears in fault history, the records stay and nothing is silently deleted. A message says so. | [[UC-5]] step 2a |
-| Password rules | At least 15 characters, and 64 or more accepted. No forced capitals, numbers or symbols. Common or leaked passwords are refused. | [[FR-28a]], [[FR-28b]], [[FR-28c]] |
+| Password rules | At least 8 characters, and 64 or more accepted. No forced capitals, numbers or symbols. Common or leaked passwords are refused. | [[FR-28a]], [[FR-28b]], [[FR-28c]] |
 
 ## Tab 2: Machines
 
