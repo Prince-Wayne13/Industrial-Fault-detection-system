@@ -32,8 +32,15 @@ UNKNOWN = {"value": None, "invalid": False, "sensor_fault": False, "status": "un
 def fault_value(machine_type, parameter, level, machine_id=None):
     """A value that sits in the given level for this parameter, taken from the limits in force."""
     r = config.MACHINE_LIMITS.get(machine_id, {}).get(parameter, config.LIMITS[machine_type][parameter])
-    if r.get("critical") is not None:
-        return round(r["critical"] * 1.07, 2) if level == "critical" else round((r["warning"] + r["critical"]) / 2, 2)
+    warning, critical = r.get("warning"), r.get("critical")      # any limit may be left out ("not necessary")
+    if level == "critical" and critical is not None:
+        return round(critical * 1.07, 2)
+    if level == "critical" and warning is not None:
+        return round(warning * 1.15, 2)
+    if level == "warning" and warning is not None:
+        return round((warning + critical) / 2, 2) if critical is not None else round(warning * 1.05, 2)
+    if level == "warning" and critical is not None:
+        return round(critical * 0.95, 2)
     if r.get("abnormal") is not None:
         return round(r["abnormal"] * 1.1, 2)
     if r.get("abnormal_below") is not None:

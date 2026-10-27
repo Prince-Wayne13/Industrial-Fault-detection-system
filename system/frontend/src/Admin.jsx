@@ -1,5 +1,6 @@
 // Admin. Requirements: FR-21a, FR-22, FR-27
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { get, post, del, live } from './api.js'
 import { useUser } from './user.jsx'
 
@@ -96,15 +97,8 @@ export default function Admin() {
         </div>
       </div>
 
-      <h2>Change log</h2>
-      {data.change_log.length === 0 ? <p className="muted">No changes yet.</p> : (
-        <div className="card table-wrap">
-          <table className="fault-table">
-            <thead><tr><th>When</th><th>Who</th><th>What</th><th>Old</th><th>New</th></tr></thead>
-            <tbody>{data.change_log.map((c, i) => <tr key={i}><td>{when(c.when)}</td><td>{c.who}</td><td>{c.what}</td><td>{JSON.stringify(c.old)}</td><td>{JSON.stringify(c.new)}</td></tr>)}</tbody>
-          </table>
-        </div>
-      )}
+      <h2>Activity log</h2>
+      <p className="muted">Limit changes, acknowledged and resolved faults, users and machines are all recorded in the database. <Link to="/logs">Open the Logs page</Link>.</p>
     </div>
   )
 }

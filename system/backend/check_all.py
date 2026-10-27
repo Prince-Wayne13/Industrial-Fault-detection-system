@@ -307,6 +307,29 @@ def _():
     need(e["who"] == "engineer1" and e["when"] > 0, e)
     return "engineer1 changed the limit"
 
+@check("FR-22a", "Acknowledgements are logged and saved in the database")
+def _():
+    s, _f = fresh("Limit change")
+    machine = next(iter(s.machines))
+    fault, _why = s.faults.raise_fault(machine, "temperature", "warning", 130, clock.now(), value=140)
+    s.faults.acknowledge(fault["id"], s.users["operator"])
+    s.faults.acknowledge(fault["id"], s.users["operator"])                   # the same person again: one line only
+    lines = [e for e in s.admin.change_log if e["what"] == "acknowledge fault"]
+    saved = [e for e in s.store.local.logs() if e["what"] == "acknowledge fault"]
+    need(len(lines) == 1 and lines[0]["who"] == "operator1" and len(saved) == 1, lines)
+    return "one line, saved in the database"
+
+@check("FR-23a2", "Any limit can be set, changed or left out")
+def _():
+    s, _f = fresh("Limit change")
+    eng = s.users["engineer"]
+    ok1, _ = s.admin.change_limit(eng, parameter="rpm", machine_id="motor-1", abnormal=1600)             # a limit the parameter did not have
+    ok2, _ = s.admin.change_limit(eng, parameter="rpm", machine_id="motor-1", abnormal=None)             # left out again
+    bad, why = s.admin.change_limit(eng, parameter="rpm", machine_id="motor-1", abnormal_below=None)     # the last limit cannot go
+    need(ok1 and ok2 and not bad and "at least one" in why.lower(), (ok1, ok2, bad, why))
+    need(config.MACHINE_LIMITS["motor-1"]["rpm"] == {"abnormal_below": 1332}, config.MACHINE_LIMITS["motor-1"]["rpm"])
+    return "added, removed, and the last one is kept"
+
 @check("FR-23", "Old value and date kept when a limit changes")
 def _():
     s, _f = fresh("Limit change")

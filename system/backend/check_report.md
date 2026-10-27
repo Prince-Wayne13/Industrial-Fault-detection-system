@@ -29,10 +29,11 @@
 | FR-17 | PASS | Only an Engineer resolves, after acknowledging; time recorded | Operator refused, Engineer needs to acknowledge first, bell count drops |
 | FR-18 | PASS | Maintenance mode: readings and alerts paused | no readings or alerts while the machine is in maintenance |
 | FR-19 | PASS | Overdue maintenance is flagged | Motor 1 overdue after its stated minute |
-| FR-20 | PASS | Storage full: keep readings, no crash, event logged | 59 windows in temporary storage |
+| FR-20 | PASS | Storage full: keep readings, no crash, event logged | 58 windows in temporary storage |
 | FR-21 | PASS | Restart: last settings and open faults come back | limit 135 kept, fault kept, status back after fresh readings |
 | FR-21a | PASS | Storage alert at 75% goes to the Administrator only | alert at 75% |
 | FR-22 | PASS | Change log: who and when | engineer1 changed the limit |
+| FR-22a | PASS | Acknowledgements are logged and saved in the database | one line, saved in the database |
 | FR-23 | PASS | Old value and date kept when a limit changes | 130 kept next to 135 |
 | FR-23a | PASS | Engineer changes a limit, no restart | works; Operator refused (screen in Segment 4) |
 | FR-23b | PASS | Warning limit must stay below critical | The warning limit must be below the critical limit. |
@@ -49,6 +50,7 @@
 | FR-28d | PASS | 5 wrong passwords block the account for 15 minutes | Too many wrong passwords. The account is blocked for 15 minutes. |
 | FR-28e | SEGMENT 5 | HTTPS certificate |  |
 | FR-28f | PASS | Passwords stored salted and scrambled | bcrypt, different every time |
+| FR-23a2 | PASS | Any limit can be set, changed or left out | added, removed, and the last one is kept |
 | NFR-1 | PASS | At least 95% of critical temperature and current faults found | 160 of 160 = 100% |
 | NFR-2 | PASS | At least 85% of vibration faults found | 240 of 240 = 100% |
 | NFR-5 | SEGMENT 5 | uptime measured over the demo |  |
@@ -63,8 +65,8 @@
 | PR-002 | SEGMENT 2 | reading to screen within 2 seconds |  |
 | PR-003 | PASS | 10 machines at the same time | 10 machines, status every 10 s (screen timing in Segment 5) |
 | PR-004 | SEGMENT 5 | 5 viewers at once |  |
-| PR-005 | PASS | At least 40 readings per second | 184,573 readings per second processed |
-| PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 45.3 MB needed for one day; the local file is set to 512 MB |
+| PR-005 | PASS | At least 40 readings per second | 170,740 readings per second processed |
+| PR-006 | PASS | Room for 3,456,000 readings plus statuses and faults | about 46.0 MB needed for one day; the local file is set to 512 MB |
 | PR-007 | SEGMENT 5 | start-up within 60 seconds |  |
 
-55 PASS, 1 FAIL, 8 to be shown in later segments
+57 PASS, 1 FAIL, 8 to be shown in later segments

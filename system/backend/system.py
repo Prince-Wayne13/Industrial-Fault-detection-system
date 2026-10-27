@@ -58,7 +58,8 @@ class System:
         self.faults = FaultStore(persist=self.store.save_fault)
         if restarted:
             self.faults.load(store.local.faults())
-        self.admin = Admin(self.accounts, self.machines, store)
+        self.admin = Admin(self.accounts, self.machines, store, saved_log=store.local.logs() if restarted else None)
+        self.faults.log = self.admin.record
         self.engine = Engine(self.machine_types, send_live=self._live, send_status=self._status, save_window=self.store.save_window,
                              on_sensor_fault=lambda k, t: self.sensor_faults.__setitem__(k, t),
                              on_sensor_back=lambda k, t: self.sensor_faults.pop(k, None))

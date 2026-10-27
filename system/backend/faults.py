@@ -18,8 +18,9 @@ from config import ALERT_LIMIT_S, RANK
 
 
 class FaultStore:
-    def __init__(self, persist=None):
+    def __init__(self, persist=None, log=None):
         self.persist = persist or (lambda fault: None)
+        self.log = log or (lambda who, what, old, new: None)      # the activity log (FR-22); the System connects it
         self.faults = {}
         self.next_id = 1
         self.maintenance = {}       # machine_id -> {"by", "started", "until", "minutes"}
@@ -98,6 +99,7 @@ class FaultStore:
             return True, ""
         f["acknowledged_by"].append({"user": user.username, "role": user.role, "time": clock.now()})   # FR-8a
         self.persist(f)
+        self.log(user.username, "acknowledge fault", None, self._brief(f))
         return True, ""                                         # FR-8b: the fault stays open
 
     def resolve(self, fault_id, engineer):
@@ -112,7 +114,12 @@ class FaultStore:
         f["resolved_by"] = engineer.username
         f["resolved_at"] = clock.now()                          # FR-17
         self.persist(f)
+        self.log(engineer.username, "resolve fault", None, self._brief(f))
         return True, ""
+
+    @staticmethod
+    def _brief(f):
+        return {"fault": f["id"], "machine": f["machine_id"], "parameter": f["parameter"], "level": f["level"]}
 
     def history(self, machine_id=None):
         """FR-9, FR-10: everyone can call up the fault history."""

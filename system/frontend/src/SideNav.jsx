@@ -7,6 +7,7 @@ const LINKS = [
   { to: '/', label: 'Overview', icon: 'grid', roles: ['operator', 'engineer', 'administrator'] },
   { to: '/machines', label: 'Machines', icon: 'list', roles: ['operator', 'engineer'] },
   { to: '/admin', label: 'Admin', icon: 'shield', roles: ['administrator'] },
+  { to: '/logs', label: 'Logs', icon: 'log', roles: ['administrator'] },
   { to: '/settings', label: 'Settings', icon: 'sliders', roles: ['operator', 'engineer', 'administrator'] },
 ]
 const DEMO = [

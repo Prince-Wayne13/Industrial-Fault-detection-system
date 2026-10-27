@@ -19,7 +19,7 @@ The Administrator's page. It controls who can use the system and which machines 
 +------------------------------------------------------------+
 | Fault-Detect          (bell 1)    Name v                   |
 +------------------------------------------------------------+
-| [ Users ]  [ Machines ]  [ Storage ]  [ Change log ]       |
+| [ Users ]  [ Machines ]  [ Storage ]  [ Logs link ]       |
 +------------------------------------------------------------+
 | USERS                                      [ Add user ]    |
 | Full name    | Username | Role      | Actions              |
@@ -64,13 +64,15 @@ Alert level 75%
 
 What the personnel decide after the alert (delete, update or something else) is not part of the requirements. The page only raises the alert.
 
-## Tab 4: Change log
+## The Logs page (Administrator only)
 
 | Part | What it does | Requirement |
 | --- | --- | --- |
-| Log list | Each line says what changed, who changed it and when. It covers user changes, machine registration and limit changes. | [[FR-22]] |
+| Log list | Each line is a plain sentence: who, when and what happened, with the old and new value as small tags. It covers limit changes, faults acknowledged, faults resolved, users and machines. | [[FR-22]] |
+| Filter | Tabs for All, Limits, Acknowledged, Resolved, Users and machines. | [[FR-22]] |
+| Saved in the database | Every line is written to the local and the online database, so the log is still there after a restart. | [[FR-22]], [[FR-21]] |
 
-A limit changed by an Engineer on [[05-settings]] also appears here ([[FR-22]]).
+Only the Administrator can open the Logs page. The Engineer and Operator do not see it. A limit changed by an Engineer on [[05-settings]], and every acknowledgement, appears here ([[FR-22]]).
 
 ## Who can open it
 

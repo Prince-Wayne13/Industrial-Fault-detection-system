@@ -42,11 +42,12 @@ One settings page for everyone. It opens from the name side bar in the [[top-bar
 | Theme | Switch between light and dark. | everyone | none, see [[srs-changes]] |
 | Sign-out time | How long idle before the system signs the person out. Between 1 and 5 minutes. Each person sets their own. The default is 5 minutes. | everyone | [[FR-26]] |
 | Limits: machine and parameter | Each registered machine shows its own parameters and current limits. New machines use their type defaults. | Engineer | [[FR-23a]] |
-| Limits: update | Change the limit for one machine only. No restart needed. | Engineer | [[FR-23a]] |
-| Limits: check | The warning limit must be lower than the critical limit. If not, the change is refused. | Engineer | [[FR-23b]] |
-| Limits: earlier values | The old values and the date of change stay visible. Nothing is overwritten silently. | Engineer | [[FR-23]] |
+| Limits: update | Change the limits of one machine only. No restart needed. Every parameter can have all four limits: warning above, critical above, abnormal above and abnormal below. | Engineer | [[FR-23a]] |
+| Limits: not necessary | A limit left empty shows "not necessary" and is not used. Only limits with a value count. At least one limit must stay. | Engineer | [[FR-23a]], [[FR-4]], [[FR-5]] |
+| Limits: check | The warning limit must be lower than the critical limit, and "abnormal below" must be lower than the limits for too high. If not, the change is refused. | Engineer | [[FR-23b]] |
+| Limits: earlier values | The old values and the date of change are kept in the Logs page, which only the Administrator opens. Nothing is overwritten silently. | Engineer | [[FR-23]], [[FR-22]] |
 | Limits: when it applies | A changed limit applies to readings that arrive after the change. Faults already raised keep the limit that was in force. | Engineer | [[FR-23c]], [[FR-23d]] |
-| Log entry | Every limit change is also written in the change log on [[06-admin]]. | Engineer | [[FR-22]] |
+| Log entry | Every limit change is written in the log, in the database. See [[06-admin]]. | Engineer | [[FR-22]] |
 
 ## Who sees what
 

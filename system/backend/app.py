@@ -268,7 +268,7 @@ def limits():
                     parameter, config.LIMITS[machine["type"]][parameter])
                 for parameter in PARAMETERS[machine["type"]]
             }})
-        return jsonify({"machines": machines, "history": system.admin.limit_history()[::-1][:50],
+        return jsonify({"machines": machines,
                         "trend_fraction": config.TREND_FRACTION, "window_s": config.WINDOW_S})
 
 
@@ -294,7 +294,16 @@ def admin_view():
             "storage": {"used": round(st.local.used_fraction(), 4), "cap_mb": config.LOCAL_STORAGE_CAP_MB, "alert_at": config.STORAGE_ALERT_AT,
                         "online_available": st.online.available, "online_simulated": st.online.simulated, "pending": len(st.pending_online),
                         "temp_buffer": len(st.temp_buffer), "alerts": len(st.admin_alerts), "events": st.events[-15:][::-1]},
-            "change_log": system.admin.change_log[::-1][:100]})
+            })
+
+
+@app.get("/api/logs")
+@authed("manage_users")
+def activity_log():
+    """The activity log: limit changes, acknowledgements, resolved faults, users and machines. Administrator only."""
+    with feed.lock:
+        names = {m["id"]: m["name"] for m in system.machine_list()}
+        return jsonify({"logs": system.admin.change_log[::-1][:500], "machine_names": names, "total": len(system.admin.change_log)})
 
 
 @app.post("/api/admin/users")

@@ -16,6 +16,7 @@ SCHEMA = [
     "CREATE TABLE IF NOT EXISTS windows (machine_id TEXT, parameter TEXT, start_time REAL, status TEXT, n INTEGER, readings TEXT)",
     "CREATE TABLE IF NOT EXISTS faults (id INTEGER PRIMARY KEY, data TEXT)",
     "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)",
+    "CREATE TABLE IF NOT EXISTS activity_log (id INTEGER PRIMARY KEY, data TEXT)",     # who did what and when (FR-22): limit changes, acknowledgements, users, machines
 ]
 
 
@@ -66,6 +67,12 @@ class LocalStore:
     def faults(self):
         return [json.loads(d) for (d,) in self.con.execute("SELECT data FROM faults ORDER BY id")]
 
+    def save_log(self, entry):
+        return self._write("INSERT OR REPLACE INTO activity_log VALUES (?,?)", (entry["id"], json.dumps(entry)))
+
+    def logs(self):
+        return [json.loads(d) for (d,) in self.con.execute("SELECT data FROM activity_log ORDER BY id")]
+
     def put_setting(self, key, value):
         return self._write("INSERT OR REPLACE INTO settings VALUES (?,?)", (key, json.dumps(value)))
 
@@ -115,6 +122,7 @@ class OnlineStore:
             cur = self.con.cursor()
             cur.execute("CREATE TABLE IF NOT EXISTS windows (machine_id TEXT, parameter TEXT, start_time DOUBLE PRECISION, status TEXT, n INTEGER, readings TEXT)")
             cur.execute("CREATE TABLE IF NOT EXISTS faults (id INTEGER PRIMARY KEY, data TEXT)")
+            cur.execute("CREATE TABLE IF NOT EXISTS activity_log (id INTEGER PRIMARY KEY, data TEXT)")
             self.con.commit()
         else:
             self.pg = False
@@ -150,6 +158,20 @@ class OnlineStore:
                 self._run("INSERT INTO faults VALUES (?,?) ON CONFLICT (id) DO UPDATE SET data=EXCLUDED.data", (fault["id"], json.dumps(fault)))
             else:
                 self._run("INSERT OR REPLACE INTO faults VALUES (?,?)", (fault["id"], json.dumps(fault)))
+            self.con.commit()
+            return True
+        except Exception:
+            self.con.rollback()
+            return False
+
+    def save_log(self, entry):
+        if not self.available:
+            return False
+        try:
+            if self.pg:
+                self._run("INSERT INTO activity_log VALUES (?,?) ON CONFLICT (id) DO UPDATE SET data=EXCLUDED.data", (entry["id"], json.dumps(entry)))
+            else:
+                self._run("INSERT OR REPLACE INTO activity_log VALUES (?,?)", (entry["id"], json.dumps(entry)))
             self.con.commit()
             return True
         except Exception:
@@ -199,6 +221,14 @@ class DualStore:
         self.online.save_fault(fault)
         if not ok:
             self._event("local_store_full", f"fault {fault['id']} not saved locally")
+        return ok
+
+    def save_log(self, entry):
+        """The activity log goes to both databases, like faults."""
+        ok = self.local.save_log(entry)
+        self.online.save_log(entry)
+        if not ok:
+            self._event("local_store_full", f"log entry {entry['id']} not saved locally")
         return ok
 
     def restore_online(self):

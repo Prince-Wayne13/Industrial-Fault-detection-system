@@ -8,21 +8,32 @@ from auth import can
 from seed import PARAMETERS
 
 
+# The four limits a parameter can have. Each one is optional: a limit left out is "not necessary" and is not used. FR-4, FR-5.
+LIMIT_KEYS = ("warning", "critical", "abnormal", "abnormal_below")
+
+
 class Admin:
-    def __init__(self, accounts, machines, store):
+    def __init__(self, accounts, machines, store, saved_log=None):
         self.accounts = accounts
         self.machines = machines          # machine_id -> {"id","name","type"}. Shared with the System.
         self.store = store
-        self.change_log = []              # FR-22
+        self.change_log = list(saved_log or [])          # FR-22. Kept in the database too, so it survives a restart.
+        self.next_log_id = max((e.get("id", 0) for e in self.change_log), default=0) + 1
 
-    def _log(self, who, what, old, new):
-        entry = {"who": who, "when": clock.now(), "what": what, "old": old, "new": new}
+    def record(self, who, what, old=None, new=None):
+        """Add one line to the activity log and save it in the database."""
+        entry = {"id": self.next_log_id, "who": who, "when": clock.now(), "what": what, "old": old, "new": new}
+        self.next_log_id += 1
         self.change_log.append(entry)
+        self.store.save_log(entry)
         return entry
+
+    _log = record
 
     # ---- limits: Engineer (FR-23a, the one exception to FR-27) ----
     def change_limit(self, by, machine_type=None, parameter=None, machine_id=None, **new):
-        """Change one machine's rule; callers without machine_id retain the type-default maintenance API."""
+        """Set, change or remove the limits of one parameter. A value of None removes that limit ("not necessary").
+        Any of warning, critical, abnormal (above) and abnormal_below can be used, whether or not the parameter had it before."""
         if by is None or not can(by.role, "change_limits"):
             return False, "Only an Engineer can change limits."
         machine = self.machines.get(machine_id) if machine_id else None
@@ -37,25 +48,36 @@ class Admin:
             rule = base_rule
         if rule is None:
             return False, "Unknown machine type or parameter."
-        if not new or any(k not in rule for k in new):
-            return False, "That parameter has no such limit. Its limits are: " + ", ".join(rule) + "."
+        if not new or any(k not in LIMIT_KEYS for k in new):
+            return False, "A limit is one of: warning, critical, abnormal (above) or abnormal_below."
         for k, v in new.items():
-            if isinstance(v, bool) or not isinstance(v, (int, float)) or v != v:
-                return False, "A limit must be a number."
+            if v is None:
+                continue
+            if isinstance(v, bool) or not isinstance(v, (int, float)) or v != v or v in (float("inf"), float("-inf")):
+                return False, "A limit must be a number, or left empty if it is not necessary."
         proposed = {**rule, **new}
-        if proposed.get("warning") is not None and proposed.get("critical") is not None and proposed["warning"] >= proposed["critical"]:
+        proposed = {k: v for k, v in proposed.items() if v is not None}                  # empty means not necessary
+        if not any(k in proposed for k in LIMIT_KEYS):
+            return False, "Keep at least one limit. A parameter with no limit can never raise a fault."
+        if "warning" in proposed and "critical" in proposed and proposed["warning"] >= proposed["critical"]:
             return False, "The warning limit must be below the critical limit."          # FR-23b
+        if "abnormal_below" in proposed:
+            for above in ("abnormal", "warning", "critical"):
+                if above in proposed and proposed["abnormal_below"] >= proposed[above]:
+                    return False, "The 'abnormal below' limit must be lower than the limits for too high."
         old = dict(rule)
-        updated = {**rule, **new}
+        updated = proposed
         if machine_id:
             config.MACHINE_LIMITS.setdefault(machine_id, {})[parameter] = updated
             self.store.local.put_setting("machine_limits", config.MACHINE_LIMITS)
             what = f"limit {machine_id} {parameter}"
         else:
-            rule.update(new)
+            rule.clear()
+            rule.update(updated)
             self.store.local.put_setting("limits", config.LIMITS)
             what = f"limit {machine_type} {parameter}"
-        self._log(by.username, what, old, updated)                                        # FR-22, FR-23: old value and date kept
+        if old != updated:
+            self.record(by.username, what, old, updated)                                  # FR-22, FR-23: old value and date kept
         return True, ""
 
     def limit_history(self, machine_type=None, parameter=None, machine_id=None):

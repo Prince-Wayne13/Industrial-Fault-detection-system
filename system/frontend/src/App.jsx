@@ -6,6 +6,7 @@ import MachinesList from './MachinesList.jsx'
 import MachineDetail from './MachineDetail.jsx'
 import Settings from './Settings.jsx'
 import Admin from './Admin.jsx'
+import Logs from './Logs.jsx'
 import DemoPanel from './DemoPanel.jsx'
 import Tracker from './Tracker.jsx'
 import { UserProvider, useUser } from './user.jsx'
@@ -33,6 +34,7 @@ function Signed() {
         <Route path="/machine/:id" element={<MachineDetail />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/admin" element={<Require roles={['administrator']}><Admin /></Require>} />
+        <Route path="/logs" element={<Require roles={['administrator']}><Logs /></Require>} />
         <Route path="/demo" element={<DemoPanel />} />
         <Route path="/tracker" element={<Tracker />} />
       </Routes>
