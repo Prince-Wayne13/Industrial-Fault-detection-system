@@ -85,7 +85,7 @@ class LiveFeed:
 
         def status(window):
             levels = [threshold_level(window["machine_type"], window["parameter"], v, window["machine_id"]) for v in window["readings"]]
-            summary = {"values": window["readings"], "levels": levels, "status": window["status"], "start": window["start_time"]}
+            summary = {"values": window["readings"], "levels": levels, "status": window["status"], "start": window["start_time"], "score": window.get("score")}
             self.last_window[(window["machine_id"], window["parameter"])] = summary
             self._safe(self.emit_status, {**{k: window[k] for k in ("machine_id", "parameter", "status", "end_time")}, **summary})
             send_status(window)                                          # stream 2: status goes out first, then faults are raised

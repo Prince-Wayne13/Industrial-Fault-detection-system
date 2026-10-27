@@ -7,7 +7,7 @@ Time comes from the reading's own time stamp, which comes from clock.py (FR-25).
 import clock
 from checker import check_reading
 from config import WINDOW_S, SENSOR_TIMEOUT_S
-from model import classify
+from model import classify_scored
 from seed import PARAMETERS
 
 
@@ -98,9 +98,10 @@ class Engine:
             if not items:
                 continue
             values = [v for _, v in items]
+            status, score = classify_scored(self.machines[key[0]], key[1], values, key[0])
             window = {"machine_id": key[0], "parameter": key[1], "machine_type": self.machines[key[0]],
                       "start_time": self.window_started, "end_time": items[-1][0],
-                      "status": classify(self.machines[key[0]], key[1], values, key[0]),
+                      "status": status, "score": score,
                       "readings": values, "n": len(values), "confirmed_at": clock.now()}
             self.send_status(window)
             self.save_window(window)

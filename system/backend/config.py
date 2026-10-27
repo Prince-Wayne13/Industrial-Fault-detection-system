@@ -18,7 +18,8 @@ SENSOR_TIMEOUT_S = 3           # FR-13   no reading for 3 seconds = sensor fault
 ALERT_LIMIT_S = 2              # PR-001a, PR-001b, PR-002
 NORMAL_KEEP_HOURS = 24         # FR-9b   readings of a normal window are deleted after this
 STORAGE_ALERT_AT = 0.75        # FR-21a, NFR-10
-TREND_FRACTION = 1.0           # FR-6   share of the 10-second window that must be abnormal. Decision 3: start with all of it.
+TREND_FRACTION = 0.6           # FR-6   a window counts as a fault when at least this share of it is over a limit. Used to LABEL the training windows (and as the fallback rule if scikit-learn is missing).
+STATUS_PROBABILITY = 0.5       # FR-5, FR-6   the model gives each 10-second window a fault score (0 to 100%). At or above this, the window is flagged.
 LOCAL_STORAGE_CAP_MB = float(os.getenv("LOCAL_STORAGE_CAP_MB", "512"))   # decision 4: sized in metrics.projected_mb() against PR-006
 LOCAL_DB_PATH = os.getenv("LOCAL_DB_PATH", "local_store.db")
 DATABASE_URL = os.getenv("DATABASE_URL", "")

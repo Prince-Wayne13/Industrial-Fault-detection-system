@@ -1,0 +1,212 @@
+diff --git a/system/backend/app.py b/system/backend/app.py
+index ebfa3c1..d6de296 100644
+--- a/system/backend/app.py
++++ b/system/backend/app.py
+@@ -269,7 +269,7 @@ def limits():
+                 for parameter in PARAMETERS[machine["type"]]
+             }})
+         return jsonify({"machines": machines,
+-                        "trend_fraction": config.TREND_FRACTION, "window_s": config.WINDOW_S})
++                        "trend_fraction": config.TREND_FRACTION, "status_probability": config.STATUS_PROBABILITY, "window_s": config.WINDOW_S})
+ 
+ 
+ @app.post("/api/limits")
+diff --git a/system/backend/config.py b/system/backend/config.py
+index b7f2181..11afdcc 100644
+--- a/system/backend/config.py
++++ b/system/backend/config.py
+@@ -18,7 +18,8 @@ SENSOR_TIMEOUT_S = 3           # FR-13   no reading for 3 seconds = sensor fault
+ ALERT_LIMIT_S = 2              # PR-001a, PR-001b, PR-002
+ NORMAL_KEEP_HOURS = 24         # FR-9b   readings of a normal window are deleted after this
+ STORAGE_ALERT_AT = 0.75        # FR-21a, NFR-10
+-TREND_FRACTION = 1.0           # FR-6   share of the 10-second window that must be abnormal. Decision 3: start with all of it.
++TREND_FRACTION = 0.6           # FR-6   a window counts as a fault when at least this share of it is over a limit. Used to LABEL the training windows (and as the fallback rule if scikit-learn is missing).
++STATUS_PROBABILITY = 0.5       # FR-5, FR-6   the model gives each 10-second window a fault score (0 to 100%). At or above this, the window is flagged.
+ LOCAL_STORAGE_CAP_MB = float(os.getenv("LOCAL_STORAGE_CAP_MB", "512"))   # decision 4: sized in metrics.projected_mb() against PR-006
+ LOCAL_DB_PATH = os.getenv("LOCAL_DB_PATH", "local_store.db")
+ DATABASE_URL = os.getenv("DATABASE_URL", "")
+diff --git a/system/backend/engine.py b/system/backend/engine.py
+index 6e5be2b..803553b 100644
+--- a/system/backend/engine.py
++++ b/system/backend/engine.py
+@@ -7,7 +7,7 @@ Time comes from the reading's own time stamp, which comes from clock.py (FR-25).
+ import clock
+ from checker import check_reading
+ from config import WINDOW_S, SENSOR_TIMEOUT_S
+-from model import classify
++from model import classify_scored
+ from seed import PARAMETERS
+ 
+ 
+@@ -98,9 +98,10 @@ class Engine:
+             if not items:
+                 continue
+             values = [v for _, v in items]
++            status, score = classify_scored(self.machines[key[0]], key[1], values, key[0])
+             window = {"machine_id": key[0], "parameter": key[1], "machine_type": self.machines[key[0]],
+                       "start_time": self.window_started, "end_time": items[-1][0],
+-                      "status": classify(self.machines[key[0]], key[1], values, key[0]),
++                      "status": status, "score": score,
+                       "readings": values, "n": len(values), "confirmed_at": clock.now()}
+             self.send_status(window)
+             self.save_window(window)
+diff --git a/system/backend/live.py b/system/backend/live.py
+index 69a108f..3daee31 100644
+--- a/system/backend/live.py
++++ b/system/backend/live.py
+@@ -85,7 +85,7 @@ class LiveFeed:
+ 
+         def status(window):
+             levels = [threshold_level(window["machine_type"], window["parameter"], v, window["machine_id"]) for v in window["readings"]]
+-            summary = {"values": window["readings"], "levels": levels, "status": window["status"], "start": window["start_time"]}
++            summary = {"values": window["readings"], "levels": levels, "status": window["status"], "start": window["start_time"], "score": window.get("score")}
+             self.last_window[(window["machine_id"], window["parameter"])] = summary
+             self._safe(self.emit_status, {**{k: window[k] for k in ("machine_id", "parameter", "status", "end_time")}, **summary})
+             send_status(window)                                          # stream 2: status goes out first, then faults are raised
+diff --git a/system/backend/model.py b/system/backend/model.py
+index 691d1fc..1a2fb73 100644
+--- a/system/backend/model.py
++++ b/system/backend/model.py
+@@ -1,4 +1,4 @@
+-"""The status model. Threshold screening, then the 10-second trend check, then the classifier.
++"""The status model. Threshold screening, then the trained model scores each 10-second window.
+ FR-4, FR-5, FR-6, NFR-1, NFR-2, NFR-9. One parameter's logic can change without touching the others (limits live in config).
+ 
+ Statuses: normal, warning, critical for parameters with two limits; normal, abnormal for every other parameter (FR-5)."""
+@@ -116,26 +116,39 @@ def _train():
+     return _CLF
+ 
+ 
+-def classify(machine_type, parameter, window_values, machine_id=None):
+-    """The final status for one parameter for one window. FR-5.
+-    1. Screening and the trend check decide whether anything is flagged at all (FR-4, FR-6).
+-    2. Only a flagged window goes to the classifier, which assigns the level (DD-05)."""
+-    allowed = levels_for(machine_type, parameter, machine_id)
++def window_score(machine_type, parameter, window_values, machine_id=None):
++    """The fault score of one 10-second window, from the trained model. FR-5, FR-6.
++    Returns {'first': chance the window is at least the first fault level, 'critical': chance it is critical}, each 0 to 1.
++    Without scikit-learn it falls back to the share of readings over the limit."""
+     levels = [threshold_level(machine_type, parameter, v, machine_id) for v in window_values]
+-    rule_level = trend_check(levels)
+-    if rule_level == "normal" and is_fluctuating(machine_type, parameter, window_values, machine_id) and "abnormal" in allowed:
+-        return "abnormal"                      # a steady spread over the whole window counts, one wild reading does not (std needs all 10)
+-    if rule_level == "normal":
+-        return "normal"
+     clf = _CLF if _CLF_TRIED else _train()
+     if clf is None:
+-        return rule_level
+-    cls = int(clf.predict([_features(machine_type, parameter, window_values, machine_id)])[0])
+-    if cls == 0:
+-        return rule_level
+-    if cls == 2 and "critical" in allowed:
+-        return "critical"
+-    return "warning" if "warning" in allowed else "abnormal"
++        n = max(len(levels), 1)
++        return {"first": sum(RANK[x] >= 1 for x in levels) / n, "critical": sum(RANK[x] >= 2 for x in levels) / n}
++    proba = dict(zip(clf.classes_, clf.predict_proba([_features(machine_type, parameter, window_values, machine_id)])[0]))
++    return {"first": 1.0 - float(proba.get(0, 0.0)), "critical": float(proba.get(2, 0.0))}
++
++
++def classify_scored(machine_type, parameter, window_values, machine_id=None):
++    """(status, score) for one parameter for one 10-second window. FR-5.
++    1. Every reading is screened against the limits (FR-4).
++    2. The model turns the window into a fault score (chance of a fault, 0 to 100%).
++    3. Score at or above STATUS_PROBABILITY flags the window; critical needs its own score at or above it.
++    4. A steady spread (pump speed) can still make it abnormal on its own."""
++    allowed = levels_for(machine_type, parameter, machine_id)
++    score = window_score(machine_type, parameter, window_values, machine_id)
++    cut = config.STATUS_PROBABILITY
++    if score["critical"] >= cut and "critical" in allowed:
++        return "critical", score
++    if score["first"] >= cut and len(allowed) > 1:
++        return ("warning" if "warning" in allowed else "abnormal"), score
++    if is_fluctuating(machine_type, parameter, window_values, machine_id) and "abnormal" in allowed:
++        return "abnormal", {**score, "first": max(score["first"], cut)}
++    return "normal", score
++
++
++def classify(machine_type, parameter, window_values, machine_id=None):
++    return classify_scored(machine_type, parameter, window_values, machine_id)[0]
+ 
+ 
+ def evaluate(seed_value=2, per_case=40):
+diff --git a/system/backend/seed.py b/system/backend/seed.py
+index 63ed6cd..76526a9 100644
+--- a/system/backend/seed.py
++++ b/system/backend/seed.py
+@@ -160,11 +160,13 @@ def labelled_windows(rng, per_case=30):
+                 spike = [rng.gauss(base, base * 0.01) for _ in range(config.WINDOW_S)]
+                 spike[rng.randrange(config.WINDOW_S)] = _band(mt, p, levels[-1], rng)
+                 out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "spike", "values": spike})
+-                k = rng.randrange(3, 8)
+-                level = _band(mt, p, levels[0], rng)               # one level for the rest of the window, with ordinary noise (a ramp, not a swing)
+-                ramp = [rng.gauss(base, base * 0.01) for _ in range(k)] + \
+-                       [rng.gauss(level, abs(level) * 0.01) for _ in range(config.WINDOW_S - k)]
+-                out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "ramp", "values": ramp})
++                for lv in levels:                                  # partway windows: f of the 10 readings over the limit, the rest normal. FR-6
++                    f = rng.randrange(1, 10)
++                    level = _band(mt, p, lv, rng)
++                    vals = [rng.gauss(level, abs(level) * 0.01) for _ in range(f)] + [rng.gauss(base, base * 0.01) for _ in range(config.WINDOW_S - f)]
++                    rng.shuffle(vals) if rng.random() < 0.5 else None      # sometimes a ramp, sometimes scattered
++                    truth = lv if f / config.WINDOW_S >= config.TREND_FRACTION else "normal"
++                    out.append({"machine_type": mt, "parameter": p, "truth": truth, "kind": "ramp", "values": vals})
+                 for lv in levels:
+                     out.append({"machine_type": mt, "parameter": p, "truth": lv, "kind": "fault",
+                                 "values": [_band(mt, p, lv, rng) for _ in range(config.WINDOW_S)]})
+diff --git a/system/frontend/src/LiveWindow.jsx b/system/frontend/src/LiveWindow.jsx
+index 497f8c3..48459d2 100644
+--- a/system/frontend/src/LiveWindow.jsx
++++ b/system/frontend/src/LiveWindow.jsx
+@@ -30,7 +30,7 @@ function Slots({ items, total, parameter }) {
+   )
+ }
+ 
+-export default function LiveWindow({ machine, parameter, label, unit, rule, fraction }) {
++export default function LiveWindow({ machine, parameter, label, unit, rule, fraction, cut = 0.5 }) {
+   const p = machine.parameters[parameter]
+   if (!p) return null
+   const length = p.window?.length ?? 10
+@@ -38,7 +38,8 @@ export default function LiveWindow({ machine, parameter, label, unit, rule, frac
+   const last = p.last ? p.last.values.map((value, i) => ({ value, level: p.last.levels[i] })) : []
+   const over = now.filter((r) => r.level !== 'normal').length
+   const lastOver = last.filter((r) => r.level !== 'normal').length
+-  const rule_text = fraction >= 1 ? 'Every reading in a window must be over a limit before the window is flagged.' : `At least ${Math.round(fraction * 100)}% of a window must be over a limit before it is flagged.`
++  const pct = (x) => `${Math.round(x * 100)}%`
++  const rule_text = `When the ${length} seconds end, the model gives the window a fault score. At ${pct(cut)} or more the window is flagged. It scores about ${pct(fraction)} or more of the readings over a limit as a fault.`
+ 
+   return (
+     <div className="card">
+@@ -50,17 +51,18 @@ export default function LiveWindow({ machine, parameter, label, unit, rule, frac
+       <Slots items={now} total={length} parameter={parameter} />
+       <p className="muted">
+         {over > 0 ? `${over} of ${now.length} readings so far are over a limit. ` : 'No reading so far is over a limit. '}
+-        The status is set when the 10 seconds end. {rule_text}
++        {rule_text}
+       </p>
+ 
+       <div className="card-head top-gap">
+         <h3>Last window</h3>
++        {p.last && p.last.score && <span className="muted">Fault score {pct(p.last.score.first)}{p.last.score.critical > 0.01 && ` · critical ${pct(p.last.score.critical)}`}</span>}
+         {p.last && <span className={`badge ${p.last.status}`}>{STATUS_LABEL[p.last.status] ?? p.last.status}</span>}
+       </div>
+       {p.last ? (
+         <>
+           <Slots items={last} total={Math.max(length, last.length)} parameter={parameter} />
+-          {lastOver > 0 && p.last.status === 'normal' && <p className="muted">{lastOver} reading{lastOver > 1 ? 's were' : ' was'} over a limit, but not enough of the window: the status stayed Normal.</p>}
++          {lastOver > 0 && p.last.status === 'normal' && <p className="muted">{lastOver} reading{lastOver > 1 ? 's were' : ' was'} over a limit, but the fault score stayed under the limit: the status stayed Normal.</p>}
+         </>
+       ) : <p className="muted">The first window ends within 10 seconds of the server starting.</p>}
+       {limitText(rule) && <p className="muted">Limits: {limitText(rule)}</p>}
+diff --git a/system/frontend/src/MachineDetail.jsx b/system/frontend/src/MachineDetail.jsx
+index 6d0b487..35d6087 100644
+--- a/system/frontend/src/MachineDetail.jsx
++++ b/system/frontend/src/MachineDetail.jsx
+@@ -212,7 +212,7 @@ export default function MachineDetail() {
+         {!machine.maintenance && !machine.connection_offline && limits?.machines && selectedParameter && (
+           <LiveWindow machine={machine} parameter={selectedParameter} label={labels[selectedParameter]} unit={UNITS[selectedParameter]}
+                       rule={limits.machines.find((item) => item.id === machine.id)?.limits[selectedParameter] ?? {}}
+-                      fraction={limits.trend_fraction ?? 1} />
++                      fraction={limits.trend_fraction ?? 0.6} cut={limits.status_probability ?? 0.5} />
+         )}
+         {selectedParameter && <Graph machineId={id} parameter={selectedParameter} label={labels[selectedParameter]} unit={UNITS[selectedParameter]} />}
+       </section>

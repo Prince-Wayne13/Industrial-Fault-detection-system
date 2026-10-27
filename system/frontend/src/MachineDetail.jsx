@@ -212,7 +212,7 @@ export default function MachineDetail() {
         {!machine.maintenance && !machine.connection_offline && limits?.machines && selectedParameter && (
           <LiveWindow machine={machine} parameter={selectedParameter} label={labels[selectedParameter]} unit={UNITS[selectedParameter]}
                       rule={limits.machines.find((item) => item.id === machine.id)?.limits[selectedParameter] ?? {}}
-                      fraction={limits.trend_fraction ?? 1} />
+                      fraction={limits.trend_fraction ?? 0.6} cut={limits.status_probability ?? 0.5} />
         )}
         {selectedParameter && <Graph machineId={id} parameter={selectedParameter} label={labels[selectedParameter]} unit={UNITS[selectedParameter]} />}
       </section>

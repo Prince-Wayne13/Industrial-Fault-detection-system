@@ -30,7 +30,7 @@ function Slots({ items, total, parameter }) {
   )
 }
 
-export default function LiveWindow({ machine, parameter, label, unit, rule, fraction }) {
+export default function LiveWindow({ machine, parameter, label, unit, rule, fraction, cut = 0.5 }) {
   const p = machine.parameters[parameter]
   if (!p) return null
   const length = p.window?.length ?? 10
@@ -38,7 +38,8 @@ export default function LiveWindow({ machine, parameter, label, unit, rule, frac
   const last = p.last ? p.last.values.map((value, i) => ({ value, level: p.last.levels[i] })) : []
   const over = now.filter((r) => r.level !== 'normal').length
   const lastOver = last.filter((r) => r.level !== 'normal').length
-  const rule_text = fraction >= 1 ? 'Every reading in a window must be over a limit before the window is flagged.' : `At least ${Math.round(fraction * 100)}% of a window must be over a limit before it is flagged.`
+  const pct = (x) => `${Math.round(x * 100)}%`
+  const rule_text = `When the ${length} seconds end, the model gives the window a fault score. At ${pct(cut)} or more the window is flagged. It scores about ${pct(fraction)} or more of the readings over a limit as a fault.`
 
   return (
     <div className="card">
@@ -50,17 +51,18 @@ export default function LiveWindow({ machine, parameter, label, unit, rule, frac
       <Slots items={now} total={length} parameter={parameter} />
       <p className="muted">
         {over > 0 ? `${over} of ${now.length} readings so far are over a limit. ` : 'No reading so far is over a limit. '}
-        The status is set when the 10 seconds end. {rule_text}
+        {rule_text}
       </p>
 
       <div className="card-head top-gap">
         <h3>Last window</h3>
+        {p.last && p.last.score && <span className="muted">Fault score {pct(p.last.score.first)}{p.last.score.critical > 0.01 && ` · critical ${pct(p.last.score.critical)}`}</span>}
         {p.last && <span className={`badge ${p.last.status}`}>{STATUS_LABEL[p.last.status] ?? p.last.status}</span>}
       </div>
       {p.last ? (
         <>
           <Slots items={last} total={Math.max(length, last.length)} parameter={parameter} />
-          {lastOver > 0 && p.last.status === 'normal' && <p className="muted">{lastOver} reading{lastOver > 1 ? 's were' : ' was'} over a limit, but not enough of the window: the status stayed Normal.</p>}
+          {lastOver > 0 && p.last.status === 'normal' && <p className="muted">{lastOver} reading{lastOver > 1 ? 's were' : ' was'} over a limit, but the fault score stayed under the limit: the status stayed Normal.</p>}
         </>
       ) : <p className="muted">The first window ends within 10 seconds of the server starting.</p>}
       {limitText(rule) && <p className="muted">Limits: {limitText(rule)}</p>}

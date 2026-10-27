@@ -269,7 +269,7 @@ def limits():
                 for parameter in PARAMETERS[machine["type"]]
             }})
         return jsonify({"machines": machines,
-                        "trend_fraction": config.TREND_FRACTION, "window_s": config.WINDOW_S})
+                        "trend_fraction": config.TREND_FRACTION, "status_probability": config.STATUS_PROBABILITY, "window_s": config.WINDOW_S})
 
 
 @app.post("/api/limits")

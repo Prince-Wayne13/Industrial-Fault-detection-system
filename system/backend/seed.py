@@ -160,11 +160,13 @@ def labelled_windows(rng, per_case=30):
                 spike = [rng.gauss(base, base * 0.01) for _ in range(config.WINDOW_S)]
                 spike[rng.randrange(config.WINDOW_S)] = _band(mt, p, levels[-1], rng)
                 out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "spike", "values": spike})
-                k = rng.randrange(3, 8)
-                level = _band(mt, p, levels[0], rng)               # one level for the rest of the window, with ordinary noise (a ramp, not a swing)
-                ramp = [rng.gauss(base, base * 0.01) for _ in range(k)] + \
-                       [rng.gauss(level, abs(level) * 0.01) for _ in range(config.WINDOW_S - k)]
-                out.append({"machine_type": mt, "parameter": p, "truth": "normal", "kind": "ramp", "values": ramp})
+                for lv in levels:                                  # partway windows: f of the 10 readings over the limit, the rest normal. FR-6
+                    f = rng.randrange(1, 10)
+                    level = _band(mt, p, lv, rng)
+                    vals = [rng.gauss(level, abs(level) * 0.01) for _ in range(f)] + [rng.gauss(base, base * 0.01) for _ in range(config.WINDOW_S - f)]
+                    rng.shuffle(vals) if rng.random() < 0.5 else None      # sometimes a ramp, sometimes scattered
+                    truth = lv if f / config.WINDOW_S >= config.TREND_FRACTION else "normal"
+                    out.append({"machine_type": mt, "parameter": p, "truth": truth, "kind": "ramp", "values": vals})
                 for lv in levels:
                     out.append({"machine_type": mt, "parameter": p, "truth": lv, "kind": "fault",
                                 "values": [_band(mt, p, lv, rng) for _ in range(config.WINDOW_S)]})

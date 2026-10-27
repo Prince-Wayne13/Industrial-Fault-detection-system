@@ -1,4 +1,4 @@
-"""The status model. Threshold screening, then the 10-second trend check, then the classifier.
+"""The status model. Threshold screening, then the trained model scores each 10-second window.
 FR-4, FR-5, FR-6, NFR-1, NFR-2, NFR-9. One parameter's logic can change without touching the others (limits live in config).
 
 Statuses: normal, warning, critical for parameters with two limits; normal, abnormal for every other parameter (FR-5)."""
@@ -116,26 +116,39 @@ def _train():
     return _CLF
 
 
-def classify(machine_type, parameter, window_values, machine_id=None):
-    """The final status for one parameter for one window. FR-5.
-    1. Screening and the trend check decide whether anything is flagged at all (FR-4, FR-6).
-    2. Only a flagged window goes to the classifier, which assigns the level (DD-05)."""
-    allowed = levels_for(machine_type, parameter, machine_id)
+def window_score(machine_type, parameter, window_values, machine_id=None):
+    """The fault score of one 10-second window, from the trained model. FR-5, FR-6.
+    Returns {'first': chance the window is at least the first fault level, 'critical': chance it is critical}, each 0 to 1.
+    Without scikit-learn it falls back to the share of readings over the limit."""
     levels = [threshold_level(machine_type, parameter, v, machine_id) for v in window_values]
-    rule_level = trend_check(levels)
-    if rule_level == "normal" and is_fluctuating(machine_type, parameter, window_values, machine_id) and "abnormal" in allowed:
-        return "abnormal"                      # a steady spread over the whole window counts, one wild reading does not (std needs all 10)
-    if rule_level == "normal":
-        return "normal"
     clf = _CLF if _CLF_TRIED else _train()
     if clf is None:
-        return rule_level
-    cls = int(clf.predict([_features(machine_type, parameter, window_values, machine_id)])[0])
-    if cls == 0:
-        return rule_level
-    if cls == 2 and "critical" in allowed:
-        return "critical"
-    return "warning" if "warning" in allowed else "abnormal"
+        n = max(len(levels), 1)
+        return {"first": sum(RANK[x] >= 1 for x in levels) / n, "critical": sum(RANK[x] >= 2 for x in levels) / n}
+    proba = dict(zip(clf.classes_, clf.predict_proba([_features(machine_type, parameter, window_values, machine_id)])[0]))
+    return {"first": 1.0 - float(proba.get(0, 0.0)), "critical": float(proba.get(2, 0.0))}
+
+
+def classify_scored(machine_type, parameter, window_values, machine_id=None):
+    """(status, score) for one parameter for one 10-second window. FR-5.
+    1. Every reading is screened against the limits (FR-4).
+    2. The model turns the window into a fault score (chance of a fault, 0 to 100%).
+    3. Score at or above STATUS_PROBABILITY flags the window; critical needs its own score at or above it.
+    4. A steady spread (pump speed) can still make it abnormal on its own."""
+    allowed = levels_for(machine_type, parameter, machine_id)
+    score = window_score(machine_type, parameter, window_values, machine_id)
+    cut = config.STATUS_PROBABILITY
+    if score["critical"] >= cut and "critical" in allowed:
+        return "critical", score
+    if score["first"] >= cut and len(allowed) > 1:
+        return ("warning" if "warning" in allowed else "abnormal"), score
+    if is_fluctuating(machine_type, parameter, window_values, machine_id) and "abnormal" in allowed:
+        return "abnormal", {**score, "first": max(score["first"], cut)}
+    return "normal", score
+
+
+def classify(machine_type, parameter, window_values, machine_id=None):
+    return classify_scored(machine_type, parameter, window_values, machine_id)[0]
 
 
 def evaluate(seed_value=2, per_case=40):
